@@ -32,7 +32,7 @@ website:
 
 format:
   html:
-    theme: zephyr
+    theme: solar
     toc: true
     css: assets/css/hub.css
 
