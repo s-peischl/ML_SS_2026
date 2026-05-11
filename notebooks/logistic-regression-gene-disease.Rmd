@@ -51,6 +51,7 @@ We simulate gene expression data for 200 samples and 10 genes. `Gene1`, `Gene3`,
 library(caret)
 library(rpart)
 library(ggplot2)
+library(rlang)
 library(GGally)
 
 # Set seed for reproducibility
@@ -165,9 +166,14 @@ plot_decision_boundary <- function(model, data, feature1, feature2, model_type) 
     grid$response <- predict(model, newdata = grid, type = "class")
   }
   
-  ggplot(data, aes_string(x = feature1, y = feature2)) +
-    geom_point(aes(fill=disease_presence),alpha = 1,shape = 21,col="black",size = 3) +
-    geom_tile(data = grid, aes_string(fill = "response"), alpha = 0.3) +
+  ggplot(data, aes(x = !!rlang::sym(feature1), y = !!rlang::sym(feature2))) +
+    geom_point(aes(fill = disease_presence), alpha = 1, shape = 21, col = "black", size = 3) +
+    geom_tile(
+      data = grid,
+      aes(x = !!rlang::sym(feature1), y = !!rlang::sym(feature2), fill = response),
+      alpha = 0.3,
+      inherit.aes = FALSE
+    ) +
     scale_fill_manual(values = c("Absent" = "turquoise", "Present" = "magenta")) +
         scale_color_manual(values = c("Absent" = "turquoise", "Present" = "magenta")) +
     theme_minimal() +

@@ -27,15 +27,18 @@ jobs:
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
         with:
+          r-version: "4.4"
           use-public-rspm: true
 
-      - name: Install R packages (for executed chunks / Shinylive)
+      - name: Install R packages (for executed chunks / Shinylive / notebooks)
         run: |
-          Rscript -e "install.packages(c('glmnet','caret','dplyr','ggplot2','GGally','rlang','knitr','rmarkdown','MASS','rcartocolor'), repos='https://cloud.r-project.org', Ncpus=2)"
+          Rscript -e "pkgs <- c('glmnet','caret','dplyr','ggplot2','GGally','rlang','knitr','rmarkdown','MASS','rcartocolor','rpart','rpart.plot'); install.packages(pkgs, repos='https://cloud.r-project.org', Ncpus=2, dependencies=TRUE)"
           Rscript -e "install.packages('shinylive', repos=c('https://posit-dev.r-universe.dev','https://cloud.r-project.org'))"
 
       - name: Render site
         run: quarto render
+        env:
+          LANG: C.UTF-8
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
