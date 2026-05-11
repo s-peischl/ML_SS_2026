@@ -1,0 +1,21 @@
+Package: mlss2026site
+Title: CI-only dependency bundle for Quarto site render
+Version: 0.0.0.9000
+Authors@R: person("Teaching", "Hub", email = "na@example.com", role = "ctb")
+Description: Not an R package; exists so r-lib/actions/setup-r-dependencies can
+    install binaries with caching in GitHub Actions.
+License: CC0-1.0
+Encoding: UTF-8
+Imports:
+    glmnet,
+    caret,
+    dplyr,
+    ggplot2,
+    GGally,
+    rlang,
+    knitr,
+    rmarkdown,
+    MASS,
+    rpart,
+    rpart.plot,
+    rcartocolor

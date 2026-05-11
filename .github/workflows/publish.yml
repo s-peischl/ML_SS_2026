@@ -12,11 +12,12 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,9 +31,20 @@ jobs:
           r-version: "4.4"
           use-public-rspm: true
 
-      - name: Install R packages (for executed chunks / Shinylive / notebooks)
+      - name: Cache Shinylive web assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/shinylive
+          key: shinylive-assets-${{ runner.os }}-v1
+
+      - name: Install R packages (cached via DESCRIPTION)
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: DESCRIPTION
+          cache-version: 2
+
+      - name: Install shinylive (R-universe binary)
         run: |
-          Rscript -e "pkgs <- c('glmnet','caret','dplyr','ggplot2','GGally','rlang','knitr','rmarkdown','MASS','rcartocolor','rpart','rpart.plot'); install.packages(pkgs, repos='https://cloud.r-project.org', Ncpus=2, dependencies=TRUE)"
           Rscript -e "install.packages('shinylive', repos=c('https://posit-dev.r-universe.dev','https://cloud.r-project.org'))"
 
       - name: Render site
@@ -48,6 +60,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
