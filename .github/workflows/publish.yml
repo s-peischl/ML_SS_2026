@@ -31,21 +31,11 @@ jobs:
           r-version: "4.4"
           use-public-rspm: true
 
-      - name: Cache Shinylive web assets
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/shinylive
-          key: shinylive-assets-${{ runner.os }}-v1
-
       - name: Install R packages (cached via DESCRIPTION)
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: DESCRIPTION
           cache-version: 2
-
-      - name: Install shinylive (R-universe binary)
-        run: |
-          Rscript -e "install.packages('shinylive', repos=c('https://posit-dev.r-universe.dev','https://cloud.r-project.org'))"
 
       - name: Render site
         run: quarto render

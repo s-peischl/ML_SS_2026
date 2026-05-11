@@ -1,7 +1,5 @@
 ---
 title: "Day 2 (Tuesday): Trees and Modern Pipelines"
-filters:
-  - shinylive
 format:
   revealjs:
     theme: [default, ../assets/css/slides-theme.scss]
@@ -44,18 +42,11 @@ format:
 - Impurity criteria (Gini, entropy)
 - Stopping rules and pruning to control complexity
 
-## Demo: tree splitting intuition (Shinylive)
+## Demo: tree splitting intuition (interactive)
 
-```{shinylive-r}
-#| standalone: true
-library(shiny)
-ui <- fluidPage(
-  h4("Tree Split Demo"),
-  p("TODO: add slider-driven split visualizations.")
-)
-server <- function(input, output, session) {}
-shinyApp(ui, server)
-```
+::: {.callout-note}
+Stub: `apps/tree_split_demo/app.R` — list of demos: [App Library](../apps/index.qmd). Shinylive embedding is disabled in these decks for fast CI; use `quarto preview` locally if you re-enable the Shinylive filter.
+:::
 
 ## Pipeline mindset
 

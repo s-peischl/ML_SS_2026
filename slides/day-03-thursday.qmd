@@ -1,7 +1,5 @@
 ---
 title: "Day 3 (Thursday): Advanced Models, Metrics, and Explainability"
-filters:
-  - shinylive
 format:
   revealjs:
     theme: [default, ../assets/css/slides-theme.scss]
@@ -50,18 +48,11 @@ Thursday uses the same pipeline file as Tuesday: change only `mod_spec` (and rec
 - Use class weights, resampling, or threshold tuning
 - Evaluate with precision/recall-centric metrics when needed
 
-## Demo: class imbalance intuition (Shinylive)
+## Demo: class imbalance intuition (interactive)
 
-```{shinylive-r}
-#| standalone: true
-library(shiny)
-ui <- fluidPage(
-  h4("Class Imbalance Demo"),
-  p("TODO: add prevalence and threshold controls with confusion matrix output.")
-)
-server <- function(input, output, session) {}
-shinyApp(ui, server)
-```
+::: {.callout-note}
+Stub: `apps/class_imbalance_demo/app.R` — [App Library](../apps/index.qmd).
+:::
 
 ## Metrics toolbox
 
@@ -134,18 +125,11 @@ shinyApp(ui, server)
 - Watch for **large accuracy gaps** driven by prevalence differences rather than meaningful model quality.
 - Pair with curriculum idea: separate half-day on causal vs associational claims before students ship SHAP plots to stakeholders.
 
-## Demo: SHAP intuition (Shinylive)
+## Demo: SHAP intuition (interactive)
 
-```{shinylive-r}
-#| standalone: true
-library(shiny)
-ui <- fluidPage(
-  h4("SHAP Intuition Demo"),
-  p("TODO: add toy feature contribution visualization.")
-)
-server <- function(input, output, session) {}
-shinyApp(ui, server)
-```
+::: {.callout-note}
+Stub: `apps/shap_intuition_demo/app.R` — [App Library](../apps/index.qmd).
+:::
 
 ## Final takeaway
 

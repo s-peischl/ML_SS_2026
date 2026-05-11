@@ -1,7 +1,5 @@
 ---
 title: "Day 1 (Monday): Foundations and Regularization"
-filters:
-  - shinylive
 format:
   revealjs:
     theme: [default, ../assets/css/slides-theme.scss]
@@ -107,19 +105,17 @@ The next slides pull in live plots from the same simulations as your original `.
 - Logistic + tree + boundaries: [notebooks/logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 - Overview: [notebooks/index.qmd](../notebooks/index.qmd)
 
-## Demo: regularization paths (Shinylive)
+## Demo: regularization paths (interactive)
 
-```{shinylive-r}
-#| standalone: true
-# Placeholder app. Replace with full implementation in apps/regularization_path_demo/app.R
-library(shiny)
-ui <- fluidPage(
-  h4("Regularization Path Demo"),
-  p("TODO: add ridge/lasso path exploration UI.")
-)
-server <- function(input, output, session) {}
-shinyApp(ui, server)
-```
+::: {.callout-note}
+## App placeholder (CI-friendly)
+Embedded **Shinylive** blocks were removed so GitHub Actions finishes in minutes instead of downloading large web runtimes on every push.
+
+- Stub app source: `apps/regularization_path_demo/app.R`
+- App index: [App Library](../apps/index.qmd)
+
+To embed Shinylive again locally, re-add `filters: [shinylive]` to this file’s YAML and a `` `{shinylive-r}` `` chunk (see Quarto Shinylive docs).
+:::
 
 ## End-of-day checklist (before you leave the room)
 
