@@ -13,6 +13,7 @@ suppressPackageStartupMessages({
   library(ggplot2)
   library(GGally)
   library(rlang)
+  library(MASS)
 })
 theme_set(theme_classic())
 knitr::opts_chunk$set(
@@ -126,6 +127,144 @@ oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), mgp = c(2, 0.7, 0))
 plot(fit_ridge, xvar = "lambda", label = TRUE, main = "Ridge coefficients vs log(lambda)")
 plot(fit_lasso, xvar = "lambda", label = TRUE, main = "Lasso coefficients vs log(lambda)")
 par(oldpar)
+```
+
+## OLS linear regression (matches `LinearRegressionLasso.Rmd`)
+
+Ordinary least squares on the **same scaled training matrix** as LASSO: `lm(trait ~ .)` with all genes. This is the “full complexity” linear benchmark before discrete model search (AIC) or continuous shrinkage (ridge/lasso).
+
+```{r}
+#| label: day01-lm-full-train
+#| echo: false
+#| results: hide
+X_train_df <- as.data.frame(X_train_s)
+X_train_df$trait <- y_train
+X_test_df <- as.data.frame(X_test_s)
+full_lm <- lm(trait ~ ., data = X_train_df)
+```
+
+```{r}
+#| label: day01-lm-coef-plot
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 8
+cf <- coef(full_lm)
+cf <- cf[names(cf) != "(Intercept)"]
+ci <- tryCatch(
+  confint(full_lm, parm = names(cf)),
+  error = function(e) matrix(NA_real_, length(cf), 2, dimnames = list(names(cf), c("2.5 %", "97.5 %")))
+)
+coef_tbl <- data.frame(
+  gene = names(cf),
+  estimate = as.numeric(cf),
+  lo = as.numeric(ci[, 1]),
+  hi = as.numeric(ci[, 2])
+)
+ggplot(coef_tbl, aes(x = estimate, y = reorder(gene, estimate))) +
+  geom_vline(xintercept = 0, linetype = 2, color = "gray50") +
+  geom_pointrange(aes(xmin = lo, xmax = hi), fatten = 3) +
+  labs(
+    title = "OLS coefficients ± 95% CI (train, all predictors)",
+    x = "Effect on trait (scaled gene units)", y = NULL
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-lm-test-metrics
+#| echo: false
+#| results: asis
+pred_lm_test <- predict(full_lm, newdata = X_test_df)
+mse_ols <- mean((y_test - pred_lm_test)^2)
+rmse_ols <- sqrt(mse_ols)
+r2_ols <- cor(y_test, pred_lm_test)^2
+best_lam <- cv_lasso$lambda.1se
+lasso_best_fit <- glmnet(X_train_s, y_train, alpha = 1, lambda = best_lam)
+pred_lasso_test <- as.numeric(predict(lasso_best_fit, newx = X_test_s))
+mse_las <- mean((y_test - pred_lasso_test)^2)
+rmse_las <- sqrt(mse_las)
+r2_las <- cor(y_test, pred_lasso_test)^2
+knitr::kable(
+  data.frame(
+    model = c("OLS full (train fit)", "Lasso (lambda.1se)"),
+    RMSE_test = c(rmse_ols, rmse_las),
+    R2_test = c(r2_ols, r2_las)
+  ),
+  digits = 3,
+  caption = "Held-out test performance (same split, scaled features)"
+)
+```
+
+## AIC: backward and forward selection (same notebook)
+
+`stepAIC` greedily adds or drops terms to improve the Akaike information criterion \( \mathrm{AIC} = 2k - 2\log L \), trading fit against number of parameters \(k\).
+
+```{r}
+#| label: day01-step-aic
+#| echo: false
+#| results: hide
+backward_model <- stepAIC(full_lm, direction = "backward", trace = FALSE)
+start_model <- lm(trait ~ 1, data = X_train_df)
+forward_model <- stepAIC(
+  start_model,
+  direction = "forward",
+  scope = list(lower = start_model, upper = full_lm),
+  trace = FALSE
+)
+```
+
+```{r}
+#| label: day01-aic-model-sizes
+#| echo: false
+#| fig-height: 3.2
+#| fig-width: 6.5
+aic_tbl <- data.frame(
+  approach = c("OLS full", "AIC backward", "AIC forward"),
+  n_terms = c(
+    length(coef(full_lm)),
+    length(coef(backward_model)),
+    length(coef(forward_model))
+  ),
+  AIC = c(AIC(full_lm), AIC(backward_model), AIC(forward_model))
+)
+ggplot(aic_tbl, aes(x = reorder(approach, AIC), y = AIC, fill = approach)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "AIC across nested-search models (train)", x = NULL, y = "AIC (lower is better)") +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-aic-terms-text
+#| echo: false
+#| results: asis
+fmt_f <- function(f) paste(deparse(f), collapse = " ")
+cat("**Backward AIC formula:** `", fmt_f(formula(backward_model)), "`\n\n", sep = "")
+cat("**Forward AIC formula:** `", fmt_f(formula(forward_model)), "`\n\n", sep = "")
+```
+
+```{r}
+#| label: day01-aic-vs-lasso-coefs
+#| echo: false
+#| fig-height: 4
+#| fig-width: 9
+coef_back <- coef(backward_model)
+nm <- names(coef_back)
+nm <- nm[nm != "(Intercept)"]
+lc_mat <- as.matrix(coef(lasso_best_fit, s = best_lam))
+lasso_vals <- ifelse(nm %in% rownames(lc_mat), lc_mat[nm, 1], NA_real_)
+coef_compare_long <- rbind(
+  data.frame(gene = nm, model = "backward", estimate = as.numeric(coef_back[nm])),
+  data.frame(gene = nm, model = "lasso", estimate = lasso_vals)
+)
+ggplot(coef_compare_long, aes(x = estimate, y = reorder(gene, estimate), color = model)) +
+  geom_vline(xintercept = 0, linetype = 2, color = "gray60") +
+  geom_point(position = position_dodge(width = 0.4), size = 2) +
+  labs(
+    title = "Backward-AIC vs Lasso(1se) coefficients (train)",
+    x = "Coefficient", y = NULL, color = NULL
+  ) +
+  theme_minimal()
 ```
 
 ## Example: gene expression → disease (logistic notebook)

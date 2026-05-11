@@ -63,12 +63,53 @@ shinyApp(ui, server)
 - Preprocessing is part of the model, not a side step
 - Evaluation design must be fixed before tuning
 
-## Tidymodels blueprint
+## Tidymodels: split objects first (`rsample`)
+
+- `initial_split(data, prop = 0.8, strata = outcome)` returns an `rsplit` bundle: which rows belong to analysis vs assessment.
+- `training(split)` and `testing(split)` materialize the two tibbles. **Never** preprocess the full dataset before splitting if steps learn from data (means, factor levels, PCA loadings).
+- For repeated estimates of generalization error, use `vfold_cv(training(split), v = 10, strata = outcome)` or nested resampling when tuning within an outer loop.
+
+## Recipes: deferred transformations (`recipes`)
+
+- A **recipe** is a declarative list of steps: `recipe(outcome ~ predictors, data = train_data) |> step_*()`.
+- **Roles:** `all_numeric_predictors()`, `all_nominal_predictors()`, `all_outcomes()` select columns by role instead of fragile name vectors.
+- Common steps: `step_impute_*`, `step_normalize`, `step_dummy`, `step_zv` (zero-variance), `step_corr` (remove redundant columns), `step_log`, `step_ns` (splines).
+- `prep(recipe, training = train_data)` learns constants from training rows; `bake(prep, new_data = ...)` applies the same rules to validation/test rows. This is what prevents leakage.
+
+## Parsnip: specification vs estimation (`parsnip`)
+
+- **Specification** describes the model family and hyperparameters, not the fitted object: e.g. `logistic_reg(penalty = tune(), mixture = 1) |> set_engine("glmnet") |> set_mode("classification")`.
+- `set_engine()` picks the computational backend (`"glmnet"`, `"ranger"`, `"xgboost"`, `"keras"`). Same user-facing call can map to different packages.
+- `translate()` shows how a parsnip call maps to the underlying function arguments—useful when debugging or reading tutorials written in native `xgboost` syntax.
+- **Fit** happens later via `fit(workflow, data = train_data)` or `last_fit`, after workflows bundle preprocessing + model.
+
+## Workflows: glue recipe + model (`workflows`)
+
+- `workflow() |> add_recipe(rec) |> add_model(mod)` produces a single object you can resample and tune as a unit.
+- Benefits: the resampler sees the *whole* estimation chain; tuning grids can include recipe parameters (e.g. spline degrees) alongside model hyperparameters.
+- `workflow() |> add_formula(y ~ .) |> add_model(mod)` skips a recipe when you only need a bare formula, but recipes remain the right place for learned steps.
+
+## Tuning and metrics (`tune`, `dials`, `yardstick`)
+
+- Mark unknown parameters with `tune()` inside `parsnip` specs or `recipes` steps.
+- `extract_parameter_set_dials(wf)` + `grid_regular()` / `grid_space_filling()` build candidate grids; `tune_grid(wf, resamples = folds, grid = ..., metrics = metric_set(roc_auc, pr_auc))` evaluates them.
+- `collect_metrics()`, `autoplot()`, and `select_best()` summarize results; `finalize_workflow(wf, best_params)` plugs in winners.
+- `yardstick::metric_set` keeps evaluation consistent across models; choose metrics **before** peeking at test data.
+
+## Tidymodels blueprint (overview)
 
 - `recipes`: preprocess, impute, encode, normalize
 - `parsnip`: model specification
 - `workflows`: combine recipe + model
 - `rsample` + `tune`: resampling and hyperparameter search
+
+## Mental checklist before you `fit`
+
+1. Declare split and resampling strategy.
+2. Build recipe on **training** data only; verify steps make sense for production features.
+3. Choose parsnip model + engine + mode; wrap in workflow.
+4. Pick metrics aligned with deployment costs; tune if needed.
+5. Fit final workflow on all training data; assess once on the locked-away test set (or use nested CV for honest tuning comparison).
 
 ## Reusable classification template
 

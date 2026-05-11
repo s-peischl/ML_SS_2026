@@ -84,11 +84,42 @@ shinyApp(ui, server)
 - Permutation importance as model-agnostic baseline
 - Correlated features can distort importance rankings
 
-## SHAP values
+## Explainability beyond a single number
 
-- Local explanations: feature contribution per prediction
-- Global view: aggregate SHAP distributions
-- Caution: explanations are conditional on model and feature space
+- **Global:** which features matter on average across the dataset?
+- **Local:** why did *this* patient receive *this* score?
+- **Faithfulness:** an explanation is only as trustworthy as the model’s fit and the data generating process you condition on.
+
+## SHAP: Shapley values for ML
+
+- SHAP (**SH**apley **A**dditive ex**P**lanations) builds on cooperative game theory: each feature is a “player” contributing to the prediction surplus over a baseline (expected model output).
+- For an additive explanation model \(\hat f(x) \approx \phi_0 + \sum_j \phi_j(x)\), SHAP values \(\phi_j\) are constructed so they **sum to the deviation** from the baseline: \(\sum_j \phi_j = \hat f(x) - \phi_0\).
+- Different **SHAP formulations** correspond to different ways of averaging over feature coalitions (interventional vs conditional on correlations); this matters when predictors are dependent.
+
+## TreeSHAP vs KernelSHAP (practical angle)
+
+- **TreeSHAP** exploits tree structure (random forests, GBMs) for exact or efficient Shapley-style attributions under the model’s native partition of the input space—fast at scale for tree ensembles.
+- **KernelSHAP** is model-agnostic: it approximates Shapley values by sampling coalitions and fitting a weighted linear model around the prediction—flexible but slower and more noise-sensitive, especially in high dimensions.
+- Rule of thumb: use **TreeSHAP** for `xgboost` / `ranger` / `rpart`; consider **KernelSHAP** (or other explainers) when you must explain arbitrary black-box APIs.
+
+## Reading SHAP plots
+
+- **Waterfall / force:** shows signed contributions \(\phi_j\) stacking from baseline to final log-odds or score for one observation—best for teaching “where the prediction came from.”
+- **Summary beeswarm / bar:** orders features by mean \(|\phi_j|\) and shows distribution of impacts across individuals—highlights global drivers while preserving sign information.
+- **Dependence:** plots \(\phi_j\) vs feature value \(x_j\) to reveal interactions (color by a second feature) or nonlinear leverage.
+
+## SHAP limitations (say this out loud)
+
+- **Not causal:** large SHAP mass on a variable does not prove manipulation of that variable would change outcomes in the real world.
+- **Correlated inputs:** attribution can be split arbitrarily between twins; use domain knowledge, grouped explanations, or regularized surrogate models.
+- **Adversarial models:** a model can hide dependence from naive explainers; treat SHAP as a *sanity check*, not a proof of safety.
+- **Baseline choice:** interventional SHAP depends on the reference distribution; changing the baseline shifts all \(\phi_j\).
+
+## Model-agnostic baselines to pair with SHAP
+
+- **Permutation importance:** shuffle one column in validation data and measure drop in score—simple, unstable with collinearity, but intuitive.
+- **Partial dependence / accumulated local effects:** trace average prediction vs one or two features—complements local SHAP by showing global curvature.
+- **Calibration plots:** check whether predicted probabilities line up with observed frequencies before trusting SHAP on probability space.
 
 ## Demo: SHAP intuition (Shinylive)
 

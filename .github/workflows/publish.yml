@@ -31,7 +31,7 @@ jobs:
 
       - name: Install R packages (for executed chunks / Shinylive)
         run: |
-          Rscript -e "install.packages(c('glmnet','caret','dplyr','ggplot2','GGally','rlang','knitr','rmarkdown'), repos='https://cloud.r-project.org', Ncpus=2)"
+          Rscript -e "install.packages(c('glmnet','caret','dplyr','ggplot2','GGally','rlang','knitr','rmarkdown','MASS'), repos='https://cloud.r-project.org', Ncpus=2)"
           Rscript -e "install.packages('shinylive', repos=c('https://posit-dev.r-universe.dev','https://cloud.r-project.org'))"
 
       - name: Render site

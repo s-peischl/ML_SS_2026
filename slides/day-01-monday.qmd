@@ -38,6 +38,27 @@ format:
 - Frame the bias-variance tradeoff
 - Compare train vs validation error as complexity grows
 
+## Linear model: matrix form
+
+- Response vector \(y \in \mathbb{R}^n\); design matrix \(X\) with rows as samples and columns as predictors (plus intercept column).
+- Ordinary least squares minimizes \(\|y - X\beta\|_2^2\) over \(\beta\).
+- Closed form (when \(X'X\) is invertible): \(\hat\beta = (X'X)^{-1} X'y\).
+- Predictions on new \(X_{\text{new}}\): \(\hat y_{\text{new}} = X_{\text{new}} \hat\beta\).
+
+## What OLS gives you (and what it assumes)
+
+- **Interpretation:** each \(\hat\beta_j\) is a *conditional* slope: expected change in \(y\) when gene \(j\) increases by one unit, holding other modeled genes fixed.
+- **Linearity:** effects combine additively in the predictor space you specify (interactions only if you engineer them).
+- **Collinearity:** if predictors are nearly redundant, variances of \(\hat\beta_j\) explode and coefficients become unstable—regularization is one response.
+- **High \(p\), low \(n\):** OLS is not unique or behaves badly; shrinkage or explicit sparsity becomes necessary.
+
+## Discrete complexity control: AIC stepwise search
+
+- **AIC** trades log-likelihood against model size: \(\mathrm{AIC} = 2k - 2\log L\). Lower is better; compare models on the *same* data with care.
+- **Backward** starts at the full linear model and drops terms if AIC improves.
+- **Forward** starts at the intercept-only model and adds terms greedily up to a declared upper scope.
+- Unlike ridge/lasso, this is a **discrete** search over subsets of predictors; it can miss good subsets and is more aggressive about *which* \(k\) counts as complexity.
+
 ## Logistic regression for classification
 
 - Introduce probability modeling via log-odds
