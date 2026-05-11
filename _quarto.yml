@@ -4,6 +4,7 @@ project:
 
 website:
   title: "Machine Learning Summer School 2026"
+  site-url: https://s-peischl.github.io/ML_SS_2026/
   navbar:
     left:
       - href: index.qmd
