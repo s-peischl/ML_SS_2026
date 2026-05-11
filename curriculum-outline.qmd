@@ -62,3 +62,17 @@ This outline mirrors your requested flow and keeps exercises separate.
 - Exercises are run separately from this hub.
 - Each day has one dedicated revealjs deck and linked app demos.
 - The same pipeline grammar is reused from Tuesday onward.
+- Student **`.Rmd`** notebooks live under `notebooks/` and are linked from the hub navbar.
+
+## Ideas to strengthen the curriculum
+
+These are optional upgrades you can phase in over editions of the school.
+
+1. **Explicit probability and decision theory half-day** — prior odds, likelihood ratios, and cost-sensitive thresholds before metrics overload on Thursday.
+2. **Causal framing as guardrails** — one short module on “association vs intervention” so SHAP and importance are not over-interpreted.
+3. **Data cards + model cards** — lightweight templates students fill for each dataset and each final model (provenance, known biases, intended use).
+4. **Reproducibility sprint** — `renv` or `conda` lockfile, directory layout, and a single `targets` or `quarto` report that rebuilds all figures.
+5. **Ethics / fairness block** — demographic parity vs equalized odds on a toy dataset; pairs well with imbalance and metric choice.
+6. **Guest “deployment” vignette** — API batch scoring or Plumber/Posit Connect sketch so “pipeline” does not end at `fit()`.
+7. **Sparse day for consolidation** — buffer half-day with recap quizzes and one capstone analysis so advanced topics are not rushed.
+8. **Versioned assessments** — publish rubrics for notebook grading (correctness, clarity, diagnostics) to align TAs across years.

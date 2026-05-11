@@ -121,6 +121,19 @@ shinyApp(ui, server)
 - **Partial dependence / accumulated local effects:** trace average prediction vs one or two features—complements local SHAP by showing global curvature.
 - **Calibration plots:** check whether predicted probabilities line up with observed frequencies before trusting SHAP on probability space.
 
+## Nested resampling when tuning gets serious
+
+- **Problem:** if you tune on the same outer folds you use for final comparison, optimistic bias creeps in.
+- **Pattern:** outer `vfold_cv` for performance; inside each analysis fold, inner CV or bootstrap for hyperparameter selection; aggregate outer metrics only.
+- **tidymodels:** implement nested splits with **composed `rsample` objects** (inner resampling inside each `analysis()` fold of an outer `vfold_cv`); see official case studies and optional `finetune` for racing methods.
+- Teaching tip: draw the **two-layer diagram** on the board once; students reuse it for every advanced model day.
+
+## Fairness and subgroup checks (light touch)
+
+- Once metrics are chosen, report them **overall and by subgroup** (sex, site, batch) when those fields exist.
+- Watch for **large accuracy gaps** driven by prevalence differences rather than meaningful model quality.
+- Pair with curriculum idea: separate half-day on causal vs associational claims before students ship SHAP plots to stakeholders.
+
 ## Demo: SHAP intuition (Shinylive)
 
 ```{shinylive-r}

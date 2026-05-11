@@ -124,6 +124,18 @@ The block below is included from `teaching-hub/_includes/tidymodels-pipeline.qmd
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
 
+## From `caret` to `tidymodels` (migration mental map)
+
+- `caret::train(form, data, method, trControl, tuneGrid)` historically bundled preprocessing options; today **`tidymodels` separates concerns** more strictly (recipe vs model vs resampling).
+- Mapping cheat-sheet: `trainControl` \(\rightarrow\) `control_*()` functions; `method` string \(\rightarrow\) `parsnip` + `set_engine()`; `preProcess` \(\rightarrow\) `recipe` steps; `varImp` \(\rightarrow\) `vip` or model-specific tools.
+- Why switch: composability, safer tuning, easier alignment with **feature-store** style pipelines and production bundles (`vetiver`, Posit Connect).
+
+## Ensembles at the API level (`stacks`, `workflowsets`)
+
+- **`workflowsets`** runs many `(recipe, model)` pairs across the same resamples—ideal for homework comparing five learners fairly.
+- **`stacks`** treats tuned workflows as level-0 candidates and learns a sparse combination (often a constrained glm) as a meta-learner—nice capstone after random forests and boosting.
+- Pedagogically: show **one** `workflowset` call on Thursday after students understand single workflows.
+
 ## Transition to Thursday
 
 - Tuesday gives the pipeline backbone

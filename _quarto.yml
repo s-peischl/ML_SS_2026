@@ -1,6 +1,9 @@
 project:
   type: website
   output-dir: _site
+  render:
+    - "**/*.qmd"
+    - "notebooks/*.Rmd"
 
 website:
   title: "Machine Learning Summer School 2026"
@@ -21,11 +24,20 @@ website:
         text: Modules
       - href: apps/index.qmd
         text: Apps
+      - text: Notebooks
+        menu:
+          - text: Student notebooks
+            href: notebooks/index.qmd
+          - text: Linear regression + LASSO
+            href: notebooks/linear-regression-lasso.Rmd
+          - text: Logistic regression + tree
+            href: notebooks/logistic-regression-gene-disease.Rmd
 
 format:
   html:
     theme: cosmo
     toc: true
+    css: assets/css/hub.css
 
 execute:
   freeze: auto

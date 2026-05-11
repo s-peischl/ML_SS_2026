@@ -1,0 +1,4 @@
+# Applies to all decks in this folder (revealjs footer on every slide)
+format:
+  revealjs:
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a>'

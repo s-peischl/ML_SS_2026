@@ -2,30 +2,54 @@
 title: "Teaching Hub"
 ---
 
+::: {.hub-hero}
 # Machine Learning Summer School 2026
 
-This is the central hub for the 3-day machine learning block.
+::: {.hub-lead}
+Central place for **slides**, **student notebooks**, **module notes**, and **interactive demos** (Shinylive stubs you can extend). Exercises stay outside this site.
+:::
+:::
 
-## Course Flow
+::: {.hub-grid}
+::: {.hub-card}
+::: {.hub-pill}
+Slides
+:::
+### Day decks (revealjs)
 
-- Monday: foundations, over/underfitting, regularization
-- Tuesday: two cultures, trees, and modern modeling pipelines
-- Thursday: advanced models, metrics, imbalance, and interpretability
+- [Day 1 — Monday](slides/day-01-monday.qmd): linear / logistic intuition, OLS, AIC, ridge & lasso, course figures
+- [Day 2 — Tuesday](slides/day-02-tuesday.qmd): two cultures, trees, tidymodels pipeline
+- [Day 3 — Thursday](slides/day-03-thursday.qmd): ensembles, metrics, imbalance, SHAP
 
-## Day-by-Day Slides
+Every slide deck shows a **Teaching Hub** link in the footer to return here.
+:::
 
-- [Day 1 (Monday)](slides/day-01-monday.qmd)
-- [Day 2 (Tuesday)](slides/day-02-tuesday.qmd)
-- [Day 3 (Thursday)](slides/day-03-thursday.qmd)
+::: {.hub-card}
+::: {.hub-pill}
+Notebooks
+:::
+### For students (`.Rmd`)
 
-## Planning and Reusable Content
+- [Notebook overview](notebooks/index.qmd)
+- [Linear regression + LASSO](notebooks/linear-regression-lasso.Rmd)
+- [Logistic regression + tree](notebooks/logistic-regression-gene-disease.Rmd)
+:::
 
-- [Curriculum Outline](curriculum-outline.qmd)
-- [Module Library](modules/index.qmd)
-- [App Library](apps/index.qmd)
-- Shared `tidymodels` pipeline: `_includes/tidymodels-pipeline.qmd` (included in Tuesday and Thursday slides and in Module 04)
+::: {.hub-card}
+::: {.hub-pill}
+Planning
+:::
+### Reusable material
 
-## Notes
+- [Curriculum outline](curriculum-outline.qmd) — schedule, goals, iteration ideas
+- [Module library](modules/index.qmd) — short reusable topic pages
+- [App library](apps/index.qmd) — Shinylive / Shiny placeholders
+- Shared tidymodels template: `_includes/tidymodels-pipeline.qmd` (used in slides + Module 04)
+:::
+:::
 
-- Exercises are intentionally handled outside this slide system.
-- Each deck includes semi-drafted content and app placeholders.
+## Course flow (three days)
+
+- **Monday:** foundations, bias–variance, OLS, stepwise AIC, ridge/lasso, logistic intro
+- **Tuesday:** Breiman’s “two cultures”, decision trees, `tidymodels` grammar and workflows
+- **Thursday:** random forest, boosting, neural nets, imbalance & imputation, metrics, SHAP & friends

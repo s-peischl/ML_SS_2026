@@ -1,0 +1,21 @@
+---
+title: "Student notebooks"
+---
+
+Run these documents in **RStudio** or **Positron** (or render with Quarto). They are the same worked examples used on Day 1 slides.
+
+::: {.hub-muted}
+Tip: use **Render** in the IDE, or from the project root run `quarto render notebooks/your-file.Rmd`.
+:::
+
+## Linear regression, LASSO, and AIC
+
+- [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — synthetic gene–trait data, visualization, `glmnet` LASSO, forward/backward AIC (`MASS::stepAIC`).
+
+## Logistic regression and classification
+
+- [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) — simulated gene expression and disease status, `glm`, `rpart`, confusion matrix, decision boundaries.
+
+## Requirements
+
+Install, as needed: `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (linear notebook theme).

@@ -95,6 +95,18 @@ The next slides pull in live plots from the same simulations as your original `.
 
 {{< include ../_includes/day01-lasso-ridge-logistic.qmd >}}
 
+## Elastic net (bridge between ridge and lasso)
+
+- `glmnet` uses mixing parameter \(\alpha\in[0,1]\): \(\alpha=0\) is pure ridge, \(\alpha=1\) is pure lasso, values in between blend \(L_1\) and \(L_2\) penalties.
+- Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).
+- In teaching: mention it as the default “I am not sure” regularization path before students reach black-box models.
+
+## Student notebooks (same code as Day 1 figures)
+
+- Linear + LASSO + AIC: [notebooks/linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
+- Logistic + tree + boundaries: [notebooks/logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
+- Overview: [notebooks/index.qmd](../notebooks/index.qmd)
+
 ## Demo: regularization paths (Shinylive)
 
 ```{shinylive-r}
@@ -108,6 +120,13 @@ ui <- fluidPage(
 server <- function(input, output, session) {}
 shinyApp(ui, server)
 ```
+
+## End-of-day checklist (before you leave the room)
+
+- Can you explain **train vs validation** error for your favorite plot in the deck?
+- Can you contrast **discrete** model search (AIC) with **continuous** shrinkage (ridge/lasso)?
+- Can you name one situation where **lasso** beats **ridge** and one where the opposite is true?
+- Did you open at least one **student `.Rmd`** and run all chunks?
 
 ## End-of-day takeaway
 

@@ -1,0 +1,81 @@
+/* Hub landing page + light polish for site HTML pages */
+
+:root {
+  --hub-accent: #163d73;
+  --hub-accent-soft: #e8eef7;
+  --hub-radius: 12px;
+  --hub-shadow: 0 8px 24px rgba(22, 61, 115, 0.08);
+}
+
+.hub-hero {
+  background: linear-gradient(135deg, var(--hub-accent-soft) 0%, #ffffff 55%);
+  border: 1px solid #dbe4f3;
+  border-radius: var(--hub-radius);
+  padding: 1.75rem 1.75rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--hub-shadow);
+}
+
+.hub-hero h1,
+.hub-hero .quarto-title-meta {
+  margin-top: 0;
+}
+
+.hub-hero h1 {
+  color: var(--hub-accent);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.hub-lead {
+  font-size: 1.1rem;
+  color: #334155;
+  max-width: 52rem;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.hub-card {
+  border: 1px solid #e2e8f0;
+  border-radius: var(--hub-radius);
+  padding: 1.15rem 1.25rem 1.25rem;
+  background: #fff;
+  box-shadow: var(--hub-shadow);
+}
+
+.hub-card h3 {
+  margin-top: 0;
+  color: var(--hub-accent);
+  font-size: 1.05rem;
+}
+
+.hub-card ul {
+  margin-bottom: 0;
+}
+
+.hub-muted {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.hub-pill {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--hub-accent);
+  background: var(--hub-accent-soft);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  margin-bottom: 0.5rem;
+}
+
+#quarto-content main a {
+  text-decoration-thickness: 1px;
+}

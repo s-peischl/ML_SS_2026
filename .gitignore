@@ -3,3 +3,6 @@
 /_freeze/
 /.Rlibs/
 .DS_Store
+
+# Local revealjs / knitr sidecar output next to slide sources
+slides/*_files/
