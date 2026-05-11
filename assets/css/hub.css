@@ -1,81 +1,207 @@
-/* Hub landing page + light polish for site HTML pages */
+/* Hub + site-wide polish (pairs with Zephyr theme) */
 
 :root {
-  --hub-accent: #163d73;
-  --hub-accent-soft: #e8eef7;
-  --hub-radius: 12px;
-  --hub-shadow: 0 8px 24px rgba(22, 61, 115, 0.08);
+  --hub-ink: #1e293b;
+  --hub-muted: #64748b;
+  --hub-warm: #0d9488;
+  --hub-warm-deep: #0f766e;
+  --hub-wash: #f0fdfa;
+  --hub-cream: #fffbeb;
+  --hub-card-border: #e2e8f0;
+  --hub-radius: 16px;
+  --hub-shadow: 0 12px 40px rgba(15, 118, 110, 0.07);
+  --hub-shadow-hover: 0 16px 48px rgba(15, 118, 110, 0.12);
 }
 
+/* Slightly calmer page background */
+body.quarto-light #quarto-content {
+  background: linear-gradient(180deg, #fafaf9 0%, #f8fafc 40%, #ffffff 100%);
+}
+
+#quarto-content main {
+  max-width: 60rem;
+  padding-top: 0.25rem;
+}
+
+/* --- Hero --- */
 .hub-hero {
-  background: linear-gradient(135deg, var(--hub-accent-soft) 0%, #ffffff 55%);
-  border: 1px solid #dbe4f3;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(125deg, var(--hub-wash) 0%, #ffffff 45%, var(--hub-cream) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.18);
   border-radius: var(--hub-radius);
-  padding: 1.75rem 1.75rem 1.5rem;
-  margin-bottom: 2rem;
+  padding: 2rem 2rem 1.75rem;
+  margin-bottom: 1.75rem;
   box-shadow: var(--hub-shadow);
 }
 
-.hub-hero h1,
-.hub-hero .quarto-title-meta {
-  margin-top: 0;
+.hub-hero::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: var(--hub-radius) 0 0 var(--hub-radius);
+  background: linear-gradient(180deg, var(--hub-warm) 0%, #34d399 100%);
+}
+
+.hub-hero > * {
+  position: relative;
+  padding-left: 0.35rem;
 }
 
 .hub-hero h1 {
-  color: var(--hub-accent);
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  margin-top: 0;
+  margin-bottom: 0.35rem;
+  color: var(--hub-ink);
+  font-weight: 700;
+  font-size: clamp(1.85rem, 4.2vw, 2.45rem);
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.hub-hero .hub-tagline {
+  font-size: 1.15rem;
+  color: var(--hub-warm-deep);
+  font-weight: 500;
+  margin: 0 0 0.75rem;
+}
+
+.hub-hero .hub-tagline p {
+  margin: 0;
 }
 
 .hub-lead {
-  font-size: 1.1rem;
-  color: #334155;
-  max-width: 52rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--hub-muted);
+  max-width: 42rem;
+  margin-bottom: 0;
 }
 
+/* --- Cards --- */
 .hub-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.25rem;
-  margin: 1.5rem 0 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 1.35rem;
+  margin: 1.75rem 0 2.25rem;
 }
 
 .hub-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--hub-card-border);
   border-radius: var(--hub-radius);
-  padding: 1.15rem 1.25rem 1.25rem;
+  padding: 1.35rem 1.4rem 1.4rem;
   background: #fff;
   box-shadow: var(--hub-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hub-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--hub-shadow-hover);
 }
 
 .hub-card h3 {
   margin-top: 0;
-  color: var(--hub-accent);
-  font-size: 1.05rem;
+  color: var(--hub-warm-deep);
+  font-size: 1.12rem;
+  font-weight: 650;
 }
 
 .hub-card ul {
   margin-bottom: 0;
+  padding-left: 1.1rem;
+}
+
+.hub-card li {
+  margin-bottom: 0.45rem;
+  line-height: 1.5;
+}
+
+.hub-card a {
+  font-weight: 550;
 }
 
 .hub-muted {
-  color: #64748b;
+  color: var(--hub-muted);
   font-size: 0.95rem;
+  line-height: 1.55;
 }
 
 .hub-pill {
   display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--hub-accent);
-  background: var(--hub-accent-soft);
+  color: var(--hub-warm-deep);
+  background: var(--hub-wash);
+  border: 1px solid rgba(13, 148, 136, 0.25);
   border-radius: 999px;
-  padding: 0.2rem 0.65rem;
+  padding: 0.25rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+/* --- Week section --- */
+.hub-week {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--hub-card-border);
+}
+
+.hub-week h2 {
+  color: var(--hub-ink);
+  font-weight: 700;
+  font-size: 1.35rem;
   margin-bottom: 0.5rem;
 }
 
+.hub-week-intro {
+  color: var(--hub-muted);
+  max-width: 48rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.hub-week ul {
+  line-height: 1.65;
+}
+
+.hub-week li strong {
+  color: var(--hub-warm-deep);
+}
+
+/* --- Links --- */
 #quarto-content main a {
   text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+#quarto-content main a:hover {
+  color: var(--hub-warm-deep);
+}
+
+/* Callouts on hub feel a bit softer */
+.callout.callout-style-default {
+  border-radius: 12px;
+}
+
+/* “Start here” — welcoming, not alarm-yellow */
+.hub-start.callout-tip {
+  border-color: rgba(13, 148, 136, 0.35);
+  background: linear-gradient(135deg, #ecfdf5 0%, #f8fafc 100%);
+}
+
+.hub-start.callout-tip .callout-header {
+  color: var(--hub-warm-deep);
+}
+
+.hub-start.callout-tip .callout-body {
+  color: var(--hub-ink);
+}
+
+/* Slightly roomier lists on the hub */
+.hub-week ul li + li {
+  margin-top: 0.35rem;
 }

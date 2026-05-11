@@ -1,56 +1,88 @@
 ---
-title: "Teaching Hub"
+title: "Machine Learning Summer School 2026"
+format:
+  html:
+    title-block: false
+    toc: false
 ---
 
 ::: {.hub-hero}
-# Machine Learning Summer School 2026
+# Welcome
+
+::: {.hub-tagline}
+Slides, notebooks, and a short map of the week — all in one place.
+:::
 
 ::: {.hub-lead}
-Central place for **slides**, **student notebooks**, and **module notes**. Open the site with **`quarto preview`** from this folder so all links resolve; or open files under `_site/` after `quarto render`. Exercises stay outside this site.
+Use this site **during and after class**: open today’s deck, then try the matching notebook when you feel like coding along. If something is unclear, that’s normal — bring it to the room or office hours. Separate lab exercises (if any) will be announced there.
 :::
+:::
+
+::: {.callout-tip .hub-start appearance="simple"}
+## Start here (2 minutes)
+
+1. **Open today’s slides** — we follow **Monday → Tuesday → Thursday** in class.
+2. **When you’re ready**, pick a notebook from the menu — same R you already use (RStudio or Positron is fine).
+3. **Skim “Your week”** below for the story of the three days — no jargon quiz attached.
 :::
 
 ::: {.hub-grid}
 ::: {.hub-card}
 ::: {.hub-pill}
-Slides
+Class slides
 :::
-### Day decks (revealjs)
+### Follow along day by day
 
-- [Day 1 — Monday](slides/day-01-monday.qmd): linear / logistic intuition, OLS, AIC, ridge & lasso, course figures
-- [Day 2 — Tuesday](slides/day-02-tuesday.qmd): two cultures, trees, tidymodels pipeline
-- [Day 3 — Thursday](slides/day-03-thursday.qmd): ensembles, metrics, imbalance, SHAP
+- **[Monday](slides/day-01-monday.qmd)** — from questions to simple models: when a straight line (or curve) helps, and when a model is “trying too hard.”  
+- **[Tuesday](slides/day-02-tuesday.qmd)** — branching decisions (trees), and how to keep your code organized so Thursday still makes sense.  
+- **[Thursday](slides/day-03-thursday.qmd)** — richer models, what to measure when the world is messy, and how to talk about a prediction without overselling it.  
 
-Every slide deck shows a **Teaching Hub** link in the footer to return here.
-:::
-
-::: {.hub-card}
-::: {.hub-pill}
-Notebooks
-:::
-### For students (`.Rmd`)
-
-- [Notebook overview](notebooks/index.qmd)
-- [Linear regression + LASSO](notebooks/linear-regression-lasso.Rmd)
-- [Logistic regression + tree](notebooks/logistic-regression-gene-disease.Rmd)
+Each deck links back here from the **footer** if you get lost.
 :::
 
 ::: {.hub-card}
 ::: {.hub-pill}
-Planning
+Hands-on notebooks
 :::
-### Reusable material
+### Try the code yourself
 
-- [Curriculum outline](curriculum-outline.qmd) — schedule, goals, iteration ideas
-- [Module library](modules/index.qmd) — short reusable topic pages
-- Shared tidymodels template: `_includes/tidymodels-pipeline.qmd` (used in slides + Module 04)
+- **[Notebook home](notebooks/index.qmd)** — list of notebooks + setup in plain steps  
+- **[Linear models & LASSO](notebooks/linear-regression-lasso.Rmd)** — a small genetics-style example: shrinkage and “how much should the model listen to each gene?”  
+- **[Logistic & trees](notebooks/logistic-regression-gene-disease.Rmd)** — yes/no outcomes and a first classifier you can plot  
+
+Go as fast or slow as you like; the notebooks are for **you**, not for a grade on this site.
+:::
+
+::: {.hub-card}
+::: {.hub-pill}
+Outline & modules
+:::
+### If you want more structure
+
+- **[Curriculum outline](curriculum-outline.qmd)** — how the three days connect (also useful if you miss a session)  
+- **[Module library](modules/index.qmd)** — short pages you can skim before class or use as a refresher after  
+
+Your instructors may point you to extra readings or exercises; those live wherever the course announces them.
 :::
 :::
 
-## Course flow (three days)
+::: {.hub-week}
+## Your week at a glance
 
-The [curriculum outline](curriculum-outline.qmd) now **weaves in** one running dataset, decision costs and calibration, causal guardrails for explainability, data/model cards, reproducibility, fairness checks, and assessment prompts (including “what not to claim” from SHAP).
+::: {.hub-week-intro}
+Think of it as one story in three chapters: **see the pattern**, **keep your work honest**, then **choose and explain** models without pretending they’re magic. Curiosity beats perfection.
+:::
 
-- **Monday:** foundations, bias–variance, OLS, stepwise AIC, ridge/lasso, logistic intro, start the **data card**, light calibration intuition
-- **Tuesday:** Breiman’s “two cultures” + short causal caveat, trees, `tidymodels` workflows, reproducibility sprint, **model card** draft
-- **Thursday:** ensembles, imbalance & imputation, metrics from **costs**, calibration plots, SHAP with humility checks, **subgroup fairness**, deployment sketch, consolidation buffer
+- **Monday** — predictions, when a model is “too wiggly,” and friendly introductions to linear models, logistic regression, and a bit of regularization. You’ll practice describing **what the data actually contains**.  
+- **Tuesday** — decision trees and how we split the world into simple rules — plus habits that keep code readable when things get more complex.  
+- **Thursday** — stronger models, what to watch when outcomes aren’t balanced, and how to discuss **why** a model leaned one way — without claiming it “knows” biology or medicine by itself.
+:::
+
+::: {.callout-note collapse="true" appearance="simple"}
+## For instructors & TAs (technical)
+
+- **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.  
+- **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the running-dataset story, calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
+- **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
+- **Shared tidymodels include** — `_includes/tidymodels-pipeline.qmd` (slides + Module 04); link or excerpt in class as needed.
+:::

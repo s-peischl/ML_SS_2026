@@ -10,7 +10,7 @@ website:
   navbar:
     left:
       - href: index.qmd
-        text: Teaching Hub
+        text: Home
       - href: curriculum-outline.qmd
         text: Curriculum
       - href: slides/day-01-monday.qmd
@@ -32,7 +32,7 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme: zephyr
     toc: true
     css: assets/css/hub.css
 
