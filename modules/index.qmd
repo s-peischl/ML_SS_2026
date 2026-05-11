@@ -1,0 +1,14 @@
+---
+title: "Module Library"
+---
+
+# Reusable Teaching Modules
+
+Use these pages to stage topic snippets that can later be pulled into slides.
+
+- [Module 01: Foundations and Generalization](module-01-foundations.qmd)
+- [Module 02: Regularization](module-02-regularization.qmd)
+- [Module 03: Trees and Two Cultures](module-03-trees-and-cultures.qmd)
+- [Module 04: Tidymodels Pipeline](module-04-pipeline.qmd)
+- [Module 05: Advanced Models](module-05-advanced-models.qmd)
+- [Module 06: Metrics, Imbalance, and SHAP](module-06-evaluation-and-interpretability.qmd)

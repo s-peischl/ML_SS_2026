@@ -1,0 +1,12 @@
+---
+title: "Module 04: Tidymodels Pipeline"
+---
+
+- Learning objective: establish a reusable classification workflow in `tidymodels`.
+- Key message: recipe + model + workflow + tuning keeps experiments comparable.
+
+## Canonical code template
+
+Maintained once for the whole course:
+
+{{< include ../_includes/tidymodels-pipeline.qmd >}}

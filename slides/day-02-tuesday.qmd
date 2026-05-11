@@ -1,0 +1,90 @@
+---
+title: "Day 2 (Tuesday): Trees and Modern Pipelines"
+filters:
+  - shinylive
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: true
+    scrollable: true
+    slide-level: 2
+---
+
+## Learning objectives
+
+- Contrast statistical and algorithmic modeling cultures
+- Build intuition for decision trees
+- Use `tidymodels` as the core pipeline grammar
+
+## Navigation
+
+- [Teaching Hub](../index.qmd)
+- [Curriculum Outline](../curriculum-outline.qmd)
+- [Module Library](../modules/index.qmd)
+- [App Library](../apps/index.qmd)
+- [Back: Monday deck](day-01-monday.qmd)
+- [Next: Thursday deck](day-03-thursday.qmd)
+
+## Two cultures framing
+
+- Mathematical culture: interpretable parametric assumptions
+- Algorithmic culture: prediction-focused flexible learners
+- In practice, good workflows combine both perspectives
+
+## Why trees now?
+
+- Trees model nonlinear effects and interactions naturally
+- Easy to explain split logic to students
+- Great bridge from parametric models to ensembles
+
+## Decision tree mechanics
+
+- Recursive partitioning of feature space
+- Impurity criteria (Gini, entropy)
+- Stopping rules and pruning to control complexity
+
+## Demo: tree splitting intuition (Shinylive)
+
+```{shinylive-r}
+#| standalone: true
+library(shiny)
+ui <- fluidPage(
+  h4("Tree Split Demo"),
+  p("TODO: add slider-driven split visualizations.")
+)
+server <- function(input, output, session) {}
+shinyApp(ui, server)
+```
+
+## Pipeline mindset
+
+- Reproducibility and leakage prevention come first
+- Preprocessing is part of the model, not a side step
+- Evaluation design must be fixed before tuning
+
+## Tidymodels blueprint
+
+- `recipes`: preprocess, impute, encode, normalize
+- `parsnip`: model specification
+- `workflows`: combine recipe + model
+- `rsample` + `tune`: resampling and hyperparameter search
+
+## Reusable classification template
+
+- One recipe skeleton
+- One resampling object
+- Plug-in model specs (tree, forest, boosting, neural net)
+- Comparable metrics and tuning framework
+
+## Shared pipeline template (single source)
+
+The block below is included from `teaching-hub/_includes/tidymodels-pipeline.qmd` so you only maintain one copy.
+
+{{< include ../_includes/tidymodels-pipeline.qmd >}}
+
+## Transition to Thursday
+
+- Tuesday gives the pipeline backbone
+- Thursday swaps in stronger learners and richer evaluation
+- Exercises are handled separately

@@ -1,0 +1,64 @@
+---
+title: "Curriculum Outline"
+---
+
+# Three-Day Curriculum (Monday, Tuesday, Thursday)
+
+This outline mirrors your requested flow and keeps exercises separate.
+
+## Monday: Foundations and Regularization
+
+### Learning goals
+
+- Understand supervised learning setup for regression and classification
+- Use linear and logistic regression to frame overfitting vs underfitting
+- Learn why regularization is needed and when to use ridge vs lasso
+
+### Sequence
+
+1. Framing predictive modeling: data split, validation, and generalization
+2. Linear regression as baseline and bias-variance discussion
+3. Logistic regression for classification intuition
+4. Overfitting/underfitting diagnostics (learning curves, train vs validation)
+5. Regularization: ridge and lasso, shrinkage paths, feature selection
+6. Transition to algorithmic methods
+
+## Tuesday: Two Cultures, Trees, and Pipelines
+
+### Learning goals
+
+- Compare mathematical and algorithmic modeling mindsets
+- Build intuition for decision trees and their operating assumptions
+- Use a modern `tidymodels` pipeline that can be reused across models
+
+### Sequence
+
+1. Two cultures of statistics/data science
+2. Decision trees: splits, impurity, pruning, and interpretability
+3. Why workflows matter: preprocessing, modeling, tuning, validation
+4. `tidymodels` blueprint: recipes, parsnip, workflows, rsample, tune
+5. Reusable classification pipeline skeleton
+
+## Thursday: Advanced Models, Evaluation, and Explainability
+
+### Learning goals
+
+- Progress from trees to ensemble and neural approaches
+- Handle imbalanced and messy data robustly
+- Choose evaluation metrics based on practical objectives
+- Introduce model explainability and variable importance (including SHAP)
+
+### Sequence
+
+1. Model progression: random forests, XGBoost, neural networks
+2. Data quality topics: imputation and class imbalance handling
+3. Metrics: accuracy, precision, recall, F1, ROC-AUC, PR-AUC, calibration
+4. Metric-objective alignment: what to optimize and when
+5. Variable importance: model-specific and model-agnostic methods
+6. SHAP values: interpretation, strengths, and caveats
+
+## Delivery Notes
+
+- Exercises are run separately from this hub.
+- Each day has one dedicated revealjs deck and linked app demos.
+- The same pipeline grammar is reused from Tuesday onward.

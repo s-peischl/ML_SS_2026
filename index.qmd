@@ -1,0 +1,31 @@
+---
+title: "Teaching Hub"
+---
+
+# Machine Learning Summer School 2026
+
+This is the central hub for the 3-day machine learning block.
+
+## Course Flow
+
+- Monday: foundations, over/underfitting, regularization
+- Tuesday: two cultures, trees, and modern modeling pipelines
+- Thursday: advanced models, metrics, imbalance, and interpretability
+
+## Day-by-Day Slides
+
+- [Day 1 (Monday)](slides/day-01-monday.qmd)
+- [Day 2 (Tuesday)](slides/day-02-tuesday.qmd)
+- [Day 3 (Thursday)](slides/day-03-thursday.qmd)
+
+## Planning and Reusable Content
+
+- [Curriculum Outline](curriculum-outline.qmd)
+- [Module Library](modules/index.qmd)
+- [App Library](apps/index.qmd)
+- Shared `tidymodels` pipeline: `_includes/tidymodels-pipeline.qmd` (included in Tuesday and Thursday slides and in Module 04)
+
+## Notes
+
+- Exercises are intentionally handled outside this slide system.
+- Each deck includes semi-drafted content and app placeholders.

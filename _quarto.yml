@@ -1,0 +1,30 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Machine Learning Summer School 2026"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Teaching Hub
+      - href: curriculum-outline.qmd
+        text: Curriculum
+      - href: slides/day-01-monday.qmd
+        text: Monday
+      - href: slides/day-02-tuesday.qmd
+        text: Tuesday
+      - href: slides/day-03-thursday.qmd
+        text: Thursday
+      - href: modules/index.qmd
+        text: Modules
+      - href: apps/index.qmd
+        text: Apps
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+
+execute:
+  freeze: auto

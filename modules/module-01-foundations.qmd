@@ -1,0 +1,6 @@
+---
+title: "Module 01: Foundations and Generalization"
+---
+
+- Learning objective: establish supervised learning setup and error decomposition.
+- Key message: simple baselines anchor the rest of the course.

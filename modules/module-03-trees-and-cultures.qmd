@@ -1,0 +1,6 @@
+---
+title: "Module 03: Trees and Two Cultures"
+---
+
+- Learning objective: contrast model-driven and algorithm-driven viewpoints.
+- Key message: trees provide interpretable nonlinear decision boundaries.

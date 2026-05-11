@@ -1,0 +1,6 @@
+---
+title: "Module 02: Regularization"
+---
+
+- Learning objective: motivate ridge/lasso under multicollinearity and high variance.
+- Key message: regularization controls complexity and improves generalization.

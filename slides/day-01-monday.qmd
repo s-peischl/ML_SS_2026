@@ -1,0 +1,95 @@
+---
+title: "Day 1 (Monday): Foundations and Regularization"
+filters:
+  - shinylive
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: true
+    scrollable: true
+    slide-level: 2
+---
+
+## Learning objectives
+
+- Set up a predictive workflow for supervised learning
+- Diagnose underfitting and overfitting
+- Understand linear vs logistic regression roles
+- Introduce ridge and lasso as regularization tools
+
+## Navigation
+
+- [Teaching Hub](../index.qmd)
+- [Curriculum Outline](../curriculum-outline.qmd)
+- [Module Library](../modules/index.qmd)
+- [App Library](../apps/index.qmd)
+- [Next: Tuesday deck](day-02-tuesday.qmd)
+
+## Why start simple?
+
+- Simple models give transparent baselines
+- Baselines expose feature quality and data leakage risk
+- You need calibration before model complexity
+
+## Linear regression as baseline
+
+- Use as first supervised model to discuss fit quality
+- Frame the bias-variance tradeoff
+- Compare train vs validation error as complexity grows
+
+## Logistic regression for classification
+
+- Introduce probability modeling via log-odds
+- Connect decision threshold to false positive/false negative tradeoff
+- Discuss model assumptions and where they break
+
+## Overfitting vs underfitting
+
+- Underfitting: both train and validation errors high
+- Overfitting: train error low, validation error high
+- Good fit: balanced complexity and stable generalization
+
+## Practical diagnostics
+
+- Train/validation/test split as default
+- Cross-validation for robust performance estimates
+- Learning curves to detect data-limited regimes
+
+## Regularization motivation
+
+- Correlated predictors destabilize coefficient estimates
+- High-dimensional data increases variance
+- Regularization trades a bit of bias for lower variance
+
+## Ridge and lasso
+
+- Ridge: shrinks all coefficients, rarely to exact zero
+- Lasso: can set coefficients to zero (feature selection)
+- Choice depends on sparsity assumptions and interpretability needs
+
+## Course examples: visuals (LASSO / ridge + logistic)
+
+The next slides pull in live plots from the same simulations as your original `.Rmd` notebooks in `Examples/Day 1 - ...`.
+
+{{< include ../_includes/day01-lasso-ridge-logistic.qmd >}}
+
+## Demo: regularization paths (Shinylive)
+
+```{shinylive-r}
+#| standalone: true
+# Placeholder app. Replace with full implementation in apps/regularization_path_demo/app.R
+library(shiny)
+ui <- fluidPage(
+  h4("Regularization Path Demo"),
+  p("TODO: add ridge/lasso path exploration UI.")
+)
+server <- function(input, output, session) {}
+shinyApp(ui, server)
+```
+
+## End-of-day takeaway
+
+- Regression models are a conceptual launchpad for classification
+- Regularization is essential before moving to more flexible algorithms
+- Exercises are handled separately

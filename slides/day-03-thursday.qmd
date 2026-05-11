@@ -1,0 +1,110 @@
+---
+title: "Day 3 (Thursday): Advanced Models, Metrics, and Explainability"
+filters:
+  - shinylive
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: true
+    scrollable: true
+    slide-level: 2
+---
+
+## Learning objectives
+
+- Compare random forests, XGBoost, and neural networks
+- Handle imbalance and missingness in pipelines
+- Select metrics based on problem objectives
+- Introduce variable importance and SHAP intuition
+
+## Navigation
+
+- [Teaching Hub](../index.qmd)
+- [Curriculum Outline](../curriculum-outline.qmd)
+- [Module Library](../modules/index.qmd)
+- [App Library](../apps/index.qmd)
+- [Back: Tuesday deck](day-02-tuesday.qmd)
+
+## Model progression
+
+- Random forests: robust defaults, low tuning burden
+- XGBoost: strong tabular performance with careful tuning
+- Neural networks: flexible but data and tuning hungry
+
+## Data preparation at this stage
+
+- Missing data strategy should live in the recipe
+- Avoid test leakage when imputing
+- Keep transformations reproducible inside workflows
+
+## Same tidymodels template (swap model spec)
+
+Thursday uses the same pipeline file as Tuesday: change only `mod_spec` (and recipe steps) while keeping resampling and metrics comparable.
+
+{{< include ../_includes/tidymodels-pipeline.qmd >}}
+
+## Class imbalance
+
+- Accuracy can be misleading when classes are skewed
+- Use class weights, resampling, or threshold tuning
+- Evaluate with precision/recall-centric metrics when needed
+
+## Demo: class imbalance intuition (Shinylive)
+
+```{shinylive-r}
+#| standalone: true
+library(shiny)
+ui <- fluidPage(
+  h4("Class Imbalance Demo"),
+  p("TODO: add prevalence and threshold controls with confusion matrix output.")
+)
+server <- function(input, output, session) {}
+shinyApp(ui, server)
+```
+
+## Metrics toolbox
+
+- Accuracy: useful only with balanced classes and symmetric costs
+- Precision/recall/F1: useful when false positives and false negatives are asymmetric
+- ROC-AUC: ranking quality across thresholds
+- PR-AUC: better signal for rare positive class
+- Calibration: do probabilities match observed frequencies?
+
+## What to optimize and when
+
+- Screening: prioritize recall
+- Confirmatory test: prioritize precision
+- Ranking pipelines: monitor ROC-AUC plus calibration
+- Operational systems: include business or clinical cost context
+
+## Variable importance
+
+- Model-specific importance (e.g., split gain in trees)
+- Permutation importance as model-agnostic baseline
+- Correlated features can distort importance rankings
+
+## SHAP values
+
+- Local explanations: feature contribution per prediction
+- Global view: aggregate SHAP distributions
+- Caution: explanations are conditional on model and feature space
+
+## Demo: SHAP intuition (Shinylive)
+
+```{shinylive-r}
+#| standalone: true
+library(shiny)
+ui <- fluidPage(
+  h4("SHAP Intuition Demo"),
+  p("TODO: add toy feature contribution visualization.")
+)
+server <- function(input, output, session) {}
+shinyApp(ui, server)
+```
+
+## Final takeaway
+
+- Strong modeling requires both algorithm choice and evaluation design
+- Metrics and explainability must match the deployment objective
+- Exercises are handled separately

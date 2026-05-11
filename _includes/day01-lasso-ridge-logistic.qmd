@@ -1,0 +1,201 @@
+Visuals below follow the same simulations as the course notebooks:
+
+- [`Examples/Day 1 - Linear Regression/LinearRegressionLasso.Rmd`](../../Examples/Day%201%20-%20Linear%20Regression/LinearRegressionLasso.Rmd) (trait + LASSO / ridge with `glmnet`)
+- [`Examples/Day 1 - Logistic Regression/LogReg.Rmd`](../../Examples/Day%201%20-%20Logistic%20Regression/LogReg.Rmd) (disease + `ggpairs` + logistic boundary)
+
+```{r}
+#| label: day01-examples-libs
+#| include: false
+suppressPackageStartupMessages({
+  library(glmnet)
+  library(caret)
+  library(dplyr)
+  library(ggplot2)
+  library(GGally)
+  library(rlang)
+})
+theme_set(theme_classic())
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+```
+
+## Example: synthetic genes → continuous trait
+
+Same data-generating story as the linear / LASSO notebook: GeneA and GeneB drive the trait; correlated noise genes; GeneJ correlated with GeneA but not causal.
+
+```{r}
+#| label: day01-linear-sim-data
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 150
+p <- 10
+gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
+gene_data <- matrix(rnorm(n * p), nrow = n)
+colnames(gene_data) <- gene_names
+trait <- -0.5 * gene_data[, "GeneA"] + 0.8 * gene_data[, "GeneB"] + rnorm(n, sd = 0.3)
+gene_data[, "GeneC"] <- gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneD"] <- -0.3 * gene_data[, "GeneB"] + rnorm(n, sd = 0.2)
+for (i in 5:p) gene_data[, gene_names[i]] <- rnorm(n)
+gene_data[, "GeneF"] <- gene_data[, "GeneE"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneH"] <- -0.5 * gene_data[, "GeneG"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneJ"] <- 0.7 * gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+data_trait <- as.data.frame(cbind(gene_data, trait))
+```
+
+```{r}
+#| label: day01-correlation-heatmap
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 8
+correlation_matrix <- cor(data_trait)
+cor_data <- as.data.frame(as.table(correlation_matrix)) |>
+  dplyr::rename(variable1 = Var1, variable2 = Var2, correlation = Freq)
+ggplot(cor_data, aes(variable1, variable2, fill = correlation)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(
+    low = "dodgerblue", high = "firebrick4", mid = "white",
+    midpoint = 0, limit = c(-1, 1), name = "r"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(title = "Correlation among genes and trait")
+```
+
+```{r}
+#| label: day01-ggpairs-snippet
+#| echo: false
+#| fig-height: 5.5
+#| fig-width: 8
+ggpairs(
+  data_trait,
+  upper = list(continuous = wrap("cor", size = 2.2)),
+  aes(alpha = 0.15)
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Ridge vs Lasso: cross-validated error (`cv.glmnet`)
+
+Train/test split and scaling match the original notebook (`createDataPartition`, `preProcess`).
+
+```{r}
+#| label: day01-train-test-glmnet
+#| echo: false
+#| results: hide
+X <- as.matrix(dplyr::select(data_trait, -trait))
+y <- data_trait$trait
+trainIndex <- createDataPartition(y, p = 0.8, list = FALSE)
+X_train <- X[trainIndex, , drop = FALSE]
+y_train <- y[trainIndex]
+X_test <- X[-trainIndex, , drop = FALSE]
+y_test <- y[-trainIndex]
+preproc <- preProcess(X_train, method = c("center", "scale"))
+X_train_s <- predict(preproc, X_train)
+X_test_s <- predict(preproc, X_test)
+lam_seq <- 10^seq(-3, -0.1, length.out = 25)
+cv_ridge <- cv.glmnet(X_train_s, y_train, alpha = 0, lambda = lam_seq)
+cv_lasso <- cv.glmnet(X_train_s, y_train, alpha = 1, lambda = lam_seq)
+```
+
+```{r}
+#| label: day01-cv-plots
+#| echo: false
+#| fig-height: 4
+#| fig-width: 9
+oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), mgp = c(2, 0.7, 0))
+plot(cv_ridge, main = "Ridge (alpha = 0)")
+plot(cv_lasso, main = "Lasso (alpha = 1)")
+par(oldpar)
+```
+
+```{r}
+#| label: day01-coef-paths
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 9
+fit_ridge <- glmnet(X_train_s, y_train, alpha = 0, lambda = lam_seq)
+fit_lasso <- glmnet(X_train_s, y_train, alpha = 1, lambda = lam_seq)
+oldpar <- par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), mgp = c(2, 0.7, 0))
+plot(fit_ridge, xvar = "lambda", label = TRUE, main = "Ridge coefficients vs log(lambda)")
+plot(fit_lasso, xvar = "lambda", label = TRUE, main = "Lasso coefficients vs log(lambda)")
+par(oldpar)
+```
+
+## Example: gene expression → disease (logistic notebook)
+
+Same simulation as `LogReg.Rmd`: causal roles for Gene1, Gene3, Gene4 and an interaction term in the generative linear predictor.
+
+```{r}
+#| label: day01-logistic-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 200
+p <- 10
+gene_names <- paste0("Gene", 1:p)
+genes_data <- data.frame(matrix(rnorm(n * p), nrow = n))
+colnames(genes_data) <- gene_names
+disease_presence <- ifelse(
+  0.5 * genes_data$Gene1 + 0.8 * genes_data$Gene3 - 0.3 * genes_data$Gene4 -
+    genes_data$Gene1 * genes_data$Gene3 * 2 + rnorm(n, sd = 0.5) > 0,
+  1, 0
+)
+disease_presence <- factor(disease_presence, levels = c(0, 1), labels = c("Absent", "Present"))
+bio_data <- data.frame(genes_data, disease_presence)
+logistic_model <- glm(disease_presence ~ ., data = bio_data, family = binomial())
+```
+
+```{r}
+#| label: day01-ggpairs-logistic
+#| echo: false
+#| fig-height: 5.2
+#| fig-width: 8
+ggpairs(bio_data, columns = 1:5, aes(color = disease_presence)) +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-logistic-boundary
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 7
+plot_decision_boundary_logistic <- function(model, data, feature1, feature2) {
+  r1 <- range(data[[feature1]])
+  r2 <- range(data[[feature2]])
+  grid <- expand.grid(
+    seq(r1[1] - 1, r1[2] + 1, length.out = 160),
+    seq(r2[1] - 1, r2[2] + 1, length.out = 160)
+  )
+  names(grid) <- c(feature1, feature2)
+  for (feat in setdiff(names(data), c(feature1, feature2, "disease_presence"))) {
+    grid[[feat]] <- mean(data[[feat]])
+  }
+  grid$response_prob <- predict(model, newdata = grid, type = "response")
+  grid$response_cls <- factor(
+    ifelse(grid$response_prob > 0.5, "Present", "Absent"),
+    levels = c("Absent", "Present")
+  )
+  ggplot(data, aes(!!sym(feature1), !!sym(feature2))) +
+    geom_tile(
+      data = grid,
+      aes(!!sym(feature1), !!sym(feature2), fill = response_cls),
+      alpha = 0.28,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(fill = disease_presence), shape = 21, color = "black", size = 2.5) +
+    scale_fill_manual(values = c(Absent = "turquoise", Present = "magenta")) +
+    theme_minimal() +
+    labs(
+      title = "Logistic boundary (Gene1 vs Gene3; other genes at mean)",
+      x = feature1, y = feature2, fill = "Class"
+    )
+}
+print(plot_decision_boundary_logistic(logistic_model, bio_data, "Gene1", "Gene3"))
+```

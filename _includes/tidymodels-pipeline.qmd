@@ -1,0 +1,56 @@
+```{r}
+#| eval: false
+#| echo: true
+# Shared classification pipeline skeleton — edit this file only; include from slides/modules.
+
+suppressPackageStartupMessages(library(tidymodels))
+
+# --- Example data (replace with yours) --------------------------------------
+iris_cls <- iris |>
+  dplyr::mutate(
+    y = factor(dplyr::if_else(Species == "virginica", "vir", "other"))
+  ) |>
+  dplyr::select(-Species)
+
+# --- Recipe: preprocessing lives here (impute, encode, etc.) ----------------
+rec <- recipe(y ~ ., data = iris_cls) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+# --- Model spec: swap engine for rand_forest, xgboost, mlp, etc. ------------
+mod_spec <- decision_tree(
+  tree_depth = tune(),
+  min_n = tune()
+) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+# --- Workflow ---------------------------------------------------------------
+wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(mod_spec)
+
+# --- Resampling & metrics ---------------------------------------------------
+folds <- vfold_cv(iris_cls, v = 5)
+metrics <- metric_set(roc_auc, accuracy, sens, spec)
+
+tune_res <- tune_grid(
+  wf,
+  resamples = folds,
+  grid = grid_regular(tree_depth(range = c(2, 6)), min_n(range = c(2, 20)), levels = 3),
+  metrics = metrics
+)
+
+# --- Finalize & fit on full training data -----------------------------------
+best <- select_best(tune_res, metric = "roc_auc")
+final_wf <- finalize_workflow(wf, best)
+final_fit <- fit(final_wf, data = iris_cls)
+
+# --- Optional: last_fit with a held-out split for honest performance ---------
+# data_split <- initial_split(iris_cls, prop = 0.8, strata = y)
+# train <- training(data_split)
+# test  <- testing(data_split)
+# last_fit(final_wf, split = data_split)  # after finalize_workflow(...)
+```
+
+Edit only `teaching-hub/_includes/tidymodels-pipeline.qmd`; slide decks pull it in via Quarto `include`.

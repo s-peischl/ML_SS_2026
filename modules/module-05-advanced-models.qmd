@@ -1,0 +1,6 @@
+---
+title: "Module 05: Advanced Models"
+---
+
+- Learning objective: compare random forests, boosting, and neural networks.
+- Key message: greater model capacity needs stronger validation discipline.

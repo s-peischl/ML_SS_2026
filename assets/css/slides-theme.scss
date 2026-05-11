@@ -1,0 +1,26 @@
+/*-- scss:rules --*/
+
+/* Shared revealjs theme tweaks for all day decks */
+
+.reveal {
+  font-size: 33px;
+}
+
+.reveal h1,
+.reveal h2,
+.reveal h3 {
+  color: #163d73;
+}
+
+.reveal .slides section {
+  text-align: left;
+}
+
+.reveal pre code {
+  font-size: 0.74em;
+  line-height: 1.28;
+}
+
+.reveal .slide-number {
+  color: #163d73;
+}
