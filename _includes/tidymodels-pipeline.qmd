@@ -1,51 +1,102 @@
+## Shared pipeline — libraries & example data
+
 ```{r}
-#| eval: false
+#| label: tm-lib-data
 #| echo: true
-# Shared classification pipeline skeleton — edit this file only; include from slides/modules.
+#| message: false
+#| warning: false
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(vip)
+  library(rpart.plot)
+})
 
-suppressPackageStartupMessages(library(tidymodels))
-
-# --- Example data (replace with yours) --------------------------------------
 iris_cls <- iris |>
   dplyr::mutate(
     y = factor(dplyr::if_else(Species == "virginica", "vir", "other"))
   ) |>
   dplyr::select(-Species)
+```
 
-# --- Recipe: preprocessing lives here (impute, encode, etc.) ----------------
+Binary outcome **`y`**: `"vir"` vs `"other"`. Replace `iris_cls` with your own tibble; keep **`y` as a factor** for classification metrics.
+
+## Shared pipeline — recipe
+
+```{r}
+#| label: tm-recipe
+#| echo: true
 rec <- recipe(y ~ ., data = iris_cls) |>
   step_zv(all_predictors()) |>
   step_normalize(all_numeric_predictors())
+```
 
-# --- Model spec: swap engine for rand_forest, xgboost, mlp, etc. ------------
+Preprocessing lives in the **recipe** (impute, encode, normalize, …). Resampling will fit this recipe **inside each fold** so nothing leaks from “future” rows.
+
+## Shared pipeline — model spec
+
+```{r}
+#| label: tm-spec
+#| echo: true
 mod_spec <- decision_tree(
   tree_depth = tune(),
   min_n = tune()
 ) |>
   set_engine("rpart") |>
   set_mode("classification")
+```
 
-# --- Workflow ---------------------------------------------------------------
+Swap **`mod_spec`** (and `set_engine`) for `rand_forest`, `boost_tree` + `xgboost`, `mlp`, etc.; keep the same workflow + resampling when you want **fair** comparisons.
+
+## Shared pipeline — workflow
+
+```{r}
+#| label: tm-workflow
+#| echo: true
 wf <- workflow() |>
   add_recipe(rec) |>
   add_model(mod_spec)
+```
 
-# --- Resampling & metrics ---------------------------------------------------
+One **`workflow()`** object = recipe + model, tuned and fitted as a **single** unit.
+
+## Shared pipeline — resampling, metrics & tuning
+
+```{r}
+#| label: tm-tune
+#| echo: true
 folds <- vfold_cv(iris_cls, v = 5)
 metrics <- metric_set(roc_auc, accuracy, sens, spec)
 
 tune_res <- tune_grid(
   wf,
   resamples = folds,
-  grid = grid_regular(tree_depth(range = c(2, 6)), min_n(range = c(2, 20)), levels = 3),
+  grid = grid_regular(
+    tree_depth(range = c(2, 6)),
+    min_n(range = c(2, 20)),
+    levels = 3
+  ),
   metrics = metrics
 )
+```
 
-# --- Finalize & fit on full training data -----------------------------------
+**`metric_set`** fixes the scorecard before you peek at held-out data. **`tune_grid`** fits the workflow on each analysis set and evaluates on assessment folds.
+
+## Shared pipeline — finalize & fit on all rows
+
+```{r}
+#| label: tm-final
+#| echo: true
 best <- select_best(tune_res, metric = "roc_auc")
 final_wf <- finalize_workflow(wf, best)
 final_fit <- fit(final_wf, data = iris_cls)
+```
 
+In a real project you would **`fit(final_wf, data = training(split))`** after choosing hyperparameters using **training data only**, then assess once on **`testing(split)`**. Here we fit on all of `iris_cls` for a compact teaching demo.
+
+```{r}
+#| label: tm-optional-split
+#| echo: true
+#| eval: false
 # --- Optional: last_fit with a held-out split for honest performance ---------
 # data_split <- initial_split(iris_cls, prop = 0.8, strata = y)
 # train <- training(data_split)
@@ -53,4 +104,79 @@ final_fit <- fit(final_wf, data = iris_cls)
 # last_fit(final_wf, split = data_split)  # after finalize_workflow(...)
 ```
 
-Edit only `teaching-hub/_includes/tidymodels-pipeline.qmd`; slide decks pull it in via Quarto `include`.
+## Figure — hyperparameter tuning
+
+```{r}
+#| label: tm-fig-autoplot
+#| echo: true
+#| fig-width: 10
+#| fig-height: 5.2
+tune_res |>
+  autoplot() +
+  theme_minimal() +
+  labs(
+    title = "Hyperparameter tuning",
+    subtitle = "ROC AUC, accuracy, sensitivity, specificity across tree depth and min_n"
+  )
+```
+
+Use **`autoplot()`** on `tune_res` to see how metrics move with the grid; follow up with **`collect_metrics()`** for tables.
+
+## Figure — variable importance (model-based)
+
+```{r}
+#| label: tm-fig-vip
+#| echo: true
+#| fig-width: 9
+#| fig-height: 5
+final_fit |>
+  extract_fit_parsnip() |>
+  vip(geom = "point", aesthetics = list(color = "midnightblue", size = 3)) +
+  theme_minimal() +
+  labs(
+    title = "Feature importance",
+    subtitle = "Which predictors matter most for this fitted tree?"
+  )
+```
+
+**`vip`** summarizes how much this fitted learner leaned on each input; interpretation still depends on **correlation**, **measurement error**, and **causal** claims you do *not* make from importance alone.
+
+## Figure — fitted tree structure
+
+```{r}
+#| label: tm-fig-rpart
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+final_fit |>
+  extract_fit_engine() |>
+  rpart.plot(
+    roundint = FALSE,
+    type = 4,
+    extra = 104,
+    box.palette = "RdBu",
+    main = "Final decision tree (rpart engine)"
+  )
+```
+
+Connect this picture back to **partitioning** intuition from lecture: each box is a region of predictor space after sequential splits.
+
+## Figure — ROC curve (in-sample look)
+
+```{r}
+#| label: tm-fig-roc
+#| echo: true
+#| fig-width: 8
+#| fig-height: 5
+augment(final_fit, new_data = iris_cls) |>
+  roc_curve(truth = y, .pred_vir, event_level = "second") |>
+  autoplot() +
+  labs(
+    title = "ROC curve",
+    subtitle = "Using fitted model on same data as fit — for teaching only; report test/validation in practice"
+  )
+```
+
+Probability column **`.pred_vir`** with **`event_level = "second"`** matches factor `y` with levels `other`, `vir`. For honest performance, evaluate on **`testing(split)`** or use **`last_fit()`**.
+
+*Edit only `teaching-hub/_includes/tidymodels-pipeline.qmd`; slide decks and Module 04 pull it in with Quarto `include`.*

@@ -7,6 +7,6 @@ title: "Module 04: Tidymodels Pipeline"
 
 ## Canonical code template
 
-Maintained once for the whole course:
+Maintained once for the whole course. Headings match the **Tuesday** slide walk-through (data → recipe → spec → workflow → tuning → finalize → four figures).
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}

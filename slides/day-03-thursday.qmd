@@ -37,9 +37,9 @@ format:
 
 ## Same tidymodels template (swap model spec)
 
-Thursday uses the same pipeline file as Tuesday: change only `mod_spec` (and recipe steps) while keeping resampling and metrics comparable.
+Thursday uses the **same** `_includes/tidymodels-pipeline.qmd` as Tuesday: keep **`folds`**, **`metric_set(...)`**, and the **`tune_grid` → `select_best` → `finalize_workflow` → `fit`** rhythm fixed; change **`mod_spec`** (e.g. `rand_forest` + `ranger`, `boost_tree` + `xgboost`, `mlp` + `nnet`) and any **recipe** steps (missingness, imbalance, feature engineering).
 
-{{< include ../_includes/tidymodels-pipeline.qmd >}}
+- **Step-by-step code + figures** (tuning plot, `vip`, `rpart.plot`, ROC): see **Tuesday** slides *Shared pipeline template* and [Module 04: Tidymodels Pipeline](../modules/module-04-pipeline.qmd).
 
 ## Class imbalance
 

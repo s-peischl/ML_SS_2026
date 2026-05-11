@@ -108,7 +108,7 @@ format:
 
 ## Shared pipeline template (single source)
 
-The block below is included from `teaching-hub/_includes/tidymodels-pipeline.qmd` so you only maintain one copy.
+The **next slides** are included from `_includes/tidymodels-pipeline.qmd`: code blocks build the workflow in order, then **four figures** walk through tuning results, importance, the fitted tree, and an ROC curve (in-sample for teaching — stress proper validation in class).
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
 
