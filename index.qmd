@@ -6,7 +6,7 @@ title: "Teaching Hub"
 # Machine Learning Summer School 2026
 
 ::: {.hub-lead}
-Central place for **slides**, **student notebooks**, **module notes**, and **interactive demos** (Shinylive stubs you can extend). Exercises stay outside this site.
+Central place for **slides**, **student notebooks**, and **module notes**. Open the site with **`quarto preview`** from this folder so all links resolve; or open files under `_site/` after `quarto render`. Exercises stay outside this site.
 :::
 :::
 
@@ -43,7 +43,6 @@ Planning
 
 - [Curriculum outline](curriculum-outline.qmd) — schedule, goals, iteration ideas
 - [Module library](modules/index.qmd) — short reusable topic pages
-- [App library](apps/index.qmd) — Shinylive / Shiny placeholders
 - Shared tidymodels template: `_includes/tidymodels-pipeline.qmd` (used in slides + Module 04)
 :::
 :::

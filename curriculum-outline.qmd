@@ -81,7 +81,7 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 ## Delivery Notes
 
 - Exercises are run separately from this hub but should **reference the canonical dataset** and reuse the **data/model card** templates.
-- Each day has one dedicated revealjs deck and linked app demos; **Shinylive** stubs should eventually reflect thresholds, imbalance, and SHAP toy cases tied to that dataset story.
+- Each day has one dedicated revealjs deck; optional live R snippets or board work replace separate app demos.
 - The same `tidymodels` pipeline grammar is reused from Tuesday onward; Thursday swaps engines and evaluation emphasis, not project structure.
 - Student **`.Rmd`** notebooks live under `notebooks/` and align with Monday’s linear/logistic narrative; extend them in exercises to point at the same canonical data export if possible.
 

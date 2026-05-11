@@ -21,7 +21,6 @@ format:
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
 - [Module Library](../modules/index.qmd)
-- [App Library](../apps/index.qmd)
 - [Next: Tuesday deck](day-02-tuesday.qmd)
 
 ## Why start simple?
@@ -105,17 +104,9 @@ The next slides pull in live plots from the same simulations as your original `.
 - Logistic + tree + boundaries: [notebooks/logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 - Overview: [notebooks/index.qmd](../notebooks/index.qmd)
 
-## Demo: regularization paths (interactive)
+## Demo: regularization paths (live or board)
 
-::: {.callout-note}
-## App placeholder (CI-friendly)
-Embedded **Shinylive** blocks were removed so GitHub Actions finishes in minutes instead of downloading large web runtimes on every push.
-
-- Stub app source: `apps/regularization_path_demo/app.R`
-- App index: [App Library](../apps/index.qmd)
-
-To embed Shinylive again locally, re-add `filters: [shinylive]` to this file’s YAML and a `` `{shinylive-r}` `` chunk (see Quarto Shinylive docs).
-:::
+- Optional in-class demo: sketch how ridge vs lasso shrink coefficients as penalty increases (whiteboard or one short live `glmnet` plot in the student notebook).
 
 ## End-of-day checklist (before you leave the room)
 

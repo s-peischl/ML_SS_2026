@@ -21,7 +21,6 @@ format:
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
 - [Module Library](../modules/index.qmd)
-- [App Library](../apps/index.qmd)
 - [Back: Tuesday deck](day-02-tuesday.qmd)
 
 ## Model progression
@@ -48,11 +47,9 @@ Thursday uses the same pipeline file as Tuesday: change only `mod_spec` (and rec
 - Use class weights, resampling, or threshold tuning
 - Evaluate with precision/recall-centric metrics when needed
 
-## Demo: class imbalance intuition (interactive)
+## Demo: class imbalance intuition
 
-::: {.callout-note}
-Stub: `apps/class_imbalance_demo/app.R` — [App Library](../apps/index.qmd).
-:::
+- Optional: show one confusion matrix at two prevalence levels (board or a quick R snippet in exercises).
 
 ## Metrics toolbox
 
@@ -125,11 +122,9 @@ Stub: `apps/class_imbalance_demo/app.R` — [App Library](../apps/index.qmd).
 - Watch for **large accuracy gaps** driven by prevalence differences rather than meaningful model quality.
 - Pair with curriculum idea: separate half-day on causal vs associational claims before students ship SHAP plots to stakeholders.
 
-## Demo: SHAP intuition (interactive)
+## Demo: SHAP intuition
 
-::: {.callout-note}
-Stub: `apps/shap_intuition_demo/app.R` — [App Library](../apps/index.qmd).
-:::
+- Optional: one hand-drawn “waterfall” of signed contributions for a toy two-feature model in class.
 
 ## Final takeaway
 

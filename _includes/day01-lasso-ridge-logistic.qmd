@@ -1,7 +1,7 @@
-Visuals below follow the same simulations as the course notebooks:
+Visuals below follow the same simulations as the **student notebooks** in this repo:
 
-- [`Examples/Day 1 - Linear Regression/LinearRegressionLasso.Rmd`](../../Examples/Day%201%20-%20Linear%20Regression/LinearRegressionLasso.Rmd) (trait + LASSO / ridge with `glmnet`)
-- [`Examples/Day 1 - Logistic Regression/LogReg.Rmd`](../../Examples/Day%201%20-%20Logistic%20Regression/LogReg.Rmd) (disease + `ggpairs` + logistic boundary)
+- [Linear regression + LASSO](../notebooks/linear-regression-lasso.Rmd)
+- [Logistic regression + tree](../notebooks/logistic-regression-gene-disease.Rmd)
 
 ```{r}
 #| label: day01-examples-libs

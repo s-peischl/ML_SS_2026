@@ -20,7 +20,6 @@ format:
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
 - [Module Library](../modules/index.qmd)
-- [App Library](../apps/index.qmd)
 - [Back: Monday deck](day-01-monday.qmd)
 - [Next: Thursday deck](day-03-thursday.qmd)
 
@@ -42,11 +41,9 @@ format:
 - Impurity criteria (Gini, entropy)
 - Stopping rules and pruning to control complexity
 
-## Demo: tree splitting intuition (interactive)
+## Demo: tree splitting intuition
 
-::: {.callout-note}
-Stub: `apps/tree_split_demo/app.R` — list of demos: [App Library](../apps/index.qmd). Shinylive embedding is disabled in these decks for fast CI; use `quarto preview` locally if you re-enable the Shinylive filter.
-:::
+- Optional: draw one 2D partition by hand or use a single `rpart` plot in the console; full coding practice belongs in exercises.
 
 ## Pipeline mindset
 
