@@ -4,75 +4,89 @@ title: "Curriculum Outline"
 
 # Three-Day Curriculum (Monday, Tuesday, Thursday)
 
-This outline mirrors your requested flow and keeps exercises separate.
+This outline keeps **exercises outside the hub** while integrating cross-cutting ideas: a **single running dataset**, **decision costs and calibration**, **causal guardrails**, **documentation (data/model cards)**, **reproducibility**, **fairness**, and **assessment that resists over-claiming** (especially around SHAP).
+
+## Integrated design principles (built into the week)
+
+- **One canonical dataset** — reuse the same variables from Monday (tabular, messy enough) through Thursday so learners see OLS → trees → boosting → metrics → SHAP on *one* story, not disconnected toys.
+- **Decision costs before metric zoo** — introduce thresholds, prevalence, and misclassification costs early; return to them on Thursday so ROC/PR/F1 choices feel motivated, not arbitrary.
+- **Association ≠ intervention** — embed a short “causal guardrails” beat when introducing importance and SHAP so plots are not read as policy levers by default.
+- **Data cards + model cards** — start a one-page **data card** Monday (provenance, leakage risks, subgroup fields); finish a **model card** Thursday (intended use, metrics, limits, monitoring).
+- **Reproducibility spine** — Tuesday includes a concrete folder layout + “one command rebuilds figures” goal (`quarto` project, optional `renv`/`conda` lockfile for a reproducibility sprint homework).
+- **Fairness as a metric choice** — Thursday explicitly compares overall vs subgroup metrics on the canonical dataset when a sensitive attribute exists (or simulate site/batch as a stand-in).
+- **Assessment that teaches humility** — include a **short oral or written prompt**: “What would you *not* claim from this SHAP summary?” graded with a published mini-rubric (correctness, diagnostics, communication).
 
 ## Monday: Foundations and Regularization
 
 ### Learning goals
 
-- Understand supervised learning setup for regression and classification
+- Understand supervised learning setup for regression and classification on the **canonical dataset**
 - Use linear and logistic regression to frame overfitting vs underfitting
 - Learn why regularization is needed and when to use ridge vs lasso
+- Draft a **data card** (sources, leakage, subgroups) and connect it to train/validation design
 
 ### Sequence
 
-1. Framing predictive modeling: data split, validation, and generalization
-2. Linear regression as baseline and bias-variance discussion
-3. Logistic regression for classification intuition
-4. Overfitting/underfitting diagnostics (learning curves, train vs validation)
-5. Regularization: ridge and lasso, shrinkage paths, feature selection
-6. Transition to algorithmic methods
+1. Framing predictive modeling: data split, validation, and generalization (**tie each choice to the data card**)
+2. Linear regression as baseline and bias–variance discussion (same genes/trait story as notebooks)
+3. Logistic regression for classification intuition (same patient/scientific framing as Thursday metrics)
+4. Overfitting/underfitting diagnostics (learning curves; train vs validation) on the canonical split
+5. Regularization: ridge and lasso, shrinkage paths, feature selection; **preview elastic net** as the “unsure” default
+6. **Calibration intuition (light)** — reliability of predicted probabilities even within linear models; sets up Thursday without heavy math
+7. Transition to algorithmic methods + assign **reproducibility mini-task** (directory + render script)
 
 ## Tuesday: Two Cultures, Trees, and Pipelines
 
 ### Learning goals
 
-- Compare mathematical and algorithmic modeling mindsets
+- Compare mathematical and algorithmic modeling mindsets (**explicit “prediction vs explanation for intervention”** caveat)
 - Build intuition for decision trees and their operating assumptions
-- Use a modern `tidymodels` pipeline that can be reused across models
+- Use a modern `tidymodels` pipeline that can be reused across models on the **canonical dataset**
+- Establish **reproducible project layout** and optional `renv`/environment pinning policy
 
 ### Sequence
 
-1. Two cultures of statistics/data science
-2. Decision trees: splits, impurity, pruning, and interpretability
-3. Why workflows matter: preprocessing, modeling, tuning, validation
+1. Two cultures of statistics/data science + **5-minute causal guardrail** (when SHAP later is descriptive, not causal)
+2. Decision trees: splits, impurity, pruning, interpretability; connect splits to subgroup structure in the data card
+3. Why workflows matter: preprocessing, modeling, tuning, validation (**leakage checklist tied to data card fields**)
 4. `tidymodels` blueprint: recipes, parsnip, workflows, rsample, tune
-5. Reusable classification pipeline skeleton
+5. Reusable classification pipeline skeleton **frozen to the canonical outcome definition**
+6. **Reproducibility sprint (lab)** — one-button `quarto render` / `targets::tar_make()` sketch; what must be in version control vs ignored artifacts
+7. **Model card draft** — students sketch intended use, metrics to monitor, and known failure modes before ensembles
 
 ## Thursday: Advanced Models, Evaluation, and Explainability
 
 ### Learning goals
 
-- Progress from trees to ensemble and neural approaches
-- Handle imbalanced and messy data robustly
-- Choose evaluation metrics based on practical objectives
-- Introduce model explainability and variable importance (including SHAP)
+- Progress from trees to ensemble and neural approaches **on the same canonical dataset**
+- Handle imbalanced and messy data robustly inside workflows
+- Choose evaluation metrics from **decision costs** and prevalence (not accuracy by default)
+- Introduce model explainability and variable importance (including SHAP) with **explicit non-causal limits**
+- **Fairness / subgroup checks** where ethically appropriate (or batch/site as proxy)
+- Complete the **model card** and articulate deployment vs research-only use
 
 ### Sequence
 
-1. Model progression: random forests, XGBoost, neural networks
-2. Data quality topics: imputation and class imbalance handling
-3. Metrics: accuracy, precision, recall, F1, ROC-AUC, PR-AUC, calibration
-4. Metric-objective alignment: what to optimize and when
-5. Variable importance: model-specific and model-agnostic methods
-6. SHAP values: interpretation, strengths, and caveats
+1. Model progression: random forests, XGBoost, neural networks (same recipe + resampling object as Tuesday)
+2. Data quality topics: imputation and class imbalance handling **cross-checked with the data card**
+3. **Decision theory refresher** — costs, thresholds, prior odds sketch; then metrics: accuracy, precision/recall/F1, ROC-AUC, PR-AUC
+4. **Calibration** — reliability curves / expected calibration error; when metrics on probabilities are trustworthy
+5. Metric–objective alignment: what to optimize and when (screening vs confirmatory vs ranking products)
+6. Variable importance: model-specific and model-agnostic methods; **permutation importance with correlated-feature warning**
+7. SHAP values: interpretation, TreeSHAP vs KernelSHAP, dependence plots; **paired oral/written “what not to claim” assessment**
+8. **Fairness / subgroup metrics** — compare overall vs subgroup performance; discuss parity-style metrics only with context
+9. **Deployment vignette (guest or async)** — batch scoring API / Plumber / Connect sketch so pipelines do not end at `fit()`
+10. **Consolidation buffer** — recap quiz + one capstone question using the canonical dataset end-to-end
 
 ## Delivery Notes
 
-- Exercises are run separately from this hub.
-- Each day has one dedicated revealjs deck and linked app demos.
-- The same pipeline grammar is reused from Tuesday onward.
-- Student **`.Rmd`** notebooks live under `notebooks/` and are linked from the hub navbar.
+- Exercises are run separately from this hub but should **reference the canonical dataset** and reuse the **data/model card** templates.
+- Each day has one dedicated revealjs deck and linked app demos; **Shinylive** stubs should eventually reflect thresholds, imbalance, and SHAP toy cases tied to that dataset story.
+- The same `tidymodels` pipeline grammar is reused from Tuesday onward; Thursday swaps engines and evaluation emphasis, not project structure.
+- Student **`.Rmd`** notebooks live under `notebooks/` and align with Monday’s linear/logistic narrative; extend them in exercises to point at the same canonical data export if possible.
 
-## Ideas to strengthen the curriculum
+## Optional extensions (only if time remains)
 
-These are optional upgrades you can phase in over editions of the school.
-
-1. **Explicit probability and decision theory half-day** — prior odds, likelihood ratios, and cost-sensitive thresholds before metrics overload on Thursday.
-2. **Causal framing as guardrails** — one short module on “association vs intervention” so SHAP and importance are not over-interpreted.
-3. **Data cards + model cards** — lightweight templates students fill for each dataset and each final model (provenance, known biases, intended use).
-4. **Reproducibility sprint** — `renv` or `conda` lockfile, directory layout, and a single `targets` or `quarto` report that rebuilds all figures.
-5. **Ethics / fairness block** — demographic parity vs equalized odds on a toy dataset; pairs well with imbalance and metric choice.
-6. **Guest “deployment” vignette** — API batch scoring or Plumber/Posit Connect sketch so “pipeline” does not end at `fit()`.
-7. **Sparse day for consolidation** — buffer half-day with recap quizzes and one capstone analysis so advanced topics are not rushed.
-8. **Versioned assessments** — publish rubrics for notebook grading (correctness, clarity, diagnostics) to align TAs across years.
+- Deeper **causal** half-day (DAGs, backdoor adjustment) as a parallel track for quantitatively mature audiences.
+- **Guest deployment** expanded into a full lab with authentication and logging.
+- **Versioned TA grading rubrics** published to students day-one for every notebook hand-in.

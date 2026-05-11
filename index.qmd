@@ -50,6 +50,8 @@ Planning
 
 ## Course flow (three days)
 
-- **Monday:** foundations, bias–variance, OLS, stepwise AIC, ridge/lasso, logistic intro
-- **Tuesday:** Breiman’s “two cultures”, decision trees, `tidymodels` grammar and workflows
-- **Thursday:** random forest, boosting, neural nets, imbalance & imputation, metrics, SHAP & friends
+The [curriculum outline](curriculum-outline.qmd) now **weaves in** one running dataset, decision costs and calibration, causal guardrails for explainability, data/model cards, reproducibility, fairness checks, and assessment prompts (including “what not to claim” from SHAP).
+
+- **Monday:** foundations, bias–variance, OLS, stepwise AIC, ridge/lasso, logistic intro, start the **data card**, light calibration intuition
+- **Tuesday:** Breiman’s “two cultures” + short causal caveat, trees, `tidymodels` workflows, reproducibility sprint, **model card** draft
+- **Thursday:** ensembles, imbalance & imputation, metrics from **costs**, calibration plots, SHAP with humility checks, **subgroup fairness**, deployment sketch, consolidation buffer
