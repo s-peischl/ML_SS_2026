@@ -1,7 +1,10 @@
-Visuals below follow the same simulations as the **student notebooks** in this repo:
+Visuals below follow the **student notebooks** in this repo — **synthetic genes** (known ground truth) plus a short **Palmer Penguins** teaser (full penguin notebooks linked).
 
-- [Linear regression + LASSO](../notebooks/linear-regression-lasso.Rmd)
-- [Logistic regression + tree](../notebooks/logistic-regression-gene-disease.Rmd)
+- [Dataset: Palmer Penguins](../dataset-penguins.qmd)
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
+- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)
+- [Penguins — body mass](../notebooks/penguins-body-mass.Rmd)
+- [Penguins — classification](../notebooks/penguins-classification.Rmd)
 
 ```{r}
 #| label: day01-examples-libs
@@ -14,6 +17,8 @@ suppressPackageStartupMessages({
   library(GGally)
   library(rlang)
   library(MASS)
+  library(palmerpenguins)
+  library(tidyr)
 })
 theme_set(theme_classic())
 knitr::opts_chunk$set(
@@ -337,4 +342,56 @@ plot_decision_boundary_logistic <- function(model, data, feature1, feature2) {
     )
 }
 print(plot_decision_boundary_logistic(logistic_model, bio_data, "Gene1", "Gene3"))
+```
+
+## Example: Palmer Penguins (real measurements)
+
+Short **teaser** only — the full regression and classification workflows are in the dedicated notebooks:
+
+- [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd) (EDA + ridge/LASSO on `body_mass_g`)
+- [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (Adelie vs Gentoo, logistic + tree)
+
+```{r}
+#| label: day01-peng-prep
+#| echo: false
+#| results: hide
+pg_teaser <- palmerpenguins::penguins |>
+  tidyr::drop_na(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, species)
+```
+
+```{r}
+#| label: day01-peng-corr
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 7.5
+pg_num <- dplyr::select(pg_teaser, bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g)
+cor_m <- cor(pg_num)
+cor_df <- as.data.frame(as.table(cor_m)) |>
+  dplyr::rename(v1 = Var1, v2 = Var2, r = Freq)
+ggplot(cor_df, aes(v1, v2, fill = r)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(
+    low = "steelblue", mid = "white", high = "firebrick",
+    midpoint = 0, limits = c(-1, 1), name = "r"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(
+    title = "Palmer Penguins — correlation among measurements",
+    subtitle = "Same dataset as Tuesday tidymodels pipeline and the penguin notebooks"
+  )
+```
+
+```{r}
+#| label: day01-peng-ggpairs
+#| echo: false
+#| fig-height: 5
+#| fig-width: 7.5
+GGally::ggpairs(
+  pg_num,
+  upper = list(continuous = wrap("cor", size = 2.2)),
+  aes(color = pg_teaser$species, alpha = 0.2)
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```

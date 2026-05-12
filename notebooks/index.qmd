@@ -2,20 +2,26 @@
 title: "Student notebooks"
 ---
 
-Run these documents in **RStudio** or **Positron** (or render with Quarto). They are the same worked examples used on Day 1 slides.
+Run these documents in **RStudio** or **Positron** (or render with Quarto). The site uses **two parallel tracks**: synthetic **genes** (ground truth for teaching) and **Palmer Penguins** (one real dataset all week). See the **[Palmer Penguins data page](../dataset-penguins.qmd)** for context.
 
 ::: {.hub-muted}
 Tip: use **Render** in the IDE, or from the project root run `quarto render notebooks/your-file.Rmd`.
 :::
 
-## Linear regression, LASSO, and AIC
+## Synthetic genes (known truth)
 
-- [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — synthetic gene–trait data, visualization, `glmnet` LASSO, forward/backward AIC (`MASS::stepAIC`).
+Ideal for understanding **LASSO, ridge, AIC**, and logistic regression when we **know** which simulated features matter.
 
-## Logistic regression and classification
-
+- [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — gene–trait simulation, visualization, `glmnet`, forward/backward AIC (`MASS::stepAIC`).
 - [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) — simulated gene expression and disease status, `glm`, `rpart`, confusion matrix, decision boundaries.
+
+## Palmer Penguins (continuity)
+
+Same real table as the **Tuesday** `tidymodels` slide pipeline and the **Data** page.
+
+- [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — EDA, correlation / `ggpairs`, ridge and LASSO on **`body_mass_g`**.
+- [penguins-classification.Rmd](penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression, `rpart`, confusion matrix, 2D decision regions.
 
 ## Requirements
 
-Install, as needed: `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (linear notebook theme).
+Install as needed: `palmerpenguins`, `tidyr`, `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (gene linear notebook theme).

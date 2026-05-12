@@ -2,8 +2,8 @@
 title: "Module 04: Tidymodels Pipeline"
 ---
 
-- Learning objective: establish a reusable classification workflow in `tidymodels`.
-- Key message: recipe + model + workflow + tuning keeps experiments comparable.
+- Learning objective: establish a reusable classification workflow in `tidymodels` on **Palmer Penguins** (Adelie vs Gentoo).
+- Key message: recipe + model + workflow + tuning keeps experiments comparable — same table as [dataset-penguins](../dataset-penguins.qmd) and [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd).
 
 ## Canonical code template
 

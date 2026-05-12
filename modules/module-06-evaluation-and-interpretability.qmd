@@ -4,3 +4,4 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 - Learning objective: align metric choice with practical decision costs.
 - Key message: interpretability methods complement, but do not replace, validation.
+- Running example: **[Palmer Penguins](../dataset-penguins.qmd)** (e.g. subgroup checks by `species` / `island`).

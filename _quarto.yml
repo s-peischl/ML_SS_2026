@@ -13,6 +13,8 @@ website:
         text: Home
       - href: curriculum-outline.qmd
         text: Curriculum
+      - href: dataset-penguins.qmd
+        text: Data
       - href: slides/day-01-monday.qmd
         text: Monday
       - href: slides/day-02-tuesday.qmd
@@ -25,10 +27,14 @@ website:
         menu:
           - text: Student notebooks
             href: notebooks/index.qmd
-          - text: Linear regression + LASSO
+          - text: Linear regression + LASSO (genes)
             href: notebooks/linear-regression-lasso.Rmd
-          - text: Logistic regression + tree
+          - text: Logistic regression + tree (genes)
             href: notebooks/logistic-regression-gene-disease.Rmd
+          - text: Penguins — body mass (regression)
+            href: notebooks/penguins-body-mass.Rmd
+          - text: Penguins — classification
+            href: notebooks/penguins-classification.Rmd
 
 format:
   html:

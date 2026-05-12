@@ -44,7 +44,7 @@ format:
 
 ## What OLS gives you (and what it assumes)
 
-- **Interpretation:** each \(\hat\beta_j\) is a *conditional* slope: expected change in \(y\) when gene \(j\) increases by one unit, holding other modeled genes fixed.
+- **Interpretation:** each \(\hat\beta_j\) is a *conditional* slope: expected change in \(y\) when predictor \(j\) increases by one unit, holding others fixed (in our **gene simulation**, each column is a gene; morphometrics play that role in **Palmer Penguins**).
 - **Linearity:** effects combine additively in the predictor space you specify (interactions only if you engineer them).
 - **Collinearity:** if predictors are nearly redundant, variances of \(\hat\beta_j\) explode and coefficients become unstable—regularization is one response.
 - **High \(p\), low \(n\):** OLS is not unique or behaves badly; shrinkage or explicit sparsity becomes necessary.
@@ -86,9 +86,9 @@ format:
 - Lasso: can set coefficients to zero (feature selection)
 - Choice depends on sparsity assumptions and interpretability needs
 
-## Course examples: visuals (LASSO / ridge + logistic)
+## Course examples: genes (known truth) + Palmer Penguins
 
-The next slides pull in live plots from the same simulations as your original `.Rmd` notebooks in `Examples/Day 1 - ...`.
+The next slides include **two blocks**: (1) **synthetic gene** simulations for LASSO / ridge / AIC (same as the gene notebooks), then (2) a short **Palmer Penguins** teaser — full penguin workflows live in separate notebooks linked below.
 
 {{< include ../_includes/day01-lasso-ridge-logistic.qmd >}}
 
@@ -98,11 +98,12 @@ The next slides pull in live plots from the same simulations as your original `.
 - Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).
 - In teaching: mention it as the default “I am not sure” regularization path before students reach black-box models.
 
-## Student notebooks (same code as Day 1 figures)
+## Student notebooks (genes + penguins)
 
-- Linear + LASSO + AIC: [notebooks/linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
-- Logistic + tree + boundaries: [notebooks/logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
-- Overview: [notebooks/index.qmd](../notebooks/index.qmd)
+- **Data reference:** [Palmer Penguins — about the dataset](../dataset-penguins.qmd)  
+- **Genes (unchanged):** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)  
+- **Penguins:** [body mass regression](../notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo classification](../notebooks/penguins-classification.Rmd)  
+- **Index:** [notebooks/index.qmd](../notebooks/index.qmd)
 
 ## Demo: regularization paths (live or board)
 

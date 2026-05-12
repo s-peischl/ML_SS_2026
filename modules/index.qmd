@@ -6,6 +6,8 @@ title: "Module Library"
 
 Use these pages to stage topic snippets that can later be pulled into slides.
 
+The course uses **two data tracks**: synthetic **genes** (see the gene notebooks) and **[Palmer Penguins](../dataset-penguins.qmd)** for real-data continuity across days.
+
 - [Module 01: Foundations and Generalization](module-01-foundations.qmd)
 - [Module 02: Regularization](module-02-regularization.qmd)
 - [Module 03: Trees and Two Cultures](module-03-trees-and-cultures.qmd)

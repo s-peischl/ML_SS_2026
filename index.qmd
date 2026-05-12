@@ -29,6 +29,18 @@ Use this site **during and after class**: open today’s deck, then try the matc
 ::: {.hub-grid}
 ::: {.hub-card}
 ::: {.hub-pill}
+Palmer Penguins
+:::
+### Our real-data running example
+
+- **[About the dataset](dataset-penguins.qmd)** — variables, biology, caveats, and how we reuse penguins **Monday → Thursday**  
+- Links to **penguin-only** notebooks from that page (regression + classification)
+
+Synthetic **gene** notebooks stay the place for **known-truth** LASSO / ridge pedagogy.
+:::
+
+::: {.hub-card}
+::: {.hub-pill}
 Class slides
 :::
 ### Follow along day by day
@@ -46,9 +58,9 @@ Hands-on notebooks
 :::
 ### Try the code yourself
 
-- **[Notebook home](notebooks/index.qmd)** — list of notebooks + setup in plain steps  
-- **[Linear models & LASSO](notebooks/linear-regression-lasso.Rmd)** — a small genetics-style example: shrinkage and “how much should the model listen to each gene?”  
-- **[Logistic & trees](notebooks/logistic-regression-gene-disease.Rmd)** — yes/no outcomes and a first classifier you can plot  
+- **[Notebook home](notebooks/index.qmd)** — all notebooks + setup in plain steps  
+- **Genes (known truth):** [linear + LASSO](notebooks/linear-regression-lasso.Rmd), [logistic + tree](notebooks/logistic-regression-gene-disease.Rmd)  
+- **Palmer Penguins:** [body mass regression](notebooks/penguins-body-mass.Rmd), [species classification](notebooks/penguins-classification.Rmd)  
 
 Go as fast or slow as you like; the notebooks are for **you**, not for a grade on this site.
 :::
@@ -73,7 +85,7 @@ Your instructors may point you to extra readings or exercises; those live wherev
 Think of it as one story in three chapters: **see the pattern**, **keep your work honest**, then **choose and explain** models without pretending they’re magic. Curiosity beats perfection.
 :::
 
-- **Monday** — predictions, when a model is “too wiggly,” and friendly introductions to linear models, logistic regression, and a bit of regularization. You’ll practice describing **what the data actually contains**.  
+- **Monday** — predictions, when a model is “too wiggly,” and friendly introductions to linear models, logistic regression, and a bit of regularization. You’ll see **synthetic genes** (known truth) and **Palmer Penguins** (real measurements) in parallel.  
 - **Tuesday** — decision trees and how we split the world into simple rules — plus habits that keep code readable when things get more complex.  
 - **Thursday** — stronger models, what to watch when outcomes aren’t balanced, and how to discuss **why** a model leaned one way — without claiming it “knows” biology or medicine by itself.
 :::
@@ -82,7 +94,8 @@ Think of it as one story in three chapters: **see the pattern**, **keep your wor
 ## For instructors & TAs (technical)
 
 - **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.  
-- **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the running-dataset story, calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
+- **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the two-track story (genes + Palmer Penguins), calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
 - **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
+- **Palmer Penguins** — [About the dataset](dataset-penguins.qmd); Tuesday `tidymodels` include uses the same **Adelie vs Gentoo** slice as the penguin classification notebook.  
 - **Shared tidymodels include** — `_includes/tidymodels-pipeline.qmd` (slides + Module 04); link or excerpt in class as needed.
 :::

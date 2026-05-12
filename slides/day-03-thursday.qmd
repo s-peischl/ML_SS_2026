@@ -39,10 +39,12 @@ format:
 
 Thursday uses the **same** `_includes/tidymodels-pipeline.qmd` as Tuesday: keep **`folds`**, **`metric_set(...)`**, and the **`tune_grid` → `select_best` → `finalize_workflow` → `fit`** rhythm fixed; change **`mod_spec`** (e.g. `rand_forest` + `ranger`, `boost_tree` + `xgboost`, `mlp` + `nnet`) and any **recipe** steps (missingness, imbalance, feature engineering).
 
-- **Step-by-step code + figures** (tuning plot, `vip`, `rpart.plot`, ROC): see **Tuesday** slides *Shared pipeline template* and [Module 04: Tidymodels Pipeline](../modules/module-04-pipeline.qmd).
+- **Step-by-step code + figures** (tuning plot, `vip`, `rpart.plot`, ROC): see **Tuesday** slides *Shared pipeline template* and [Module 04: Tidymodels Pipeline](../modules/module-04-pipeline.qmd). **Same penguins table** as [dataset-penguins](../dataset-penguins.qmd) and [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd).
 
-## Class imbalance
+## Class imbalance (tie-in: Palmer Penguins)
 
+- **Three species** on the full dataset are **not** as skewed as many clinical endpoints — use them to discuss **what imbalance would look like**, then contrast with **gene** disease prevalence in the simulation notebooks.
+- **Adelie vs Gentoo** (Tuesday pipeline slice) is closer to balanced; still practice **sensitivity/specificity** from `metric_set` and ask when **accuracy** misleads.
 - Accuracy can be misleading when classes are skewed
 - Use class weights, resampling, or threshold tuning
 - Evaluate with precision/recall-centric metrics when needed

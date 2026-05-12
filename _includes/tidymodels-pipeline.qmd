@@ -9,28 +9,36 @@ suppressPackageStartupMessages({
   library(tidymodels)
   library(vip)
   library(rpart.plot)
+  library(palmerpenguins)
+  library(dplyr)
+  library(tidyr)
 })
 
-iris_cls <- iris |>
-  dplyr::mutate(
-    y = factor(dplyr::if_else(Species == "virginica", "vir", "other"))
+# Adelie vs Gentoo (binary); complete cases — matches penguins-classification.Rmd
+peng_cls <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
   ) |>
-  dplyr::select(-Species)
+  dplyr::select(-species) |>
+  tidyr::drop_na()
 ```
 
-Binary outcome **`y`**: `"vir"` vs `"other"`. Replace `iris_cls` with your own tibble; keep **`y` as a factor** for classification metrics.
+Binary outcome **`y`**: Adelie vs Gentoo on complete-case Palmer Penguins (bill, flipper, mass, island, sex, year). Same story as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd).
 
 ## Shared pipeline — recipe
 
 ```{r}
 #| label: tm-recipe
 #| echo: true
-rec <- recipe(y ~ ., data = iris_cls) |>
+rec <- recipe(y ~ ., data = peng_cls) |>
   step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
   step_normalize(all_numeric_predictors())
 ```
 
-Preprocessing lives in the **recipe** (impute, encode, normalize, …). Resampling will fit this recipe **inside each fold** so nothing leaks from “future” rows.
+Preprocessing lives in the **recipe** (impute, encode, normalize, …). Resampling fits this recipe **inside each fold** so nothing leaks from “future” rows.
 
 ## Shared pipeline — model spec
 
@@ -64,7 +72,7 @@ One **`workflow()`** object = recipe + model, tuned and fitted as a **single** u
 ```{r}
 #| label: tm-tune
 #| echo: true
-folds <- vfold_cv(iris_cls, v = 5)
+folds <- vfold_cv(peng_cls, v = 5, strata = y)
 metrics <- metric_set(roc_auc, accuracy, sens, spec)
 
 tune_res <- tune_grid(
@@ -88,17 +96,17 @@ tune_res <- tune_grid(
 #| echo: true
 best <- select_best(tune_res, metric = "roc_auc")
 final_wf <- finalize_workflow(wf, best)
-final_fit <- fit(final_wf, data = iris_cls)
+final_fit <- fit(final_wf, data = peng_cls)
 ```
 
-In a real project you would **`fit(final_wf, data = training(split))`** after choosing hyperparameters using **training data only**, then assess once on **`testing(split)`**. Here we fit on all of `iris_cls` for a compact teaching demo.
+In a real project you would **`fit(final_wf, data = training(split))`** after choosing hyperparameters using **training data only**, then assess once on **`testing(split)`**. Here we fit on all of `peng_cls` for a compact teaching demo.
 
 ```{r}
 #| label: tm-optional-split
 #| echo: true
 #| eval: false
 # --- Optional: last_fit with a held-out split for honest performance ---------
-# data_split <- initial_split(iris_cls, prop = 0.8, strata = y)
+# data_split <- initial_split(peng_cls, prop = 0.8, strata = y)
 # train <- training(data_split)
 # test  <- testing(data_split)
 # last_fit(final_wf, split = data_split)  # after finalize_workflow(...)
@@ -135,7 +143,7 @@ final_fit |>
   theme_minimal() +
   labs(
     title = "Feature importance",
-    subtitle = "Which predictors matter most for this fitted tree?"
+    subtitle = "Which predictors matter most for Adelie vs Gentoo in this tree?"
   )
 ```
 
@@ -168,15 +176,15 @@ Connect this picture back to **partitioning** intuition from lecture: each box i
 #| echo: true
 #| fig-width: 8
 #| fig-height: 5
-augment(final_fit, new_data = iris_cls) |>
-  roc_curve(truth = y, .pred_vir, event_level = "second") |>
+augment(final_fit, new_data = peng_cls) |>
+  roc_curve(truth = y, .pred_Gentoo, event_level = "second") |>
   autoplot() +
   labs(
     title = "ROC curve",
-    subtitle = "Using fitted model on same data as fit — for teaching only; report test/validation in practice"
+    subtitle = "Gentoo as event class; in-sample fit — use test data in practice"
   )
 ```
 
-Probability column **`.pred_vir`** with **`event_level = "second"`** matches factor `y` with levels `other`, `vir`. For honest performance, evaluate on **`testing(split)`** or use **`last_fit()`**.
+**`.pred_Gentoo`** with **`event_level = \"second\"`** matches `y` with levels Adelie (first), Gentoo (second). For honest performance, evaluate on **`testing(split)`** or use **`last_fit()`**.
 
 *Edit only `teaching-hub/_includes/tidymodels-pipeline.qmd`; slide decks and Module 04 pull it in with Quarto `include`.*

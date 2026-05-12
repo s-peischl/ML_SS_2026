@@ -4,23 +4,23 @@ title: "Curriculum Outline"
 
 # Three-Day Curriculum (Monday, Tuesday, Thursday)
 
-This outline keeps **exercises outside the hub** while integrating cross-cutting ideas: a **single running dataset**, **decision costs and calibration**, **causal guardrails**, **documentation (data/model cards)**, **reproducibility**, **fairness**, and **assessment that resists over-claiming** (especially around SHAP).
+This outline keeps **exercises outside the hub** while integrating cross-cutting ideas: **two parallel data tracks** (synthetic **genes** for known-truth regularization + **Palmer Penguins** for a single real running example), **decision costs and calibration**, **causal guardrails**, **documentation (data/model cards)**, **reproducibility**, **fairness**, and **assessment that resists over-claiming** (especially around SHAP).
 
 ## Integrated design principles (built into the week)
 
-- **One canonical dataset** — reuse the same variables from Monday (tabular, messy enough) through Thursday so learners see OLS → trees → boosting → metrics → SHAP on *one* story, not disconnected toys.
+- **Two parallel data tracks** — **Synthetic genes** in the original linear / logistic notebooks: known ground truth for LASSO, ridge, and AIC pedagogy. **Palmer Penguins** ([dataset page](dataset-penguins.qmd), dedicated notebooks, Tuesday `tidymodels` include): one small real table reused Mon→Thu for visualization, regression, classification, and workflows.
 - **Decision costs before metric zoo** — introduce thresholds, prevalence, and misclassification costs early; return to them on Thursday so ROC/PR/F1 choices feel motivated, not arbitrary.
 - **Association ≠ intervention** — embed a short “causal guardrails” beat when introducing importance and SHAP so plots are not read as policy levers by default.
 - **Data cards + model cards** — start a one-page **data card** Monday (provenance, leakage risks, subgroup fields); finish a **model card** Thursday (intended use, metrics, limits, monitoring).
 - **Reproducibility spine** — Tuesday includes a concrete folder layout + “one command rebuilds figures” goal (`quarto` project, optional `renv`/`conda` lockfile for a reproducibility sprint homework).
-- **Fairness as a metric choice** — Thursday explicitly compares overall vs subgroup metrics on the canonical dataset when a sensitive attribute exists (or simulate site/batch as a stand-in).
+- **Fairness as a metric choice** — Thursday explicitly compares overall vs subgroup metrics on **Palmer Penguins** (e.g. `species` or `island` as a subgroup lens) when a sensitive attribute exists (or simulate site/batch as a stand-in).
 - **Assessment that teaches humility** — include a **short oral or written prompt**: “What would you *not* claim from this SHAP summary?” graded with a published mini-rubric (correctness, diagnostics, communication).
 
 ## Monday: Foundations and Regularization
 
 ### Learning goals
 
-- Understand supervised learning setup for regression and classification on the **canonical dataset**
+- Understand supervised learning setup for regression and classification on **genes (simulation) and Palmer Penguins (real)**
 - Use linear and logistic regression to frame overfitting vs underfitting
 - Learn why regularization is needed and when to use ridge vs lasso
 - Draft a **data card** (sources, leakage, subgroups) and connect it to train/validation design
@@ -28,9 +28,9 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 ### Sequence
 
 1. Framing predictive modeling: data split, validation, and generalization (**tie each choice to the data card**)
-2. Linear regression as baseline and bias–variance discussion (same genes/trait story as notebooks)
+2. Linear regression as baseline and bias–variance discussion (**synthetic gene–trait** story in notebooks; **penguins** for real EDA in parallel)
 3. Logistic regression for classification intuition (same patient/scientific framing as Thursday metrics)
-4. Overfitting/underfitting diagnostics (learning curves; train vs validation) on the canonical split
+4. Overfitting/underfitting diagnostics (learning curves; train vs validation) on a held-out split (genes or penguins)
 5. Regularization: ridge and lasso, shrinkage paths, feature selection; **preview elastic net** as the “unsure” default
 6. **Calibration intuition (light)** — reliability of predicted probabilities even within linear models; sets up Thursday without heavy math
 7. Transition to algorithmic methods + assign **reproducibility mini-task** (directory + render script)
@@ -41,7 +41,7 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 
 - Compare mathematical and algorithmic modeling mindsets (**explicit “prediction vs explanation for intervention”** caveat)
 - Build intuition for decision trees and their operating assumptions
-- Use a modern `tidymodels` pipeline that can be reused across models on the **canonical dataset**
+- Use a modern `tidymodels` pipeline that can be reused across models on **Palmer Penguins** (same include as Module 04)
 - Establish **reproducible project layout** and optional `renv`/environment pinning policy
 
 ### Sequence
@@ -50,7 +50,7 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 2. Decision trees: splits, impurity, pruning, interpretability; connect splits to subgroup structure in the data card
 3. Why workflows matter: preprocessing, modeling, tuning, validation (**leakage checklist tied to data card fields**)
 4. `tidymodels` blueprint: recipes, parsnip, workflows, rsample, tune
-5. Reusable classification pipeline skeleton **frozen to the canonical outcome definition**
+5. Reusable classification pipeline skeleton **frozen to the penguin outcome definition** used Tuesday–Thursday (Adelie vs Gentoo in the shared include; extend in exercises)
 6. **Reproducibility sprint (lab)** — one-button `quarto render` / `targets::tar_make()` sketch; what must be in version control vs ignored artifacts
 7. **Model card draft** — students sketch intended use, metrics to monitor, and known failure modes before ensembles
 
@@ -58,7 +58,7 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 
 ### Learning goals
 
-- Progress from trees to ensemble and neural approaches **on the same canonical dataset**
+- Progress from trees to ensemble and neural approaches **on Palmer Penguins** (swap engines in the same `tidymodels` pattern)
 - Handle imbalanced and messy data robustly inside workflows
 - Choose evaluation metrics from **decision costs** and prevalence (not accuracy by default)
 - Introduce model explainability and variable importance (including SHAP) with **explicit non-causal limits**
@@ -76,14 +76,14 @@ This outline keeps **exercises outside the hub** while integrating cross-cutting
 7. SHAP values: interpretation, TreeSHAP vs KernelSHAP, dependence plots; **paired oral/written “what not to claim” assessment**
 8. **Fairness / subgroup metrics** — compare overall vs subgroup performance; discuss parity-style metrics only with context
 9. **Deployment vignette (guest or async)** — batch scoring API / Plumber / Connect sketch so pipelines do not end at `fit()`
-10. **Consolidation buffer** — recap quiz + one capstone question using the canonical dataset end-to-end
+10. **Consolidation buffer** — recap quiz + one capstone question using **Palmer Penguins** end-to-end (genes optional for regularization recap)
 
 ## Delivery Notes
 
-- Exercises are run separately from this hub but should **reference the canonical dataset** and reuse the **data/model card** templates.
+- Exercises are run separately from this hub but should **reference Palmer Penguins** (and optionally **gene** simulations) and reuse the **data/model card** templates.
 - Each day has one dedicated revealjs deck; optional live R snippets or board work replace separate app demos.
 - The same `tidymodels` pipeline grammar is reused from Tuesday onward; Thursday swaps engines and evaluation emphasis, not project structure.
-- Student **`.Rmd`** notebooks live under `notebooks/` and align with Monday’s linear/logistic narrative; extend them in exercises to point at the same canonical data export if possible.
+- Student **`.Rmd`** notebooks live under `notebooks/`: **gene** pair unchanged; **penguin** pair added; align exercises with the same **penguin** export where possible.
 
 ## Optional extensions (only if time remains)
 

@@ -20,4 +20,6 @@ Imports:
     rpart.plot,
     rcartocolor,
     tidymodels,
-    vip
+    vip,
+    palmerpenguins,
+    tidyr

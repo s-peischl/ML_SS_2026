@@ -1,0 +1,123 @@
+---
+title: "Palmer Penguins — classification (species)"
+author: "ML Summer School"
+format:
+  html:
+    toc: true
+    code-tools: true
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(palmerpenguins)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(tidyr)
+library(rlang)
+theme_set(theme_classic())
+```
+
+# Overview
+
+This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** for **classification**. We use a **binary** task — **Adelie vs Gentoo** — after dropping Chinstrap (cleaner boundaries in 2D plots; you can extend to three species in `tidymodels`).
+
+The **synthetic gene / disease** notebook (`logistic-regression-gene-disease.Rmd`) stays the place for **known-truth** logistic stories.
+
+## Prepare data
+
+```{r}
+data("penguins", package = "palmerpenguins")
+pg <- penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(species = droplevels(species)) |>
+  tidyr::drop_na()
+table(pg$species)
+```
+
+## Pair plot (first five columns)
+
+```{r fig.width=8, fig.height=5}
+GGally::ggpairs(
+  pg,
+  columns = c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "sex"),
+  aes(color = species)
+) +
+  theme_minimal()
+```
+
+## Logistic regression
+
+```{r}
+log_fit <- glm(
+  species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g + island + sex,
+  data = pg,
+  family = binomial()
+)
+summary(log_fit)
+```
+
+## Classification tree
+
+```{r fig.width=8, fig.height=5}
+tree_fit <- rpart(
+  species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g + island + sex,
+  data = pg,
+  method = "class"
+)
+rpart.plot(tree_fit, type = 4, extra = 104, main = "Adelie vs Gentoo (rpart)")
+```
+
+## Confusion matrix (tree, training data)
+
+```{r}
+pred_class <- predict(tree_fit, type = "class")
+confusionMatrix(pred_class, pg$species)
+```
+
+## Decision-region sketch (logistic)
+
+Other predictors held at their training means / modes.
+
+```{r fig.width=7, fig.height=4.5}
+plot_boundary <- function(model, data, f1, f2) {
+  r1 <- range(data[[f1]])
+  r2 <- range(data[[f2]])
+  grid <- expand.grid(
+    seq(r1[1], r1[2], length.out = 120),
+    seq(r2[1], r2[2], length.out = 120)
+  )
+  names(grid) <- c(f1, f2)
+  for (nm in setdiff(names(data), c(f1, f2, "species"))) {
+    v <- data[[nm]]
+    grid[[nm]] <- if (is.numeric(v)) {
+      mean(v, na.rm = TRUE)
+    } else {
+      tab <- table(v)
+      grid[[nm]] <- names(tab)[which.max(tab)]
+    }
+  }
+  grid$p_Gentoo <- predict(model, newdata = grid, type = "response")
+  grid$cls <- factor(ifelse(grid$p_Gentoo > 0.5, "Gentoo", "Adelie"), levels = c("Adelie", "Gentoo"))
+  ggplot(data, aes(!!sym(f1), !!sym(f2))) +
+    geom_raster(data = grid, aes(!!sym(f1), !!sym(f2), fill = cls), alpha = 0.25, inherit.aes = FALSE) +
+    geom_point(aes(shape = species, fill = species), size = 2.5, color = "gray20") +
+    scale_fill_brewer(palette = "Set2") +
+    theme_minimal() +
+    labs(
+      title = "Logistic decision regions (bill length vs flipper length)",
+      subtitle = "Other predictors fixed at typical values",
+      fill = "Region", shape = "Truth"
+    )
+}
+print(plot_boundary(log_fit, pg, "bill_length_mm", "flipper_length_mm"))
+```
+
+## Takeaways
+
+- Adelie and Gentoo are fairly separable in measurement space — discuss **overlap**, **costs of errors**, and why **test-set** evaluation matters.
+- The Tuesday slide deck reuses the same **Adelie vs Gentoo** idea inside the shared `tidymodels` pipeline include.

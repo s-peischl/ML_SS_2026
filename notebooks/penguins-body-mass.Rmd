@@ -1,0 +1,121 @@
+---
+title: "Palmer Penguins — predicting body mass"
+author: "ML Summer School"
+format:
+  html:
+    toc: true
+    code-tools: true
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(palmerpenguins)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(glmnet)
+library(caret)
+library(tidyr)
+theme_set(theme_classic())
+```
+
+# Overview
+
+This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** as a **continuous outcome** example: we predict **`body_mass_g`** from bill and flipper measurements (and simple factors).
+
+It complements the **synthetic gene** linear / LASSO notebook (`linear-regression-lasso.Rmd`), where we know the ground truth. Here we work with **real measurements** and the usual messiness (correlation, nonlinear hints, missing values).
+
+## Load and clean
+
+```{r}
+data("penguins", package = "palmerpenguins")
+pg <- penguins |>
+  tidyr::drop_na()
+nrow(pg)
+```
+
+## Exploratory plots
+
+```{r fig.width=8, fig.height=4.5}
+pg_num <- pg |>
+  select(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g)
+cor_m <- cor(pg_num)
+cor_df <- as.data.frame(as.table(cor_m)) |>
+  rename(v1 = Var1, v2 = Var2, r = Freq)
+ggplot(cor_df, aes(v1, v2, fill = r)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "steelblue", mid = "white", high = "firebrick", midpoint = 0, limits = c(-1, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(title = "Correlation among numeric penguin measurements")
+```
+
+```{r fig.width=8, fig.height=5.5}
+GGally::ggpairs(
+  pg_num,
+  upper = list(continuous = wrap("cor", size = 2.2)),
+  aes(color = pg$species, alpha = 0.25)
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Train / test split and matrix of predictors
+
+We model `body_mass_g` from morphometrics plus `species`, `island`, `sex`, and `year` (as numeric).
+
+```{r}
+pred_df <- pg |>
+  mutate(year = as.numeric(year)) |>
+  select(body_mass_g, bill_length_mm, bill_depth_mm, flipper_length_mm, species, island, sex, year)
+
+y <- pred_df$body_mass_g
+X <- model.matrix(body_mass_g ~ ., data = pred_df)[, -1] # drop intercept column; dummy coding
+
+set.seed(42)
+tr_idx <- createDataPartition(y, p = 0.8, list = FALSE)[, 1]
+X_train <- X[tr_idx, , drop = FALSE]
+y_train <- y[tr_idx]
+X_test <- X[-tr_idx, , drop = FALSE]
+y_test <- y[-tr_idx]
+
+pre <- preProcess(X_train, method = c("center", "scale"))
+X_train_s <- predict(pre, X_train)
+X_test_s <- predict(pre, X_test)
+```
+
+## Ridge and LASSO with cross-validation
+
+```{r fig.width=7, fig.height=4}
+cv_ridge <- cv.glmnet(X_train_s, y_train, alpha = 0)
+cv_lasso <- cv.glmnet(X_train_s, y_train, alpha = 1)
+par(mfrow = c(1, 2))
+plot(cv_ridge, main = "Ridge CV")
+plot(cv_lasso, main = "LASSO CV")
+```
+
+```{r}
+best_lam_ridge <- cv_ridge$lambda.min
+best_lam_lasso <- cv_lasso$lambda.min
+fit_ridge <- glmnet(X_train_s, y_train, alpha = 0, lambda = best_lam_ridge)
+fit_lasso <- glmnet(X_train_s, y_train, alpha = 1, lambda = best_lam_lasso)
+
+pred_ridge <- as.numeric(predict(fit_ridge, newx = X_test_s))
+pred_lasso <- as.numeric(predict(fit_lasso, newx = X_test_s))
+
+postResample(pred_ridge, y_test)
+postResample(pred_lasso, y_test)
+```
+
+## Coefficient path (LASSO)
+
+```{r fig.width=7, fig.height=5}
+fit_path <- glmnet(X_train_s, y_train, alpha = 1)
+plot(fit_path, xvar = "lambda", label = TRUE, main = "LASSO coefficient paths (scaled predictors)")
+```
+
+## Takeaways
+
+- Morphometrics and **species** explain much of the variation in mass — check whether a simpler scientific story (e.g. mass ~ flipper + species) is enough before chasing complexity.
+- Compare this open-ended exercise to the **gene** notebook, where we know which features are truly causal.

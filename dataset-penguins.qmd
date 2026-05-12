@@ -1,0 +1,63 @@
+---
+title: "Palmer Penguins — our real-data running example"
+format:
+  html:
+    toc: true
+---
+
+This page describes the **Palmer Penguins** dataset, which we use **across the week** for visualization, regression, classification, and the shared `tidymodels` pipeline on the Tuesday slides.
+
+::: {.callout-note appearance="simple"}
+## Synthetic gene notebooks (unchanged)
+
+For **known ground truth** when teaching LASSO, ridge, and AIC (which coefficients *should* matter), we keep separate **simulated gene** notebooks — they are not replaced by penguins:
+
+- [linear-regression-lasso.Rmd](notebooks/linear-regression-lasso.Rmd)  
+- [logistic-regression-gene-disease.Rmd](notebooks/logistic-regression-gene-disease.Rmd)  
+
+Palmer Penguins examples live in **additional** notebooks (linked below).
+:::
+
+## What it is
+
+The **Palmer Archipelago** penguins dataset (Horst *et al.*, 2020) bundles size measurements for three penguin species. It ships with the R package **`palmerpenguins`** as `palmerpenguins::penguins`.
+
+```r
+library(palmerpenguins)
+data(penguins, package = "palmerpenguins")
+```
+
+## Variables (344 rows)
+
+| Variable | Meaning |
+|----------|---------|
+| `species` | Adelie, Chinstrap, or Gentoo |
+| `island` | Torgersen, Biscoe, or Dream |
+| `bill_length_mm`, `bill_depth_mm` | Bill size (mm) |
+| `flipper_length_mm` | Flipper length (mm) |
+| `body_mass_g` | Body mass (g) |
+| `sex` | female / male (some `NA`) |
+| `year` | Study year (2007, 2008, 2009) |
+
+## Why we use it in this course
+
+- **Plots read well in class** (colour by `species`, pairs of measurements).
+- **Same table everywhere** — Monday EDA, Tuesday `tidymodels` pipeline, Thursday metrics / interpretability talking points.
+- You can practice **regression** (e.g. predict `body_mass_g`) and **classification** (e.g. species or sex) on one familiar object.
+
+## Caveats (say these out loud)
+
+- **Small sample** (~344 rows after dropping missing values) — use for pedagogy, not for “big data” claims.
+- **Observational** — strong predictions do **not** prove causal mechanisms in biology.
+- **Missing `sex`** — many workflows use `tidyr::drop_na()` or explicit imputation in a `recipe`.
+- **Leakage awareness** — if the prediction task is trivial given the inputs (e.g. near-perfect separation), use it to discuss **evaluation** and **honest splits**, not to oversell accuracy.
+
+## Student notebooks (Palmer Penguins only)
+
+- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — EDA + predicting body mass (continuous outcome).  
+- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — logistic regression + classification tree, confusion matrix, simple decision-region plot.
+
+## Citation
+
+Horst AM, Hill AP, Gorman KB (2020). *palmerpenguins: Palmer Archipelago (Antarctica) penguin data.* R package version 0.1.1.  
+DOI: [10.5281/zenodo.3960218](https://doi.org/10.5281/zenodo.3960218).
