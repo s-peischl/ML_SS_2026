@@ -108,7 +108,7 @@ format:
 
 ## Shared pipeline template (single source)
 
-The **next slides** are included from `_includes/tidymodels-pipeline.qmd` on **Palmer Penguins** (Adelie vs Gentoo, same idea as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)): code blocks build the workflow in order, then **four figures** walk through tuning results, importance, the fitted tree, and an ROC curve (in-sample for teaching — stress proper validation in class).
+The **next slides** are included from `_includes/tidymodels-pipeline.qmd` on **Palmer Penguins** (Adelie vs Gentoo, same idea as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)); for **sex** or **three-species** tasks, see the other penguin notebooks from the **Data** page.
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
 

@@ -35,6 +35,10 @@ website:
             href: notebooks/penguins-body-mass.Rmd
           - text: Penguins — classification
             href: notebooks/penguins-classification.Rmd
+          - text: Penguins — sex (binary)
+            href: notebooks/penguins-sex-classification.Rmd
+          - text: Penguins — three species
+            href: notebooks/penguins-species-multiclass.Rmd
 
 format:
   html:

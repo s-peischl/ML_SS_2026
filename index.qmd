@@ -34,7 +34,7 @@ Palmer Penguins
 ### Our real-data running example
 
 - **[About the dataset](dataset-penguins.qmd)** — variables, biology, caveats, and how we reuse penguins **Monday → Thursday**  
-- Links to **penguin-only** notebooks from that page (regression + classification)
+- Links to **penguin-only** notebooks from that page (mass, binary species, sex, three-class species)
 
 Synthetic **gene** notebooks stay the place for **known-truth** LASSO / ridge pedagogy.
 :::
@@ -60,7 +60,7 @@ Hands-on notebooks
 
 - **[Notebook home](notebooks/index.qmd)** — all notebooks + setup in plain steps  
 - **Genes (known truth):** [linear + LASSO](notebooks/linear-regression-lasso.Rmd), [logistic + tree](notebooks/logistic-regression-gene-disease.Rmd)  
-- **Palmer Penguins:** [body mass regression](notebooks/penguins-body-mass.Rmd), [species classification](notebooks/penguins-classification.Rmd)  
+- **Palmer Penguins:** [body mass regression](notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](notebooks/penguins-classification.Rmd), [sex prediction](notebooks/penguins-sex-classification.Rmd), [three species](notebooks/penguins-species-multiclass.Rmd)  
 
 Go as fast or slow as you like; the notebooks are for **you**, not for a grade on this site.
 :::

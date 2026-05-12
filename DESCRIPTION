@@ -22,4 +22,5 @@ Imports:
     tidymodels,
     vip,
     palmerpenguins,
-    tidyr
+    tidyr,
+    nnet

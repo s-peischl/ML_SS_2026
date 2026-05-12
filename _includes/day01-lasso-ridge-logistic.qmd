@@ -4,7 +4,9 @@ Visuals below follow the **student notebooks** in this repo — **synthetic gene
 - [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
 - [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)
 - [Penguins — body mass](../notebooks/penguins-body-mass.Rmd)
-- [Penguins — classification](../notebooks/penguins-classification.Rmd)
+- [Penguins — classification (Adelie vs Gentoo)](../notebooks/penguins-classification.Rmd)
+- [Penguins — sex](../notebooks/penguins-sex-classification.Rmd)
+- [Penguins — three species](../notebooks/penguins-species-multiclass.Rmd)
 
 ```{r}
 #| label: day01-examples-libs

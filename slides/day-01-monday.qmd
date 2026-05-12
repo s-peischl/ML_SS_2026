@@ -102,7 +102,7 @@ The next slides include **two blocks**: (1) **synthetic gene** simulations for L
 
 - **Data reference:** [Palmer Penguins — about the dataset](../dataset-penguins.qmd)  
 - **Genes (unchanged):** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)  
-- **Penguins:** [body mass regression](../notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo classification](../notebooks/penguins-classification.Rmd)  
+- **Penguins:** [body mass](../notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd), [three species](../notebooks/penguins-species-multiclass.Rmd)  
 - **Index:** [notebooks/index.qmd](../notebooks/index.qmd)
 
 ## Demo: regularization paths (live or board)

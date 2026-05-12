@@ -43,7 +43,14 @@ data(penguins, package = "palmerpenguins")
 
 - **Plots read well in class** (colour by `species`, pairs of measurements).
 - **Same table everywhere** — Monday EDA, Tuesday `tidymodels` pipeline, Thursday metrics / interpretability talking points.
-- You can practice **regression** (e.g. predict `body_mass_g`) and **classification** (e.g. species or sex) on one familiar object.
+- You can practice **regression** (e.g. predict `body_mass_g`), **binary classification** (species slice, or **sex**), and **three-species** models on one familiar object.
+
+## Student notebooks (Palmer Penguins only)
+
+- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — EDA + predicting body mass (continuous outcome).  
+- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic + tree, confusion matrix, 2D regions.  
+- [penguins-sex-classification.Rmd](notebooks/penguins-sex-classification.Rmd) — **Sex** from morphology (species **not** used as a predictor; discuss why).  
+- [penguins-species-multiclass.Rmd](notebooks/penguins-species-multiclass.Rmd) — **All three species**: multinomial logit + multiclass tree, test-set confusion.
 
 ## Caveats (say these out loud)
 
@@ -51,11 +58,6 @@ data(penguins, package = "palmerpenguins")
 - **Observational** — strong predictions do **not** prove causal mechanisms in biology.
 - **Missing `sex`** — many workflows use `tidyr::drop_na()` or explicit imputation in a `recipe`.
 - **Leakage awareness** — if the prediction task is trivial given the inputs (e.g. near-perfect separation), use it to discuss **evaluation** and **honest splits**, not to oversell accuracy.
-
-## Student notebooks (Palmer Penguins only)
-
-- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — EDA + predicting body mass (continuous outcome).  
-- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — logistic regression + classification tree, confusion matrix, simple decision-region plot.
 
 ## Citation
 

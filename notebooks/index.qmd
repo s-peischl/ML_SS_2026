@@ -21,7 +21,9 @@ Same real table as the **Tuesday** `tidymodels` slide pipeline and the **Data** 
 
 - [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — EDA, correlation / `ggpairs`, ridge and LASSO on **`body_mass_g`**.
 - [penguins-classification.Rmd](penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression, `rpart`, confusion matrix, 2D decision regions.
+- [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) — predict **female vs male** from morphology ( **`species` omitted on purpose** ), logistic + `rpart`, stratified train/test.
+- [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) — **three species**: `nnet::multinom`, multiclass `rpart`, confusion matrices + heatmap.
 
 ## Requirements
 
-Install as needed: `palmerpenguins`, `tidyr`, `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (gene linear notebook theme).
+Install as needed: `palmerpenguins`, `tidyr`, `nnet`, `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (gene linear notebook theme).
