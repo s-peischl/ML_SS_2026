@@ -11,9 +11,9 @@ format:
 
 ## Learning objectives
 
-- Contrast statistical and algorithmic modeling cultures
-- Build intuition for decision trees
-- Use `tidymodels` as the core pipeline grammar
+- Contrast two traditions: **write-down models** vs **flexible prediction** — both need honest checking on new data.
+- Build intuition for **decision trees** (sequences of simple “if–then” rules on measurements).
+- Use R’s **`tidymodels`** tools to **bundle preprocessing, fitting, and scoring** so comparisons stay fair (builds on **`lm`** / **`glm`**).
 
 ## Navigation
 
@@ -25,9 +25,9 @@ format:
 
 ## Two cultures framing
 
-- Mathematical culture: interpretable parametric assumptions
-- Algorithmic culture: prediction-focused flexible learners
-- In practice, good workflows combine both perspectives
+- **Classical / generative view:** start with assumptions you can defend, then quantify uncertainty (close to how many of you were taught statistics).
+- **Algorithmic / predictive view:** start with flexible patterns, then worry hard about **error on new data** (common in ML competitions).
+- Good applied work **mixes both**: clear measurements + careful evaluation.
 
 ## Why trees now?
 
@@ -47,57 +47,64 @@ format:
 
 ## Pipeline mindset
 
-- Reproducibility and leakage prevention come first
-- Preprocessing is part of the model, not a side step
-- Evaluation design must be fixed before tuning
+- **Reproducibility** and **leakage** first: if a step “learns” from the data (means, categories, PCs), it must be repeated correctly inside each train/test split.
+- Treat **cleaning and scaling** as part of the model, not something you do once by hand and forget.
+- **Decide how you will score mistakes** before you hunt for the best tuning knobs.
 
-## Tidymodels: split objects first (`rsample`)
+## Tuesday roadmap (then the R package names)
 
-- `initial_split(data, prop = 0.8, strata = outcome)` returns an `rsplit` bundle: which rows belong to analysis vs assessment.
+- **Split rows** so some penguins are only used to *check* performance, never to *choose* settings dishonestly.
+- **Write preprocessing once** (e.g. turn factors into 0/1 columns, scale bill length) and apply the same rules on each split.
+- **Name the model family** (here: classification tree) **before** fitting — including which settings you will try later.
+- **Glue preprocessing + model** into one object so the computer resamples the **whole** process, not half of it.
+
+## Split your training and test rows (`rsample`)
+
+- **Goal — hide future rows from past rows:** `initial_split(data, prop = 0.8, strata = outcome)` records which rows are for **training** vs **testing** (an `rsplit` object in code).
 - `training(split)` and `testing(split)` materialize the two tibbles. **Never** preprocess the full dataset before splitting if steps learn from data (means, factor levels, PCA loadings).
 - For repeated estimates of generalization error, use `vfold_cv(training(split), v = 10, strata = outcome)` or nested resampling when tuning within an outer loop.
 
-## Recipes: deferred transformations (`recipes`)
+## Preprocessing as a reusable checklist (`recipes`)
 
-- A **recipe** is a declarative list of steps: `recipe(outcome ~ predictors, data = train_data) |> step_*()`.
+- **Goal — a reusable checklist of preprocessing:** `recipe(outcome ~ predictors, data = train_data) |> step_*()` lists steps in order.
 - **Roles:** `all_numeric_predictors()`, `all_nominal_predictors()`, `all_outcomes()` select columns by role instead of fragile name vectors.
 - Common steps: `step_impute_*`, `step_normalize`, `step_dummy`, `step_zv` (zero-variance), `step_corr` (remove redundant columns), `step_log`, `step_ns` (splines).
 - `prep(recipe, training = train_data)` learns constants from training rows; `bake(prep, new_data = ...)` applies the same rules to validation/test rows. This is what prevents leakage.
 
-## Parsnip: specification vs estimation (`parsnip`)
+## Name the model family before you fit (`parsnip`)
 
-- **Specification** describes the model family and hyperparameters, not the fitted object: e.g. `logistic_reg(penalty = tune(), mixture = 1) |> set_engine("glmnet") |> set_mode("classification")`.
+- **Goal — separate “what model?” from “fit it now”:** the **specification** names the family and unknown settings (example in slides: penalized logistic with `glmnet` engine).
 - `set_engine()` picks the computational backend (`"glmnet"`, `"ranger"`, `"xgboost"`, `"keras"`). Same user-facing call can map to different packages.
-- `translate()` shows how a parsnip call maps to the underlying function arguments—useful when debugging or reading tutorials written in native `xgboost` syntax.
+- `translate()` shows how the **same R call** maps to the **underlying package** (handy when a blog post uses `xgboost` arguments verbatim).
 - **Fit** happens later via `fit(workflow, data = train_data)` or `last_fit`, after workflows bundle preprocessing + model.
 
-## Workflows: glue recipe + model (`workflows`)
+## One object that runs preprocessing + model together (`workflows`)
 
-- `workflow() |> add_recipe(rec) |> add_model(mod)` produces a single object you can resample and tune as a unit.
+- **Goal — one object to resample:** `workflow() |> add_recipe(rec) |> add_model(mod)` packages preprocessing + model so cross-validation always runs both.
 - Benefits: the resampler sees the *whole* estimation chain; tuning grids can include recipe parameters (e.g. spline degrees) alongside model hyperparameters.
 - `workflow() |> add_formula(y ~ .) |> add_model(mod)` skips a recipe when you only need a bare formula, but recipes remain the right place for learned steps.
 
-## Tuning and metrics (`tune`, `dials`, `yardstick`)
+## Try settings honestly; score with the same metrics (`tune`, `dials`, `yardstick`)
 
-- Mark unknown parameters with `tune()` inside `parsnip` specs or `recipes` steps.
+- **Goal — try several settings honestly:** mark unknowns with `tune()`, build a candidate grid, and score each with the **same** metric set (e.g. ROC AUC + sensitivity) on held-out folds.
 - `extract_parameter_set_dials(wf)` + `grid_regular()` / `grid_space_filling()` build candidate grids; `tune_grid(wf, resamples = folds, grid = ..., metrics = metric_set(roc_auc, pr_auc))` evaluates them.
 - `collect_metrics()`, `autoplot()`, and `select_best()` summarize results; `finalize_workflow(wf, best_params)` plugs in winners.
 - `yardstick::metric_set` keeps evaluation consistent across models; choose metrics **before** peeking at test data.
 
 ## Tidymodels blueprint (overview)
 
-- `recipes`: preprocess, impute, encode, normalize
-- `parsnip`: model specification
-- `workflows`: combine recipe + model
-- `rsample` + `tune`: resampling and hyperparameter search
+- **Preprocessing steps** (`recipes`) — impute, encode, normalize, and the like
+- **Model specification** (`parsnip`) — choose the *family* before fitting
+- **Workflow** (`workflows`) — bind preprocessing + model so resampling sees both
+- **Splits + tuning** (`rsample`, `tune`) — cross-validation and hyperparameter search
 
 ## Mental checklist before you `fit`
 
-1. Declare split and resampling strategy.
-2. Build recipe on **training** data only; verify steps make sense for production features.
-3. Choose parsnip model + engine + mode; wrap in workflow.
-4. Pick metrics aligned with deployment costs; tune if needed.
-5. Fit final workflow on all training data; assess once on the locked-away test set (or use nested CV for honest tuning comparison).
+1. Decide how you will **split** and (if needed) **cross-validate**.
+2. Build preprocessing on **training** rows only; check each step makes scientific sense.
+3. Pick the **model family** + software **engine**; wrap in a **workflow**.
+4. Pick **scores** that match the biology or clinic question; tune if needed.
+5. Fit the final workflow on **all training data**; assess **once** on the held-out test set (or use nested CV for serious tuning comparisons).
 
 ## Reusable classification template
 
@@ -108,21 +115,21 @@ format:
 
 ## Shared pipeline template (single source)
 
-The **next slides** are a **slow walk-through** from `_includes/tidymodels-pipeline.qmd`: for each pipeline stage you get a **Palmer Penguins** explanation slide, then a **code** slide (Adelie vs Gentoo, same idea as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)), then **four figure** slides with short “how to read” intros. Stress proper train/test use in class. For **sex** or **three-species** tasks, see the other penguin notebooks from the **Data** page.
+The **next slides** are a **slow walk-through** of the same **Adelie vs Gentoo** penguin example as [Module 04](../modules/module-04-pipeline.qmd) and the [classification notebook](../notebooks/penguins-classification.Rmd): each stage has a **short intuition slide**, then **R code** (shared file used here and in Module 04), then **four figure** slides. Say out loud: in research you keep a final **test** set; some plots here reuse **fit rows** for speed. For **sex** or **three-species** notebooks, see the **Data** page.
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
 
-## From `caret` to `tidymodels` (migration mental map)
+## If you already know `caret` (optional bridge)
 
-- `caret::train(form, data, method, trControl, tuneGrid)` historically bundled preprocessing options; today **`tidymodels` separates concerns** more strictly (recipe vs model vs resampling).
-- Mapping cheat-sheet: `trainControl` \(\rightarrow\) `control_*()` functions; `method` string \(\rightarrow\) `parsnip` + `set_engine()`; `preProcess` \(\rightarrow\) `recipe` steps; `varImp` \(\rightarrow\) `vip` or model-specific tools.
-- Why switch: composability, safer tuning, easier alignment with **feature-store** style pipelines and production bundles (`vetiver`, Posit Connect).
+- Older **`caret::train()`** often mixed **preprocessing**, **model choice**, and **resampling** in one call; **`tidymodels`** splits those into clearer pieces so cross-validation cannot accidentally skip a step.
+- Rough map: training control \(\rightarrow\) `control_*()` helpers; method string \(\rightarrow\) model spec + `set_engine()`; `preProcess` \(\rightarrow\) recipe steps; variable importance \(\rightarrow\) `vip` or engine-specific summaries.
+- The payoff is the same idea as good lab practice: **every transformation is scripted and replayed** the same way on each fold.
 
-## Ensembles at the API level (`stacks`, `workflowsets`)
+## Comparing many models fairly (`workflowsets`, `stacks`)
 
-- **`workflowsets`** runs many `(recipe, model)` pairs across the same resamples—ideal for homework comparing five learners fairly.
-- **`stacks`** treats tuned workflows as level-0 candidates and learns a sparse combination (often a constrained glm) as a meta-learner—nice capstone after random forests and boosting.
-- Pedagogically: show **one** `workflowset` call on Thursday after students understand single workflows.
+- **`workflowsets`** — run **several** preprocessing + model combinations on the **same** cross-validated folds (fair homework comparisons).
+- **`stacks`** — treat a few tuned models as **candidates**, then learn a **simple combination** (meta-learner) on top — a nice capstone after forests and boosting.
+- Pedagogy: introduce **one** workflowset example after students are comfortable with a **single** workflow.
 
 ## Transition to Thursday
 

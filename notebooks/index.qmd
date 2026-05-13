@@ -2,28 +2,28 @@
 title: "Student notebooks"
 ---
 
-Run these documents in **RStudio** or **Positron** (or render with Quarto). The site uses **two parallel tracks**: synthetic **genes** (ground truth for teaching) and **Palmer Penguins** (one real dataset all week). See the **[Palmer Penguins data page](../dataset-penguins.qmd)** for context.
+Run these documents in **RStudio** or **Positron** (or render with Quarto). The site uses **two parallel tracks**: **simulated genes** (we designed the data so we know the truth) and **Palmer Penguins** (one real dataset all week). See the **[Palmer Penguins data page](../dataset-penguins.qmd)** for context.
 
 ::: {.hub-muted}
 Tip: use **Render** in the IDE, or from the project root run `quarto render notebooks/your-file.Rmd`.
 :::
 
-## Synthetic genes (known truth)
+## Synthetic genes (we know the answers)
 
-Ideal for understanding **LASSO, ridge, AIC**, and logistic regression when we **know** which simulated features matter.
+Ideal for **LASSO, ridge, AIC**, and logistic regression when we **know** which simulated features should matter.
 
-- [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — gene–trait simulation, visualization, `glmnet`, forward/backward AIC (`MASS::stepAIC`).
-- [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) — simulated gene expression and disease status, `glm`, `rpart`, confusion matrix, decision boundaries.
+- [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — gene–trait simulation, plots, **penalized regression** (`glmnet` package), forward/backward model choice by AIC (`MASS::stepAIC` in the code).
+- [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) — simulated gene expression and disease status, `glm` logistic regression, `rpart` tree, confusion table, decision-boundary plot.
 
 ## Palmer Penguins (continuity)
 
-Same real table as the **Tuesday** `tidymodels` slide pipeline and the **Data** page.
+Same real table as on the **Data** page and in **Tuesday’s step-by-step “fit a model properly” slides** (the code there uses `tidymodels`; the notebooks below use mostly familiar `lm` / `glm` / `rpart` plus a few add-on packages).
 
-- [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — EDA, correlation / `ggpairs`, ridge and LASSO on **`body_mass_g`**.
-- [penguins-classification.Rmd](penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression, `rpart`, confusion matrix, 2D decision regions.
-- [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) — predict **female vs male** from morphology ( **`species` omitted on purpose** ), logistic + `rpart`, stratified train/test.
-- [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) — **three species**: `nnet::multinom`, multiclass `rpart`, confusion matrices + heatmap.
+- [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — plots and correlations, then ridge/LASSO to predict **body mass** (code uses `glmnet` like the gene notebook).  
+- [penguins-classification.Rmd](penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression and a tree (`rpart`), who-was-misclassified table, simple 2D decision picture.  
+- [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) — **female vs male** from size measures (**species left out on purpose**), train/test split, same two model types.  
+- [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) — **three species**: multinomial logistic regression (`nnet::multinom`) and a multiclass tree, confusion tables and a heatmap.
 
 ## Requirements
 
-Install as needed: `palmerpenguins`, `tidyr`, `nnet`, `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `rcartocolor` (gene linear notebook theme).
+Install as needed (copy–paste into R): `palmerpenguins`, `tidyr`, `nnet`, `glmnet`, `caret`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `tidymodels` (Tuesday slides / Module 04), `rcartocolor` (optional colours in the gene linear notebook).

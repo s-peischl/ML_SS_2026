@@ -4,24 +4,24 @@ title: "Module Library"
 
 # Reusable teaching modules
 
-These pages **mirror the week’s arc** but live outside the slide decks: you can skim them before class, point students to them for refresher reading, or grow them into longer notes over time.
+These pages **follow the same story as the slides**, but you can read them slowly on the website: good for **before class**, **catching up after a missed day**, or **review** before an exam.
 
-The course uses **two data tracks**: synthetic **genes** (see the gene notebooks) and **[Palmer Penguins](../dataset-penguins.qmd)** for real-data continuity.
+We use **two kinds of examples**: **simulated genes** (we wrote the rules, so we know what is true) and **[Palmer Penguins](../dataset-penguins.qmd)** (real measurements you can plot and argue about).
 
-| Module | Day focus | Role |
-|--------|-----------|------|
-| [01 — Foundations](#module-01-foundations-and-generalization) | Monday | Splits, bias–variance, data card |
-| [02 — Regularization](#module-02-regularization) | Monday | Ridge, lasso, AIC, elastic net |
-| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Tuesday | Two cultures, tree intuition |
-| [04 — Tidymodels pipeline](#module-04-tidymodels-pipeline) | Tuesday | Full `tidymodels` walk-through (includes shared code) |
-| [05 — Advanced models](#module-05-advanced-models) | Thursday | RF, boosting, NNs at API level |
-| [06 — Metrics & SHAP](#module-06-metrics-imbalance-and-shap) | Thursday | Metrics, imbalance, interpretability |
+| Module | Day focus | In plain language |
+|--------|-----------|-------------------|
+| [01 — Foundations](#module-01-foundations-and-generalization) | Monday | Train vs test, “too wiggly” models, one-page **data description** habit |
+| [02 — Regularization](#module-02-regularization) | Monday | Ridge, lasso, and stepwise/AIC — when to shrink coefficients or drop predictors |
+| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Tuesday | Two ways of thinking about statistics + **decision trees** (“if–then” rules) |
+| [04 — Modeling pipeline in R](#module-04-tidymodels-pipeline) | Tuesday | **Same step-by-step code as Tuesday’s slides**: preprocess, fit, tune, and plot a penguin classifier (uses the `tidymodels` packages) |
+| [05 — Advanced models](#module-05-advanced-models) | Thursday | Stronger “black box” models (random forest, boosting, neural nets) — **same checking discipline**, bigger capacity |
+| [06 — Metrics & explanations](#module-06-metrics-imbalance-and-shap) | Thursday | Picking scores that match the biology/clinic question, imbalance, and reading **SHAP** plots carefully |
 
 ---
 
 ## Module 01: Foundations and Generalization {#module-01-foundations-and-generalization}
 
-Supervised learning setup, **train / validation / test**, bias–variance language, and a lightweight **data card** habit. Ties the **gene** simulations (known truth) to **Palmer Penguins** (real measurements) so students see the same ideas on two tables.
+**Predicting an outcome from measurements**, splitting data so you are honest about performance, and the “too simple vs too wiggly” picture you see on Monday. Links **gene simulations** and **penguins** so the same ideas appear on two tables.
 
 **[Open Module 01 →](module-01-foundations.qmd)**
 
@@ -29,7 +29,7 @@ Supervised learning setup, **train / validation / test**, bias–variance langua
 
 ## Module 02: Regularization {#module-02-regularization}
 
-Ridge and lasso as **continuous shrinkage**, AIC / stepwise as **discrete** search, and when **elastic net** is a sensible middle ground. Links Monday slides to both the **gene LASSO** notebook and **penguin mass** ridge/LASSO practice.
+**Ridge** and **lasso** gently pull coefficients toward zero; **AIC / stepwise** search different subsets of predictors. Connects Monday’s slides to the **gene LASSO** notebook and **penguin body-mass** shrinkage practice.
 
 **[Open Module 02 →](module-02-regularization.qmd)**
 
@@ -37,30 +37,30 @@ Ridge and lasso as **continuous shrinkage**, AIC / stepwise as **discrete** sear
 
 ## Module 03: Trees and Two Cultures {#module-03-trees-and-two-cultures}
 
-Statistical vs algorithmic cultures at a high level, then **decision tree** mechanics (splits, impurity, depth) connected to the **penguin** classification notebooks and the Tuesday slide deck.
+Two traditions in statistics (interpretable models vs flexible prediction), then **decision trees**: sequential splits, depth, and what a **tree diagram** means for penguins.
 
 **[Open Module 03 →](module-03-trees-and-cultures.qmd)**
 
 ---
 
-## Module 04: Tidymodels Pipeline {#module-04-tidymodels-pipeline}
+## Module 04: Modeling pipeline in R {#module-04-tidymodels-pipeline}
 
-The **canonical code path**: a full **Palmer Penguins** (Adelie vs Gentoo) `tidymodels` workflow embedded via `{{< include >}}` from `_includes/tidymodels-pipeline.qmd` — same content as the paced block on **Tuesday** slides and the **penguins-classification** notebook story.
+The **same worked example as Tuesday’s deck**: Adelie vs Gentoo penguins, with **plots after tuning** (accuracy-type scores, variable importance, tree picture, ROC curve). All code lives in one shared file so slides and this page **never drift apart**.
 
 **[Open Module 04 →](module-04-pipeline.qmd)**
 
 ---
 
-## Module 05: Advanced Models {#module-05-advanced-models}
+## Module 05: Advanced models {#module-05-advanced-models}
 
-Random forests, boosting, and neural nets as **higher-capacity** learners; emphasis on **keeping the same validation discipline** and swapping **`mod_spec`** inside the Module 04 skeleton.
+Random forests, boosting, and neural nets as **more flexible** learners. Emphasis: keep **cross-validation and metrics** strict, and **swap the type of model** in the same overall workflow you learned on Tuesday.
 
 **[Open Module 05 →](module-05-advanced-models.qmd)**
 
 ---
 
-## Module 06: Metrics, Imbalance, and SHAP {#module-06-metrics-imbalance-and-shap}
+## Module 06: Metrics, imbalance, and SHAP {#module-06-metrics-imbalance-and-shap}
 
-Metric choice tied to **costs**, class imbalance without accuracy tunnel vision, and **SHAP** with causal guardrails. Points to **Thursday** slides and **multiclass / sex** penguin notebooks for concrete confusion matrices.
+Choosing **numbers that match the decision** (miss a case vs call a false alarm), **class imbalance**, and using **SHAP** and importance plots as **descriptions** — not as proof you should intervene in a biological system.
 
 **[Open Module 06 →](module-06-evaluation-and-interpretability.qmd)**

@@ -11,10 +11,10 @@ format:
 
 ## Learning objectives
 
-- Set up a predictive workflow for supervised learning
-- Diagnose underfitting and overfitting
-- Understand linear vs logistic regression roles
-- Introduce ridge and lasso as regularization tools
+- Set up a **prediction** problem the same way you would set up an experiment: what is \(y\), what are the \(x\)’s, and which rows are for **training vs checking**?
+- Diagnose **underfitting** and **overfitting** with plots and simple scores (ideas you already know from linear models).
+- See **logistic regression** as the natural extension when \(y\) is yes/no.
+- See **ridge and lasso** as ways to stabilize coefficients when predictors overlap.
 
 ## Navigation
 

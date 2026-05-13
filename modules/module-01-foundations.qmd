@@ -4,14 +4,14 @@ title: "Module 01: Foundations and Generalization"
 
 ## Learning objectives
 
-- Frame **supervised learning** as predicting an outcome from measured inputs, with a clear train / validation / test story.
+- Frame **supervised learning** (predicting an outcome \(y\) from measured predictors \(x\)) with a clear **train / validation / test** story.
 - Connect **bias–variance** and “too wiggly vs too stiff” to plots students already see on Monday.
 - Start the habit of a **data card**: what was measured, who is missing, what you would not claim from a score alone.
 
 ## Key messages
 
 - **Simple baselines** (linear models, clear splits) anchor everything that comes later.
-- The course uses **two data tracks**: synthetic **genes** (known ground truth) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
+- The course uses **two data tracks**: **simulated genes** (we know the true coefficients) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
 
 ## Concept outline
 
@@ -22,8 +22,8 @@ title: "Module 01: Foundations and Generalization"
 
 ### Splits and honest evaluation
 
-- **Training** fits parameters; **validation** (or cross-validation) chooses complexity or hyperparameters; **test** (or a locked holdout) is touched rarely.
-- Say explicitly why **preprocessing that learns from data** (means, factor levels, PCA) must be **inside** the resampling fold or workflow, not “fit on all rows first.”
+- **Training** fits the model; **validation** (or cross-validation) picks complexity or tuning knobs; **test** (or a locked holdout) is used **rarely**, for a final honest score.
+- If a step **learns from the data** (means, categories, principal components), it must be **re-fit inside each cross-validation fold** — not on the whole table first — otherwise future rows leak information backward.
 
 ### Bias and variance (Monday vocabulary)
 
@@ -39,7 +39,7 @@ title: "Module 01: Foundations and Generalization"
 
 - **Slides:** [Monday — Foundations and regularization](../slides/day-01-monday.qmd)
 - **Curriculum:** [Curriculum outline](../curriculum-outline.qmd) (Monday: Foundations and Regularization)
-- **Notebooks — genes:** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)
+- **Notebooks — genes:** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd) (same packages appear in the code: `glmnet`, `glm`, `rpart`, …)
 - **Notebooks — penguins:** [body mass](../notebooks/penguins-body-mass.Rmd), [classification](../notebooks/penguins-classification.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd), [three species](../notebooks/penguins-species-multiclass.Rmd)
 - **Data reference:** [Palmer Penguins](../dataset-penguins.qmd)
 - **Module library:** [Back to all modules](index.qmd)

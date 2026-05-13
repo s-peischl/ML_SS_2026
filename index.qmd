@@ -36,7 +36,7 @@ Palmer Penguins
 - **[About the dataset](dataset-penguins.qmd)** — variables, biology, caveats, and how we reuse penguins **Monday → Thursday**  
 - Links to **penguin-only** notebooks from that page (mass, binary species, sex, three-class species)
 
-Synthetic **gene** notebooks stay the place for **known-truth** LASSO / ridge pedagogy.
+Synthetic **gene** notebooks are there so we **know the true story behind the data** (which “genes” really matter) while we teach LASSO, ridge, and AIC.
 :::
 
 ::: {.hub-card}
@@ -59,7 +59,7 @@ Hands-on notebooks
 ### Try the code yourself
 
 - **[Notebook home](notebooks/index.qmd)** — all notebooks + setup in plain steps  
-- **Genes (known truth):** [linear + LASSO](notebooks/linear-regression-lasso.Rmd), [logistic + tree](notebooks/logistic-regression-gene-disease.Rmd)  
+- **Genes (simulation where we know the answers):** [linear + LASSO](notebooks/linear-regression-lasso.Rmd), [logistic + tree](notebooks/logistic-regression-gene-disease.Rmd)  
 - **Palmer Penguins:** [body mass regression](notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](notebooks/penguins-classification.Rmd), [sex prediction](notebooks/penguins-sex-classification.Rmd), [three species](notebooks/penguins-species-multiclass.Rmd)  
 
 Go as fast or slow as you like; the notebooks are for **you**, not for a grade on this site.
@@ -72,7 +72,7 @@ Outline & modules
 ### If you want more structure
 
 - **[Curriculum outline](curriculum-outline.qmd)** — how the three days connect (also useful if you miss a session)  
-- **[Module library](modules/index.qmd)** — six draft modules (01–06): [Foundations](modules/index.qmd#module-01-foundations-and-generalization), [Regularization](modules/index.qmd#module-02-regularization), [Trees](modules/index.qmd#module-03-trees-and-two-cultures), [Tidymodels](modules/index.qmd#module-04-tidymodels-pipeline), [Advanced models](modules/index.qmd#module-05-advanced-models), [Metrics & SHAP](modules/index.qmd#module-06-metrics-imbalance-and-shap)  
+- **[Module library](modules/index.qmd)** — six short topic pages (01–06): [Foundations](modules/index.qmd#module-01-foundations-and-generalization), [Regularization](modules/index.qmd#module-02-regularization), [Trees](modules/index.qmd#module-03-trees-and-two-cultures), [**Modeling pipeline in R**](modules/index.qmd#module-04-tidymodels-pipeline) (Tuesday walk-through, `tidymodels`), [Advanced models](modules/index.qmd#module-05-advanced-models), [Metrics & explanations](modules/index.qmd#module-06-metrics-imbalance-and-shap)  
 
 Your instructors may point you to extra readings or exercises; those live wherever the course announces them.
 :::
@@ -85,19 +85,19 @@ Your instructors may point you to extra readings or exercises; those live wherev
 Think of it as one story in three chapters: **see the pattern**, **keep your work honest**, then **choose and explain** models without pretending they’re magic. Curiosity beats perfection.
 :::
 
-- **Monday** — predictions, when a model is “too wiggly,” and friendly introductions to linear models, logistic regression, and a bit of regularization. You’ll see **synthetic genes** (known truth) and **Palmer Penguins** (real measurements) in parallel.  
-- **Tuesday** — decision trees and how we split the world into simple rules — plus habits that keep code readable when things get more complex.  
+- **Monday** — predictions, when a model is “too wiggly,” and gentle introductions to linear models, logistic regression, and a bit of regularization. You’ll see **simulated genes** (we scripted the biology so we know what’s true) and **Palmer Penguins** (real measurements) side by side.  
+- **Tuesday** — decision trees (“if bill length is above this line, go left…”) and how to **fit and check models in a tidy, repeatable way** in R so Thursday still makes sense.  
 - **Thursday** — stronger models, what to watch when outcomes aren’t balanced, and how to discuss **why** a model leaned one way — without claiming it “knows” biology or medicine by itself.
 :::
 
 ::: {.callout-note collapse="true" appearance="simple"}
-## For instructors & TAs (technical)
+## For instructors & TAs
 
 - **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.  
 
 - **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the two-track story (genes + Palmer Penguins), calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
 - **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
-- **Palmer Penguins** — [About the dataset](dataset-penguins.qmd); Tuesday `tidymodels` include uses the same **Adelie vs Gentoo** slice as the penguin classification notebook.  
+- **Palmer Penguins** — [About the dataset](dataset-penguins.qmd); Tuesday’s **modeling pipeline** examples use the same **Adelie vs Gentoo** setup as the penguin classification notebook (implemented with the `tidymodels` R packages).  
 
-- **Shared tidymodels include** — `_includes/tidymodels-pipeline.qmd` (slides + Module 04); link or excerpt in class as needed.
+- **Single source for that pipeline code** — one shared include file drives Tuesday slides and Module 04 (`_includes/tidymodels-pipeline.qmd`); edit there only.
 :::

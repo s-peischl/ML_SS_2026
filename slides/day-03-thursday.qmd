@@ -11,10 +11,10 @@ format:
 
 ## Learning objectives
 
-- Compare random forests, XGBoost, and neural networks
-- Handle imbalance and missingness in pipelines
-- Select metrics based on problem objectives
-- Introduce variable importance and SHAP intuition
+- Compare **random forests**, **gradient boosting (XGBoost)**, and **neural networks** as “more flexible” learners after trees — with the same **train/test** discipline.
+- Talk about **imbalance and missing values** the way you would in a cohort study: who is under-represented, what gets dropped, what goes wrong if you fix data using the **wrong** rows.
+- Pick **scores** (accuracy is not enough) that match the **clinical or biological** question.
+- Read **variable importance** and **SHAP** plots as **descriptive**, not as proof of causation.
 
 ## Navigation
 
@@ -31,20 +31,20 @@ format:
 
 ## Data preparation at this stage
 
-- Missing data strategy should live in the recipe
-- Avoid test leakage when imputing
-- Keep transformations reproducible inside workflows
+- **Missingness:** decide *before* looking at test performance how you will handle NA (drop, impute, model separately) — and do it **inside** the same workflow you resample, so test rows never “teach” the imputer.
+- **Leakage:** if a column would not exist in real deployment, it should not be in the model.
+- **Reproducibility:** every transformation should be **scripted**, not a one-off spreadsheet edit.
 
-## Same tidymodels template (swap model spec)
+## Same modeling template as Tuesday (swap the model type)
 
-Thursday uses the **same** `_includes/tidymodels-pipeline.qmd` as Tuesday: keep **`folds`**, **`metric_set(...)`**, and the **`tune_grid` → `select_best` → `finalize_workflow` → `fit`** rhythm fixed; change **`mod_spec`** (e.g. `rand_forest` + `ranger`, `boost_tree` + `xgboost`, `mlp` + `nnet`) and any **recipe** steps (missingness, imbalance, feature engineering).
+Thursday reuses the **same Adelie vs Gentoo penguin code path** as Tuesday and [Module 04](../modules/module-04-pipeline.qmd): keep **cross-validation**, **the same score sheet**, and the same “**preprocess + fit together**” idea; change mainly **which learner** you drop in (random forest, boosting, small neural net, …) and any preprocessing that reflects **imbalance or missing data**.
 
-- **Step-by-step code + figures** (tuning plot, `vip`, `rpart.plot`, ROC): see **Tuesday** slides *Shared pipeline template* and [Module 04: Tidymodels Pipeline](../modules/module-04-pipeline.qmd). **Same penguins table** as [dataset-penguins](../dataset-penguins.qmd) and [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd). For **three-species** practice, see [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd).
+- **Step-by-step code + figures** (tuning plot, importance, tree picture, ROC curve): still on **Tuesday** under *Shared pipeline template* and in **Module 04**. **Same penguins table** as [dataset-penguins](../dataset-penguins.qmd) and [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd). For **three-species** practice, see [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd).
 
 ## Class imbalance (tie-in: Palmer Penguins)
 
 - **Three species** on the full dataset are **not** as skewed as many clinical endpoints — use them to discuss **what imbalance would look like**, then contrast with **gene** disease prevalence in the simulation notebooks.
-- **Adelie vs Gentoo** (Tuesday pipeline slice) is closer to balanced; still practice **sensitivity/specificity** from `metric_set` and ask when **accuracy** misleads.
+- **Adelie vs Gentoo** (Tuesday’s teaching slice) is fairly balanced; still ask when **overall accuracy** hides poor performance on one species.
 - Accuracy can be misleading when classes are skewed
 - Use class weights, resampling, or threshold tuning
 - Evaluate with precision/recall-centric metrics when needed
@@ -55,11 +55,11 @@ Thursday uses the **same** `_includes/tidymodels-pipeline.qmd` as Tuesday: keep 
 
 ## Metrics toolbox
 
-- Accuracy: useful only with balanced classes and symmetric costs
-- Precision/recall/F1: useful when false positives and false negatives are asymmetric
-- ROC-AUC: ranking quality across thresholds
-- PR-AUC: better signal for rare positive class
-- Calibration: do probabilities match observed frequencies?
+- **Accuracy:** tempting, but only fair when mistakes in both directions cost the same and classes are not wildly uneven.
+- **Precision / recall / F1:** useful when **false positives** and **false negatives** carry different costs (think screening vs confirmation).
+- **ROC-AUC:** summarizes how well the model **ranks** individuals by risk across thresholds.
+- **PR-AUC:** often clearer when the **positive class is rare** (think serious side effect).
+- **Calibration:** do predicted **probabilities** line up with observed frequencies when you group similar predictions?
 
 ## What to optimize and when
 
@@ -82,15 +82,15 @@ Thursday uses the **same** `_includes/tidymodels-pipeline.qmd` as Tuesday: keep 
 
 ## SHAP: Shapley values for ML
 
-- SHAP (**SH**apley **A**dditive ex**P**lanations) builds on cooperative game theory: each feature is a “player” contributing to the prediction surplus over a baseline (expected model output).
-- For an additive explanation model \(\hat f(x) \approx \phi_0 + \sum_j \phi_j(x)\), SHAP values \(\phi_j\) are constructed so they **sum to the deviation** from the baseline: \(\sum_j \phi_j = \hat f(x) - \phi_0\).
-- Different **SHAP formulations** correspond to different ways of averaging over feature coalitions (interventional vs conditional on correlations); this matters when predictors are dependent.
+- **SHAP** (SHapley Additive exPlanations) answers: “**which predictors pushed this one prediction** up or down from an average baseline?” — useful for communication, not a license to intervene in biology without an experiment.
+- Mathematically, SHAP builds an **additive** explanation so the pieces **sum** to the gap between baseline and prediction — that is why waterfall plots “close.”
+- When predictors are **correlated**, different SHAP variants can disagree: treat plots as **sensitivity analyses**, not ground truth.
 
 ## TreeSHAP vs KernelSHAP (practical angle)
 
-- **TreeSHAP** exploits tree structure (random forests, GBMs) for exact or efficient Shapley-style attributions under the model’s native partition of the input space—fast at scale for tree ensembles.
-- **KernelSHAP** is model-agnostic: it approximates Shapley values by sampling coalitions and fitting a weighted linear model around the prediction—flexible but slower and more noise-sensitive, especially in high dimensions.
-- Rule of thumb: use **TreeSHAP** for `xgboost` / `ranger` / `rpart`; consider **KernelSHAP** (or other explainers) when you must explain arbitrary black-box APIs.
+- **TreeSHAP:** fast, tailored to **tree-based** models (random forest, boosting, single `rpart` trees).
+- **KernelSHAP:** slower, but works for **any** fitted model API — pay attention to noise in small-*n* settings.
+- **Rule of thumb:** prefer TreeSHAP for tree ensembles; reach for KernelSHAP when you must explain a black box you cannot re-implement in R.
 
 ## Reading SHAP plots
 

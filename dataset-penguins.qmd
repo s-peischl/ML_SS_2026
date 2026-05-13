@@ -5,12 +5,12 @@ format:
     toc: true
 ---
 
-This page describes the **Palmer Penguins** dataset, which we use **across the week** for visualization, regression, classification, and the shared `tidymodels` pipeline on the Tuesday slides.
+This page describes the **Palmer Penguins** dataset, which we use **all week** for plots, regression (predicting a number), and classification (predicting a category). **Tuesday’s slides** walk through a full **prediction workflow in R** using the same penguin table (the code uses the `tidymodels` family of packages — you do not need to have seen them before Monday’s `lm` / `glm` work).
 
 ::: {.callout-note appearance="simple"}
 ## Synthetic gene notebooks (unchanged)
 
-For **known ground truth** when teaching LASSO, ridge, and AIC (which coefficients *should* matter), we keep separate **simulated gene** notebooks — they are not replaced by penguins:
+For teaching **LASSO, ridge, and AIC**, we keep **simulated gene** notebooks where **we wrote the rules ourselves**, so we know which coefficients *should* matter — they are not replaced by penguins:
 
 - [linear-regression-lasso.Rmd](notebooks/linear-regression-lasso.Rmd)  
 - [logistic-regression-gene-disease.Rmd](notebooks/logistic-regression-gene-disease.Rmd)  
@@ -20,7 +20,7 @@ Palmer Penguins examples live in **additional** notebooks (linked below).
 
 ## What it is
 
-The **Palmer Archipelago** penguins dataset (Horst *et al.*, 2020) bundles size measurements for three penguin species. It ships with the R package **`palmerpenguins`** as `palmerpenguins::penguins`.
+The **Palmer Archipelago** penguins dataset (Horst *et al.*, 2020) bundles size measurements for three penguin species. In R you can load it after installing the **`palmerpenguins`** add-on package.
 
 ```r
 library(palmerpenguins)
@@ -42,21 +42,21 @@ data(penguins, package = "palmerpenguins")
 ## Why we use it in this course
 
 - **Plots read well in class** (colour by `species`, pairs of measurements).
-- **Same table everywhere** — Monday EDA, Tuesday `tidymodels` pipeline, Thursday metrics / interpretability talking points.
-- You can practice **regression** (e.g. predict `body_mass_g`), **binary classification** (species slice, or **sex**), and **three-species** models on one familiar object.
+- **Same table everywhere** — Monday exploratory plots, Tuesday’s full **fit–check–tune** example in R, Thursday’s discussion of scores and explanations.
+- You can practice **regression** (for example predicting **body mass**), **two-group classification** (one species pair, or **sex**), and **three-species** classification on one familiar dataset.
 
 ## Student notebooks (Palmer Penguins only)
 
-- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — EDA + predicting body mass (continuous outcome).  
-- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic + tree, confusion matrix, 2D regions.  
-- [penguins-sex-classification.Rmd](notebooks/penguins-sex-classification.Rmd) — **Sex** from morphology (species **not** used as a predictor; discuss why).  
-- [penguins-species-multiclass.Rmd](notebooks/penguins-species-multiclass.Rmd) — **All three species**: multinomial logit + multiclass tree, test-set confusion.
+- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — explore the data, then predict **body mass** from bill and flipper measurements (with shrinkage methods you can compare to `lm`).  
+- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression and a classification tree, confusion table, simple 2D “who would we call Gentoo?” picture.  
+- [penguins-sex-classification.Rmd](notebooks/penguins-sex-classification.Rmd) — predict **female vs male** from size measures ( **`species` is left out on purpose** so the task is not trivial — discuss why in class).  
+- [penguins-species-multiclass.Rmd](notebooks/penguins-species-multiclass.Rmd) — **all three species**: multinomial logistic model and a tree, test-set confusion tables.
 
 ## Caveats (say these out loud)
 
 - **Small sample** (~344 rows after dropping missing values) — use for pedagogy, not for “big data” claims.
 - **Observational** — strong predictions do **not** prove causal mechanisms in biology.
-- **Missing `sex`** — many workflows use `tidyr::drop_na()` or explicit imputation in a `recipe`.
+- **Missing sex** — many analyses simply **drop rows with incomplete sex**; in more advanced work you would **fill in or model missingness** inside the same workflow you use to fit the predictor (so you do not sneak information from the test fold into the training fold).
 - **Leakage awareness** — if the prediction task is trivial given the inputs (e.g. near-perfect separation), use it to discuss **evaluation** and **honest splits**, not to oversell accuracy.
 
 ## Citation

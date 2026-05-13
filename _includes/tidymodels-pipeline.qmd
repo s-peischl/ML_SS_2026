@@ -2,10 +2,19 @@
 
 We use **one table** all the way through: Palmer Penguins restricted to **Adelie vs Gentoo** (same as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)).
 
-Each **next block** follows the same rhythm: **first** a slide with intuition tied to penguin columns, **then** a slide with the matching `tidymodels` code (run in order).
+Each **next block** follows the same rhythm: **first** intuition tied to penguin columns, **then** the matching R code (uses the **`tidymodels`** packages — names like `recipe` and `workflow` are just helpers around ideas you know from `lm`/`glm`).
 
 You will move through: **data → recipe → model spec → workflow → resampling + tuning → finalize + fit → four diagnostic figures**.
 
+### Mini-glossary (read once)
+
+- **`peng_cls`** — the cleaned penguin table used in every chunk below (Adelie vs Gentoo, complete cases).
+- **Recipe** — a reusable list of preprocessing steps (dummy coding for factors, scaling numbers, …) learned **inside** each cross-validation fold.
+- **Model spec** — the **type** of model and which knobs are unknown **before** tuning (here: depth and minimum leaf size of a tree); not the fitted tree yet.
+- **Workflow** — preprocessing + model stuck together so the computer never “forgets” to redo the preprocessing when you refit.
+- **`vfold_cv`** — split data into *k* folds for **cross-validation** (here \(k=5\)), stratifying on `y` so each fold keeps both species.
+- **`tune_grid`** — try a grid of tuning values; each fit uses only **training folds**, each score uses the **held-out fold**.
+- **`finalize_workflow` + `fit`** — plug in the winning tuning values, then fit (in class we fit on **all** rows for speed; in research, reserve a true test set).
 
 ## Step 0 — The prediction task (Palmer Penguins)
 

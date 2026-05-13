@@ -6,11 +6,11 @@ title: "Module 05: Advanced Models"
 
 - Name **random forests**, **gradient boosting** (e.g. XGBoost), and **neural networks** as the usual “strong tabular learners” after single trees.
 - Explain the **capacity vs validation** tradeoff: more flexibility needs tighter resampling, more careful tuning, and clearer metrics.
-- Describe how to **swap `mod_spec`** inside the same `tidymodels` workflow skeleton used on Tuesday.
+- Describe how to **swap the type of model** (still in R, still with the same validation plan) inside the **Tuesday / Module 04 workflow** you already saw — in code this is changing the **model specification** object (`mod_spec` in `tidymodels`).
 
 ## Key messages
 
-- **Same recipe + resampling + metrics**, different **engine** — keeps student experiments comparable.
+- **Same preprocessing + cross-validation + score sheet**, different **fitting engine** underneath — that is how you compare methods fairly in class projects.
 - **Never** skip the “what would break on small *n* penguins?” conversation when demoing huge models.
 
 ## Concept outline
@@ -29,12 +29,12 @@ title: "Module 05: Advanced Models"
 
 ### Practical teaching path
 
-- Start from [Module 04](module-04-pipeline.qmd): replace `decision_tree` + `rpart` with `rand_forest` + `ranger` or `boost_tree` + `xgboost` on **`peng_cls`** or a train split; keep `tune_grid` discipline.
+- Start from [Module 04](module-04-pipeline.qmd): in the code, replace the single **classification tree** with a **random forest** or **gradient boosting** model on the **same Adelie/Gentoo penguin table**; keep the same cross-validation grid discipline.
 
 ## Course links
 
 - **Slides:** [Thursday — Advanced models and explainability](../slides/day-03-thursday.qmd)
-- **Pipeline reference:** [Module 04](module-04-pipeline.qmd) (includes `_includes/tidymodels-pipeline.qmd`)
+- **Pipeline reference:** [Module 04](module-04-pipeline.qmd) (same code block as Tuesday slides)
 - **Notebooks:** any [penguin classification](../notebooks/penguins-classification.Rmd) notebook as the **prediction task** you reuse when swapping engines
 - **Curriculum:** Thursday progression in [curriculum outline](../curriculum-outline.qmd)
 - **Module library:** [Back to all modules](index.qmd)
@@ -42,6 +42,6 @@ title: "Module 05: Advanced Models"
 ::: {.callout-note appearance="minimal"}
 ## Draft / TODO
 
-- Add **one** minimal `parsnip` spec table (engine, package, when to use) — static markdown table.
+- Add **one** compact table: model family → R package you will see in tutorials → “use when…” (optional `parsnip` function names for instructors).
 - Optional: link to official **tidymodels** tutorials for `xgboost` and `torch` when the course adds a lab machine with GPU.
 :::

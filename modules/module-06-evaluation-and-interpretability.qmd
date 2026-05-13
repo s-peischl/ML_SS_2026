@@ -4,14 +4,14 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 ## Learning objectives
 
-- Choose **metrics** that match costs (FP vs FN), prevalence, and whether you care about **ranking** or **calibrated probabilities**.
+- Choose **scores** that match real costs (false alarm vs missed case), disease **prevalence**, and whether you care about **ranking** people or about **well-calibrated probabilities**.
 - Diagnose **class imbalance** without fetishizing accuracy; use sensitivity, specificity, ROC vs PR as appropriate.
-- Introduce **SHAP** as a descriptive attribution tool with **causal** and **dependence** caveats.
+- Introduce **SHAP** (SHapley Additive exPlanations) as a way to **attribute** a single prediction to predictors — with **causal** and **correlation** caveats: a big bar does not mean “knocking out this gene cures the disease.”
 
 ## Key messages
 
 - **Interpretability complements validation**; neither replaces honest held-out or nested evaluation.
-- **Palmer Penguins** supports subgroup checks (e.g. by `species` or `island`) as a toy fairness-style lens — with small *n*, treat as pedagogy not audit.
+- **Palmer Penguins** supports “what if we look within **species** or **island**?” as a **toy** fairness-style check — with only a few hundred birds, treat it as **classroom pedagogy**, not a regulatory audit.
 
 ## Concept outline
 
@@ -19,7 +19,7 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 - Accuracy only when costs symmetric and prevalence balanced.
 - Precision / recall / F1 when costs asymmetric or positives rare.
-- ROC-AUC vs PR-AUC: ranking vs emphasis on rare positives.
+- ROC-AUC vs PR-AUC: **ROC** emphasizes ranking across thresholds; **PR** often helps when the **positive class is rare**.
 - **Calibration**: do predicted probabilities match observed frequencies?
 
 ### Imbalance and thresholds
@@ -28,14 +28,14 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 ### Variable importance and SHAP
 
-- Model-specific importance vs permutation importance.
-- SHAP as Shapley-style attributions; **TreeSHAP** vs **KernelSHAP** at high level.
+- Model-specific importance vs **permutation** importance (shuffle one column, see how much error jumps).
+- SHAP values as a Shapley-style **share of the prediction**; **TreeSHAP** vs **KernelSHAP** are two algorithm choices for computing SHAP (speed vs flexibility) — details stay on Thursday slides.
 - **Guardrail:** association \(\neq\) intervention; SHAP is not a license to change biology or policy without design.
 
 ## Course links
 
 - **Slides:** [Thursday deck](../slides/day-03-thursday.qmd) (metrics, imbalance, SHAP sections)
-- **Notebooks — penguins:** [three-species](../notebooks/penguins-species-multiclass.Rmd) (multiclass confusion — which class is hardest?), [sex](../notebooks/penguins-sex-classification.Rmd) (binary with different base rates after `drop_na`)
+- **Notebooks — penguins:** [three-species](../notebooks/penguins-species-multiclass.Rmd) (which species is hardest after a train/test split?), [sex](../notebooks/penguins-sex-classification.Rmd) (binary sex after dropping incomplete rows)
 - **Data:** [Palmer Penguins](../dataset-penguins.qmd)
 - **Curriculum:** Thursday consolidation and humility prompts in [curriculum outline](../curriculum-outline.qmd)
 - **Module library:** [Back to all modules](index.qmd)

@@ -4,25 +4,25 @@ title: "Module 03: Trees and Two Cultures"
 
 ## Learning objectives
 
-- Contrast **statistical** (model-first, uncertainty central) and **algorithmic** (prediction-first, flexible learners) cultures — and why good practice blends them.
-- Explain **decision trees** as recursive partitioning: splits, impurity, depth, and min-leaf-size as complexity knobs.
-- Connect tree **geometry** (axis-aligned boxes in feature space) to what students see in `rpart.plot` on penguins.
+- Contrast **statistical** (start with a model you can write down, emphasize uncertainty) and **algorithmic** (start with flexible prediction, still check errors honestly) viewpoints — good practice borrows from both.
+- Explain **decision trees** as a chain of **if–then** rules: each split asks a yes/no question about one predictor; depth and minimum leaf size control how detailed the tree may get.
+- Connect the **tree picture** (rectangular regions in “measurement space”) to what you see in an **`rpart.plot`** for penguins.
 
 ## Key messages
 
 - Trees are a **bridge**: interpretable splits today, ensembles and boosting tomorrow.
-- The same **Palmer Penguins** table supports both **logistic** intuition (Monday) and **tree + tidymodels** workflows (Tuesday).
+- The same **Palmer Penguins** table supports **logistic regression** (Monday feel) and **trees plus Tuesday’s full “fit and tune in R” walk-through** (Module 04).
 
 ## Concept outline
 
 ### Two cultures (compressed)
 
-- Breiman-style framing: different priorities on **assumptions** vs **error on future data**; both care about **leakage** and **evaluation**.
+- Different priorities on **writing the model first** vs **minimizing prediction error first**; both care about **leakage** and **fair evaluation**.
 
 ### Tree mechanics
 
 - Greedy binary splits; Gini / entropy; stopping vs pruning.
-- **Interactions** are automatic: sequential splits encode feature combinations without hand-written `x1:x2`.
+- **Interactions** show up automatically: a path of splits is already a combination of predictors — you do not have to type `x1:x2` by hand.
 
 ### When trees shine or struggle
 
@@ -34,12 +34,12 @@ title: "Module 03: Trees and Two Cultures"
 - **Slides:** [Tuesday — Trees and pipelines](../slides/day-02-tuesday.qmd)
 - **Notebooks — penguins:** [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd) (`rpart` + logistic boundary sketch), [three species](../notebooks/penguins-species-multiclass.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd)
 - **Data:** [Palmer Penguins](../dataset-penguins.qmd)
-- **Next module:** [Module 04 — Tidymodels pipeline](module-04-pipeline.qmd) (full tree tuning example)
+- **Next module:** [Module 04 — Modeling pipeline in R](module-04-pipeline.qmd) (full tuned-tree example on penguins)
 - **Module library:** [Back to all modules](index.qmd)
 
 ::: {.callout-note appearance="minimal"}
 ## Draft / TODO
 
 - One **hand-drawn style** figure of 2D partition (optional asset) or link to whiteboard photo policy from instructors.
-- Cross-link to **`workflowsets`** / **`stacks`** bullets on Tuesday deck when students are ready for capstone comparisons.
+- Cross-link to Tuesday slides on **comparing many models fairly** (`workflowsets` / `stacks` in the code) when students are ready for a capstone.
 :::

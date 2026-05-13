@@ -4,15 +4,15 @@ title: "Curriculum Outline"
 
 # Three-Day Curriculum (Monday, Tuesday, Thursday)
 
-This outline keeps **exercises outside the hub** while integrating cross-cutting ideas: **two parallel data tracks** (synthetic **genes** for known-truth regularization + **Palmer Penguins** for a single real running example), **decision costs and calibration**, **causal guardrails**, **documentation (data/model cards)**, **reproducibility**, **fairness**, and **assessment that resists over-claiming** (especially around SHAP).
+This outline keeps **exercises outside the hub** while weaving a few ideas through the week: **two parallel examples** (simulated **genes** where we know the truth + **Palmer Penguins** as one real table), **what a wrong prediction costs** (thresholds, prevalence), **calibration**, **“correlation is not causation”** when reading importance plots, short **data and model summaries**, **reproducibility**, **fairness-style subgroup checks**, and assignments that reward **honest wording** (especially around SHAP).
 
 ## Integrated design principles (built into the week)
 
-- **Two parallel data tracks** — **Synthetic genes** in the original linear / logistic notebooks: known ground truth for LASSO, ridge, and AIC pedagogy. **Palmer Penguins** ([dataset page](dataset-penguins.qmd), dedicated notebooks, Tuesday `tidymodels` include): one small real table reused Mon→Thu for visualization, regression, classification, and workflows.
-- **Decision costs before metric zoo** — introduce thresholds, prevalence, and misclassification costs early; return to them on Thursday so ROC/PR/F1 choices feel motivated, not arbitrary.
+- **Two parallel data tracks** — **Synthetic genes** in the original linear / logistic notebooks: we scripted the biology so we know which coefficients *should* matter. **Palmer Penguins** ([dataset page](dataset-penguins.qmd), dedicated notebooks, **Tuesday’s full modeling walk-through in R** using `tidymodels`): one small real table reused Mon→Thu for plots, regression, classification, and workflows.
+- **Decision costs before a long list of metrics** — introduce thresholds, prevalence, and misclassification costs early; return to them on Thursday so ROC / PR / F1 choices feel motivated, not arbitrary.
 - **Association ≠ intervention** — embed a short “causal guardrails” beat when introducing importance and SHAP so plots are not read as policy levers by default.
-- **Data cards + model cards** — start a one-page **data card** Monday (provenance, leakage risks, subgroup fields); finish a **model card** Thursday (intended use, metrics, limits, monitoring).
-- **Reproducibility spine** — Tuesday includes a concrete folder layout + “one command rebuilds figures” goal (`quarto` project, optional `renv`/`conda` lockfile for a reproducibility sprint homework).
+- **Data cards + model cards** — start a one-page **data card** Monday (where the numbers came from, leakage risks, subgroup fields); finish a **model card** Thursday (intended use, metrics, limits, monitoring).
+- **Reproducibility spine** — Tuesday includes a concrete folder layout + “one command rebuilds figures” goal (`quarto` project; optional `renv` / `conda` lockfile for a reproducibility homework sprint).
 - **Fairness as a metric choice** — Thursday explicitly compares overall vs subgroup metrics on **Palmer Penguins** (e.g. `species` or `island` as a subgroup lens) when a sensitive attribute exists (or simulate site/batch as a stand-in).
 - **Assessment that teaches humility** — include a **short oral or written prompt**: “What would you *not* claim from this SHAP summary?” graded with a published mini-rubric (correctness, diagnostics, communication).
 

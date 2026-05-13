@@ -1,14 +1,16 @@
 ---
-title: "Module 04: Tidymodels Pipeline"
+title: "Module 04: Modeling pipeline in R"
 ---
 
-- Learning objective: establish a reusable classification workflow in `tidymodels` on **Palmer Penguins** (Adelie vs Gentoo).
-- Key message: recipe + model + workflow + tuning keeps experiments comparable — same table as [dataset-penguins](../dataset-penguins.qmd) and [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd).
+- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, cross-validate, then read diagnostic plots.
+- **Key message:** keep **preprocessing, fitting, and scoring** in one reproducible object so every model you compare is treated **fairly** — same idea as Tuesday’s slides and the [penguin classification notebook](../notebooks/penguins-classification.Rmd). Under the hood this uses the **`tidymodels`** packages (`recipe`, `workflow`, `tune_grid`, …).
 
-## Canonical code template
+## How to read the code below
 
-Maintained once for the whole course. The include is a **paced** deck: **concept slide → code slide** for each `tidymodels` step on Palmer Penguins, then figure slides with short reading notes (same content as Tuesday’s live walk-through).
+You already know **`lm`** and **`glm`**. Here, R uses a slightly richer vocabulary: a **recipe** is “the list of preprocessing steps,” a **workflow** glues those steps to a **model specification**, and **`tune_grid`** tries several settings using **cross-validation**. Read the **concept slide** before each **code chunk** — the chunk names match the Tuesday deck.
 
 [← Module library (all modules)](index.qmd)
+
+## Canonical code (same as Tuesday slides)
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
