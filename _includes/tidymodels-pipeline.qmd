@@ -1,4 +1,20 @@
-## Shared pipeline — libraries & example data
+## Tidymodels walk-through — what you will see
+
+We use **one table** all the way through: Palmer Penguins restricted to **Adelie vs Gentoo** (same as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)).
+
+Each **next block** follows the same rhythm: **first** a slide with intuition tied to penguin columns, **then** a slide with the matching `tidymodels` code (run in order).
+
+You will move through: **data → recipe → model spec → workflow → resampling + tuning → finalize + fit → four diagnostic figures**.
+
+
+## Step 0 — The prediction task (Palmer Penguins)
+
+- **Outcome `y`:** species with two levels, Adelie then Gentoo (so later ROC uses **Gentoo** as the second / “event” level).
+- **Predictors:** bill length & depth, flipper length, body mass (all mm or g), plus **island**, **sex**, and **year** — mixed **numeric** and **nominal** columns, like most real labs.
+- **Complete cases only:** `drop_na()` drops rows missing sex or measurements (talk in class about how much *N* you lose).
+
+
+## Step 0 — Load packages and build `peng_cls`
 
 ```{r}
 #| label: tm-lib-data
@@ -25,9 +41,31 @@ peng_cls <- palmerpenguins::penguins |>
   tidyr::drop_na()
 ```
 
-Binary outcome **`y`**: Adelie vs Gentoo on complete-case Palmer Penguins (bill, flipper, mass, island, sex, year). Same story as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd).
 
-## Shared pipeline — recipe
+## Step 0b — Inspect the rows we model (code)
+
+```{r}
+#| label: tm-glimpse
+#| echo: true
+#| message: false
+dplyr::glimpse(peng_cls)
+dplyr::count(peng_cls, y, name = "n")
+```
+
+Use **`glimpse`** so students see **types** (double vs factor) before we talk about recipe steps.
+
+
+## Step 1 — Why a **recipe**? (Penguins vocabulary)
+
+- **`recipe(y ~ ., data = peng_cls)`** means: “every other column helps predict `y`.”
+- **`step_dummy(all_nominal_predictors())`** turns **island** and **sex** into numeric **0/1** columns so the tree engine can split on them.
+- **`step_normalize(all_numeric_predictors())`** puts bill length, flipper length, body mass, year on a comparable scale before the tree sees them (important when you mix mm, g, and year).
+- **`step_zv(all_predictors())`** drops **zero-variance** dummies if a level barely appears — avoids useless columns.
+
+All of this is **declared now** and **fitted inside each cross-validation fold** later, which is what prevents **leakage** from future rows.
+
+
+## Step 1 — Define the recipe (code)
 
 ```{r}
 #| label: tm-recipe
@@ -38,9 +76,17 @@ rec <- recipe(y ~ ., data = peng_cls) |>
   step_normalize(all_numeric_predictors())
 ```
 
-Preprocessing lives in the **recipe** (impute, encode, normalize, …). Resampling fits this recipe **inside each fold** so nothing leaks from “future” rows.
 
-## Shared pipeline — model spec
+## Step 2 — **Model spec** vs fitted model (penguins + trees)
+
+- Here we pick a **classification tree** (`rpart` under the hood): good for teaching **splits** you can draw on the board.
+- **`tree_depth = tune()`** and **`min_n = tune()`** say: “we will **try several** tree sizes and let cross-validation pick,” instead of guessing once by hand.
+- **`set_mode("classification")`** matches our factor outcome **`y`** (Adelie / Gentoo).
+
+Nothing is **fitted** yet — this is only the **blueprint** (parsnip’s job).
+
+
+## Step 2 — Model specification (code)
 
 ```{r}
 #| label: tm-spec
@@ -55,7 +101,14 @@ mod_spec <- decision_tree(
 
 Swap **`mod_spec`** (and `set_engine`) for `rand_forest`, `boost_tree` + `xgboost`, `mlp`, etc.; keep the same workflow + resampling when you want **fair** comparisons.
 
-## Shared pipeline — workflow
+
+## Step 3 — **Workflow** = recipe + model (why one object?)
+
+- **`workflow() |> add_recipe(rec) |> add_model(mod_spec)`** glues preprocessing + model into **one** object.
+- **Why it matters for students:** when we cross-validate next, each fold **re-fits the recipe on the analysis rows** and evaluates on the held-out fold — the computer treats preprocessing as part of the model, not a forgotten earlier script.
+
+
+## Step 3 — Build the workflow (code)
 
 ```{r}
 #| label: tm-workflow
@@ -65,9 +118,15 @@ wf <- workflow() |>
   add_model(mod_spec)
 ```
 
-One **`workflow()`** object = recipe + model, tuned and fitted as a **single** unit.
 
-## Shared pipeline — resampling, metrics & tuning
+## Step 4 — Resampling & metrics on penguins (concepts)
+
+- **`vfold_cv(peng_cls, v = 5, strata = y)`**: five folds; **`strata = y`** tries to keep Adelie/Gentoo **balanced** in each fold so no fold is “all one species.”
+- **`metric_set(roc_auc, accuracy, sens, spec)`**: we commit to **these** scores before looking at a true test set — good classroom habit.
+- **`tune_grid(...)`**: for each combination of `tree_depth` and `min_n` in the grid, fit the **whole workflow** on each analysis set and score on each assessment set.
+
+
+## Step 4 — Run cross-validation and tuning (code)
 
 ```{r}
 #| label: tm-tune
@@ -87,9 +146,15 @@ tune_res <- tune_grid(
 )
 ```
 
-**`metric_set`** fixes the scorecard before you peek at held-out data. **`tune_grid`** fits the workflow on each analysis set and evaluates on assessment folds.
 
-## Shared pipeline — finalize & fit on all rows
+## Step 5 — Choose the winner and **finalize** (concepts)
+
+- **`select_best(tune_res, metric = "roc_auc")`**: pick the depth / `min_n` pair with best **ROC AUC** on CV (you could choose another metric in real projects).
+- **`finalize_workflow(wf, best)`**: plugs those numbers into the unfitted workflow — still no fit on the full dataset until the next line.
+- **`fit(final_wf, data = peng_cls)`** below: for **teaching speed** we fit on **all** penguin rows here. In research you would normally **`fit` on training only** after tuning, then **`last_fit`** or a single test assessment.
+
+
+## Step 5 — Finalize and fit (code)
 
 ```{r}
 #| label: tm-final
@@ -98,8 +163,6 @@ best <- select_best(tune_res, metric = "roc_auc")
 final_wf <- finalize_workflow(wf, best)
 final_fit <- fit(final_wf, data = peng_cls)
 ```
-
-In a real project you would **`fit(final_wf, data = training(split))`** after choosing hyperparameters using **training data only**, then assess once on **`testing(split)`**. Here we fit on all of `peng_cls` for a compact teaching demo.
 
 ```{r}
 #| label: tm-optional-split
@@ -112,7 +175,14 @@ In a real project you would **`fit(final_wf, data = training(split))`** after ch
 # last_fit(final_wf, split = data_split)  # after finalize_workflow(...)
 ```
 
-## Figure — hyperparameter tuning
+
+## Figure 1 — How to read the **tuning** plot (Penguins)
+
+- Each panel shows how **one metric** moves over the **grid** of `tree_depth` and `min_n`.
+- Ask students: “Did ROC AUC and accuracy **agree** on the best region, or trade off?” — small *N* penguins often make metrics a bit noisy.
+
+
+## Figure 1 — Tuning results (code)
 
 ```{r}
 #| label: tm-fig-autoplot
@@ -130,7 +200,14 @@ tune_res |>
 
 Use **`autoplot()`** on `tune_res` to see how metrics move with the grid; follow up with **`collect_metrics()`** for tables.
 
-## Figure — variable importance (model-based)
+
+## Figure 2 — **Variable importance** on penguins (concepts)
+
+- **`vip`** asks: “Which inputs did **this fitted tree** use most?” for separating Adelie vs Gentoo.
+- Remind students: **bill length** might rank high because it **correlates** with mass and species ecology — not the same as a causal gene.
+
+
+## Figure 2 — Variable importance (code)
 
 ```{r}
 #| label: tm-fig-vip
@@ -147,9 +224,14 @@ final_fit |>
   )
 ```
 
-**`vip`** summarizes how much this fitted learner leaned on each input; interpretation still depends on **correlation**, **measurement error**, and **causal** claims you do *not* make from importance alone.
 
-## Figure — fitted tree structure
+## Figure 3 — **Tree plot** — connect to real penguins (concepts)
+
+- Each box is a **region** of predictor space after a **split** (e.g. flipper length below / above a threshold).
+- Ask: “Where do Adelie vs Gentoo **separate first** in this fitted tree?”
+
+
+## Figure 3 — Fitted tree structure (code)
 
 ```{r}
 #| label: tm-fig-rpart
@@ -167,9 +249,14 @@ final_fit |>
   )
 ```
 
-Connect this picture back to **partitioning** intuition from lecture: each box is a region of predictor space after sequential splits.
 
-## Figure — ROC curve (in-sample look)
+## Figure 4 — **ROC curve** on penguins (concepts)
+
+- We plot **Gentoo vs not** using **`.pred_Gentoo`** because **`y`** has levels **Adelie (first)**, **Gentoo (second)** — `event_level = "second"` tells `yardstick` which probability column defines the curve.
+- This fit is **in-sample** (same rows as `fit`) — good for **shape** of the curve in class; **not** a substitute for test-set evaluation.
+
+
+## Figure 4 — ROC curve (code)
 
 ```{r}
 #| label: tm-fig-roc
@@ -185,6 +272,5 @@ augment(final_fit, new_data = peng_cls) |>
   )
 ```
 
-**`.pred_Gentoo`** with **`event_level = \"second\"`** matches `y` with levels Adelie (first), Gentoo (second). For honest performance, evaluate on **`testing(split)`** or use **`last_fit()`**.
 
 *Edit only `teaching-hub/_includes/tidymodels-pipeline.qmd`; slide decks and Module 04 pull it in with Quarto `include`.*

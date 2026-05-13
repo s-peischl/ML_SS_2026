@@ -7,6 +7,6 @@ title: "Module 04: Tidymodels Pipeline"
 
 ## Canonical code template
 
-Maintained once for the whole course. Headings match the **Tuesday** slide walk-through (data → recipe → spec → workflow → tuning → finalize → four figures).
+Maintained once for the whole course. The include is a **paced** deck: **concept slide → code slide** for each `tidymodels` step on Palmer Penguins, then figure slides with short reading notes (same content as Tuesday’s live walk-through).
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
