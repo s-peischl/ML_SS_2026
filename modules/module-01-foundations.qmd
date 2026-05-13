@@ -2,6 +2,51 @@
 title: "Module 01: Foundations and Generalization"
 ---
 
-- Learning objective: establish supervised learning setup and error decomposition.
-- Key message: simple baselines anchor the rest of the course.
-- Running example: **[Palmer Penguins](../dataset-penguins.qmd)** (with synthetic **gene** notebooks for known-truth regularization).
+## Learning objectives
+
+- Frame **supervised learning** as predicting an outcome from measured inputs, with a clear train / validation / test story.
+- Connect **bias–variance** and “too wiggly vs too stiff” to plots students already see on Monday.
+- Start the habit of a **data card**: what was measured, who is missing, what you would not claim from a score alone.
+
+## Key messages
+
+- **Simple baselines** (linear models, clear splits) anchor everything that comes later.
+- The course uses **two data tracks**: synthetic **genes** (known ground truth) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
+
+## Concept outline
+
+### Supervised setup
+
+- Rows are units (birds, patients, assays); columns are outcomes and predictors.
+- **Generalization** is the goal: performance on **new** rows from the same kind of process, not memorizing the training table.
+
+### Splits and honest evaluation
+
+- **Training** fits parameters; **validation** (or cross-validation) chooses complexity or hyperparameters; **test** (or a locked holdout) is touched rarely.
+- Say explicitly why **preprocessing that learns from data** (means, factor levels, PCA) must be **inside** the resampling fold or workflow, not “fit on all rows first.”
+
+### Bias and variance (Monday vocabulary)
+
+- **Underfitting:** train and validation both look bad — model too simple or features too weak.
+- **Overfitting:** train looks great, validation bad — model too flexible or too many effective degrees of freedom for *n*.
+
+### Data card (lightweight)
+
+- Provenance, inclusion criteria, missingness, sensitive or grouping fields (species, island as subgroup lenses on penguins).
+- One paragraph students can reuse in homework.
+
+## Course links
+
+- **Slides:** [Monday — Foundations and regularization](../slides/day-01-monday.qmd)
+- **Curriculum:** [Curriculum outline](../curriculum-outline.qmd) (Monday: Foundations and Regularization)
+- **Notebooks — genes:** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)
+- **Notebooks — penguins:** [body mass](../notebooks/penguins-body-mass.Rmd), [classification](../notebooks/penguins-classification.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd), [three species](../notebooks/penguins-species-multiclass.Rmd)
+- **Data reference:** [Palmer Penguins](../dataset-penguins.qmd)
+- **Module library:** [Back to all modules](index.qmd)
+
+::: {.callout-note appearance="minimal"}
+## Draft / TODO
+
+- Add one **worked numeric example** of train vs validation loss (optional small table or figure) without duplicating the full Monday slide include.
+- Link or embed a **one-page data card template** when the course settles on a PDF/DOCX version.
+:::

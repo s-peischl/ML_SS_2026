@@ -9,4 +9,6 @@ title: "Module 04: Tidymodels Pipeline"
 
 Maintained once for the whole course. The include is a **paced** deck: **concept slide → code slide** for each `tidymodels` step on Palmer Penguins, then figure slides with short reading notes (same content as Tuesday’s live walk-through).
 
+[← Module library (all modules)](index.qmd)
+
 {{< include ../_includes/tidymodels-pipeline.qmd >}}

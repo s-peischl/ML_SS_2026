@@ -2,6 +2,47 @@
 title: "Module 06: Metrics, Imbalance, and SHAP"
 ---
 
-- Learning objective: align metric choice with practical decision costs.
-- Key message: interpretability methods complement, but do not replace, validation.
-- Running example: **[Palmer Penguins](../dataset-penguins.qmd)** (e.g. subgroup checks by `species` / `island`).
+## Learning objectives
+
+- Choose **metrics** that match costs (FP vs FN), prevalence, and whether you care about **ranking** or **calibrated probabilities**.
+- Diagnose **class imbalance** without fetishizing accuracy; use sensitivity, specificity, ROC vs PR as appropriate.
+- Introduce **SHAP** as a descriptive attribution tool with **causal** and **dependence** caveats.
+
+## Key messages
+
+- **Interpretability complements validation**; neither replaces honest held-out or nested evaluation.
+- **Palmer Penguins** supports subgroup checks (e.g. by `species` or `island`) as a toy fairness-style lens — with small *n*, treat as pedagogy not audit.
+
+## Concept outline
+
+### Metrics toolbox
+
+- Accuracy only when costs symmetric and prevalence balanced.
+- Precision / recall / F1 when costs asymmetric or positives rare.
+- ROC-AUC vs PR-AUC: ranking vs emphasis on rare positives.
+- **Calibration**: do predicted probabilities match observed frequencies?
+
+### Imbalance and thresholds
+
+- Class weights, resampling, threshold tuning; tie to **decision problem** not leaderboard.
+
+### Variable importance and SHAP
+
+- Model-specific importance vs permutation importance.
+- SHAP as Shapley-style attributions; **TreeSHAP** vs **KernelSHAP** at high level.
+- **Guardrail:** association \(\neq\) intervention; SHAP is not a license to change biology or policy without design.
+
+## Course links
+
+- **Slides:** [Thursday deck](../slides/day-03-thursday.qmd) (metrics, imbalance, SHAP sections)
+- **Notebooks — penguins:** [three-species](../notebooks/penguins-species-multiclass.Rmd) (multiclass confusion — which class is hardest?), [sex](../notebooks/penguins-sex-classification.Rmd) (binary with different base rates after `drop_na`)
+- **Data:** [Palmer Penguins](../dataset-penguins.qmd)
+- **Curriculum:** Thursday consolidation and humility prompts in [curriculum outline](../curriculum-outline.qmd)
+- **Module library:** [Back to all modules](index.qmd)
+
+::: {.callout-note appearance="minimal"}
+## Draft / TODO
+
+- Add **one** example confusion matrix graphic (static) comparing “overall accuracy” vs **per-class recall** on penguins — or link to Thursday slide anchor.
+- Instructor-only link list for **fairlearn**, **iml**, or **shap** Python bridge if the course adds bilingual materials.
+:::

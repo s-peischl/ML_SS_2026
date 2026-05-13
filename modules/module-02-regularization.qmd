@@ -2,5 +2,49 @@
 title: "Module 02: Regularization"
 ---
 
-- Learning objective: motivate ridge/lasso under multicollinearity and high variance.
-- Key message: regularization controls complexity and improves generalization.
+## Learning objectives
+
+- Motivate **ridge** and **lasso** when predictors are correlated or \(p\) is large relative to \(n\).
+- Contrast **continuous shrinkage** (penalized regression) with **discrete** subset search (AIC / stepwise).
+- Recognize when **elastic net** is a reasonable default between the two extremes.
+
+## Key messages
+
+- Regularization trades a controlled amount of **bias** for lower **variance** and more stable predictions.
+- On **synthetic genes**, we know which coefficients *should* matter — use that to sanity-check LASSO paths. On **penguins**, shrinkage is about real collinearity among bill / flipper / mass.
+
+## Concept outline
+
+### Ridge (\(L_2\))
+
+- Shrinks coefficients smoothly; rarely forces exact zeros.
+- Good default when many predictors move together and you do not need sparsity for interpretation.
+
+### Lasso (\(L_1\))
+
+- Can set coefficients to **exactly zero** — variable selection + prediction.
+- When sparsity matches the generating process (gene notebook), paths are pedagogically clean.
+
+### AIC and stepwise
+
+- **Discrete** search over subsets; different failure modes than lasso (instability, greedy steps).
+- Teaching beat: compare **backward vs lasso** coefficient panels from Monday materials.
+
+### Elastic net (bridge)
+
+- Mixing parameter \(\alpha \in [0,1]\): blend ridge-like stability with lasso-like zeros when you are unsure.
+
+## Course links
+
+- **Slides:** [Monday deck](../slides/day-01-monday.qmd) (ridge, lasso, AIC, elastic net slides)
+- **Notebooks — genes:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) (`glmnet`, CV, forward/backward AIC)
+- **Notebooks — penguins:** [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd) (ridge/LASSO on `body_mass_g` with real collinearity)
+- **Curriculum:** regularization and model-selection beats under Monday in [curriculum outline](../curriculum-outline.qmd)
+- **Module library:** [Back to all modules](index.qmd)
+
+::: {.callout-note appearance="minimal"}
+## Draft / TODO
+
+- Short **side-by-side schematic** of coefficient paths (ridge vs lasso) as a static figure or link to slide export.
+- Optional reading list on **post-selection inference** (one sentence + link for instructors).
+:::

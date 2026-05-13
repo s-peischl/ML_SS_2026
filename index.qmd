@@ -72,7 +72,7 @@ Outline & modules
 ### If you want more structure
 
 - **[Curriculum outline](curriculum-outline.qmd)** — how the three days connect (also useful if you miss a session)  
-- **[Module library](modules/index.qmd)** — short pages you can skim before class or use as a refresher after  
+- **[Module library](modules/index.qmd)** — six draft modules (01–06): [Foundations](modules/index.qmd#module-01-foundations-and-generalization), [Regularization](modules/index.qmd#module-02-regularization), [Trees](modules/index.qmd#module-03-trees-and-two-cultures), [Tidymodels](modules/index.qmd#module-04-tidymodels-pipeline), [Advanced models](modules/index.qmd#module-05-advanced-models), [Metrics & SHAP](modules/index.qmd#module-06-metrics-imbalance-and-shap)  
 
 Your instructors may point you to extra readings or exercises; those live wherever the course announces them.
 :::
@@ -94,8 +94,10 @@ Think of it as one story in three chapters: **see the pattern**, **keep your wor
 ## For instructors & TAs (technical)
 
 - **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.  
+
 - **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the two-track story (genes + Palmer Penguins), calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
 - **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
 - **Palmer Penguins** — [About the dataset](dataset-penguins.qmd); Tuesday `tidymodels` include uses the same **Adelie vs Gentoo** slice as the penguin classification notebook.  
+
 - **Shared tidymodels include** — `_includes/tidymodels-pipeline.qmd` (slides + Module 04); link or excerpt in class as needed.
 :::

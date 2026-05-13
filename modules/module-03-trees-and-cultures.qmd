@@ -2,5 +2,44 @@
 title: "Module 03: Trees and Two Cultures"
 ---
 
-- Learning objective: contrast model-driven and algorithm-driven viewpoints.
-- Key message: trees provide interpretable nonlinear decision boundaries.
+## Learning objectives
+
+- Contrast **statistical** (model-first, uncertainty central) and **algorithmic** (prediction-first, flexible learners) cultures — and why good practice blends them.
+- Explain **decision trees** as recursive partitioning: splits, impurity, depth, and min-leaf-size as complexity knobs.
+- Connect tree **geometry** (axis-aligned boxes in feature space) to what students see in `rpart.plot` on penguins.
+
+## Key messages
+
+- Trees are a **bridge**: interpretable splits today, ensembles and boosting tomorrow.
+- The same **Palmer Penguins** table supports both **logistic** intuition (Monday) and **tree + tidymodels** workflows (Tuesday).
+
+## Concept outline
+
+### Two cultures (compressed)
+
+- Breiman-style framing: different priorities on **assumptions** vs **error on future data**; both care about **leakage** and **evaluation**.
+
+### Tree mechanics
+
+- Greedy binary splits; Gini / entropy; stopping vs pruning.
+- **Interactions** are automatic: sequential splits encode feature combinations without hand-written `x1:x2`.
+
+### When trees shine or struggle
+
+- Shine: nonlinear boundaries, mixed types, monotone-ish effects without manual basis expansion.
+- Struggle: very high noise, tiny *n* without regularization via depth / `min_n` / ensembles.
+
+## Course links
+
+- **Slides:** [Tuesday — Trees and pipelines](../slides/day-02-tuesday.qmd)
+- **Notebooks — penguins:** [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd) (`rpart` + logistic boundary sketch), [three species](../notebooks/penguins-species-multiclass.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd)
+- **Data:** [Palmer Penguins](../dataset-penguins.qmd)
+- **Next module:** [Module 04 — Tidymodels pipeline](module-04-pipeline.qmd) (full tree tuning example)
+- **Module library:** [Back to all modules](index.qmd)
+
+::: {.callout-note appearance="minimal"}
+## Draft / TODO
+
+- One **hand-drawn style** figure of 2D partition (optional asset) or link to whiteboard photo policy from instructors.
+- Cross-link to **`workflowsets`** / **`stacks`** bullets on Tuesday deck when students are ready for capstone comparisons.
+:::

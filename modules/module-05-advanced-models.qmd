@@ -2,5 +2,46 @@
 title: "Module 05: Advanced Models"
 ---
 
-- Learning objective: compare random forests, boosting, and neural networks.
-- Key message: greater model capacity needs stronger validation discipline.
+## Learning objectives
+
+- Name **random forests**, **gradient boosting** (e.g. XGBoost), and **neural networks** as the usual “strong tabular learners” after single trees.
+- Explain the **capacity vs validation** tradeoff: more flexibility needs tighter resampling, more careful tuning, and clearer metrics.
+- Describe how to **swap `mod_spec`** inside the same `tidymodels` workflow skeleton used on Tuesday.
+
+## Key messages
+
+- **Same recipe + resampling + metrics**, different **engine** — keeps student experiments comparable.
+- **Never** skip the “what would break on small *n* penguins?” conversation when demoing huge models.
+
+## Concept outline
+
+### Random forests
+
+- Bagged trees + feature subsampling; lower variance than one tree; often strong defaults.
+
+### Boosting (XGBoost, etc.)
+
+- Sequential error correction; strong performance with tuning burden; watch overfitting on small data.
+
+### Neural networks (tabular)
+
+- Flexible function class; needs careful scaling, architecture choices, and often more data than penguins provide — use as **API literacy**, not “win every Kaggle on 300 rows.”
+
+### Practical teaching path
+
+- Start from [Module 04](module-04-pipeline.qmd): replace `decision_tree` + `rpart` with `rand_forest` + `ranger` or `boost_tree` + `xgboost` on **`peng_cls`** or a train split; keep `tune_grid` discipline.
+
+## Course links
+
+- **Slides:** [Thursday — Advanced models and explainability](../slides/day-03-thursday.qmd)
+- **Pipeline reference:** [Module 04](module-04-pipeline.qmd) (includes `_includes/tidymodels-pipeline.qmd`)
+- **Notebooks:** any [penguin classification](../notebooks/penguins-classification.Rmd) notebook as the **prediction task** you reuse when swapping engines
+- **Curriculum:** Thursday progression in [curriculum outline](../curriculum-outline.qmd)
+- **Module library:** [Back to all modules](index.qmd)
+
+::: {.callout-note appearance="minimal"}
+## Draft / TODO
+
+- Add **one** minimal `parsnip` spec table (engine, package, when to use) — static markdown table.
+- Optional: link to official **tidymodels** tutorials for `xgboost` and `torch` when the course adds a lab machine with GPU.
+:::

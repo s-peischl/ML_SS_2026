@@ -2,15 +2,65 @@
 title: "Module Library"
 ---
 
-# Reusable Teaching Modules
+# Reusable teaching modules
 
-Use these pages to stage topic snippets that can later be pulled into slides.
+These pages **mirror the week’s arc** but live outside the slide decks: you can skim them before class, point students to them for refresher reading, or grow them into longer notes over time.
 
-The course uses **two data tracks**: synthetic **genes** (see the gene notebooks) and **[Palmer Penguins](../dataset-penguins.qmd)** for real-data continuity across days.
+The course uses **two data tracks**: synthetic **genes** (see the gene notebooks) and **[Palmer Penguins](../dataset-penguins.qmd)** for real-data continuity.
 
-- [Module 01: Foundations and Generalization](module-01-foundations.qmd)
-- [Module 02: Regularization](module-02-regularization.qmd)
-- [Module 03: Trees and Two Cultures](module-03-trees-and-cultures.qmd)
-- [Module 04: Tidymodels Pipeline](module-04-pipeline.qmd)
-- [Module 05: Advanced Models](module-05-advanced-models.qmd)
-- [Module 06: Metrics, Imbalance, and SHAP](module-06-evaluation-and-interpretability.qmd)
+| Module | Day focus | Role |
+|--------|-----------|------|
+| [01 — Foundations](#module-01-foundations-and-generalization) | Monday | Splits, bias–variance, data card |
+| [02 — Regularization](#module-02-regularization) | Monday | Ridge, lasso, AIC, elastic net |
+| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Tuesday | Two cultures, tree intuition |
+| [04 — Tidymodels pipeline](#module-04-tidymodels-pipeline) | Tuesday | Full `tidymodels` walk-through (includes shared code) |
+| [05 — Advanced models](#module-05-advanced-models) | Thursday | RF, boosting, NNs at API level |
+| [06 — Metrics & SHAP](#module-06-metrics-imbalance-and-shap) | Thursday | Metrics, imbalance, interpretability |
+
+---
+
+## Module 01: Foundations and Generalization {#module-01-foundations-and-generalization}
+
+Supervised learning setup, **train / validation / test**, bias–variance language, and a lightweight **data card** habit. Ties the **gene** simulations (known truth) to **Palmer Penguins** (real measurements) so students see the same ideas on two tables.
+
+**[Open Module 01 →](module-01-foundations.qmd)**
+
+---
+
+## Module 02: Regularization {#module-02-regularization}
+
+Ridge and lasso as **continuous shrinkage**, AIC / stepwise as **discrete** search, and when **elastic net** is a sensible middle ground. Links Monday slides to both the **gene LASSO** notebook and **penguin mass** ridge/LASSO practice.
+
+**[Open Module 02 →](module-02-regularization.qmd)**
+
+---
+
+## Module 03: Trees and Two Cultures {#module-03-trees-and-two-cultures}
+
+Statistical vs algorithmic cultures at a high level, then **decision tree** mechanics (splits, impurity, depth) connected to the **penguin** classification notebooks and the Tuesday slide deck.
+
+**[Open Module 03 →](module-03-trees-and-cultures.qmd)**
+
+---
+
+## Module 04: Tidymodels Pipeline {#module-04-tidymodels-pipeline}
+
+The **canonical code path**: a full **Palmer Penguins** (Adelie vs Gentoo) `tidymodels` workflow embedded via `{{< include >}}` from `_includes/tidymodels-pipeline.qmd` — same content as the paced block on **Tuesday** slides and the **penguins-classification** notebook story.
+
+**[Open Module 04 →](module-04-pipeline.qmd)**
+
+---
+
+## Module 05: Advanced Models {#module-05-advanced-models}
+
+Random forests, boosting, and neural nets as **higher-capacity** learners; emphasis on **keeping the same validation discipline** and swapping **`mod_spec`** inside the Module 04 skeleton.
+
+**[Open Module 05 →](module-05-advanced-models.qmd)**
+
+---
+
+## Module 06: Metrics, Imbalance, and SHAP {#module-06-metrics-imbalance-and-shap}
+
+Metric choice tied to **costs**, class imbalance without accuracy tunnel vision, and **SHAP** with causal guardrails. Points to **Thursday** slides and **multiclass / sex** penguin notebooks for concrete confusion matrices.
+
+**[Open Module 06 →](module-06-evaluation-and-interpretability.qmd)**
