@@ -1,0 +1,81 @@
+Lasso figures for gene × disease (run after the lasso intro slide in the deck).
+
+```{r}
+#| label: day01-logistic-lasso-cv
+#| echo: false
+#| results: hide
+lam_seq_log <- 10^seq(-3, -0.1, length.out = 25)
+cv_lasso_log <- cv.glmnet(
+  X_log_s, y_bin,
+  family = "binomial", alpha = 1, lambda = lam_seq_log, nfold = n_obs_log
+)
+best_lam_log <- cv_lasso_log$lambda.1se
+lasso_log_fit <- glmnet(
+  X_log_s, y_bin,
+  family = "binomial", alpha = 1, lambda = best_lam_log
+)
+```
+
+## Lasso logistic: cross-validated choice of $\lambda$
+
+```{r}
+#| label: day01-logistic-cv-plot
+#| echo: false
+#| fig-height: 4
+#| fig-width: 6.5
+plot(cv_lasso_log, main = "Lasso logistic: choose lambda by leave-one-out CV")
+```
+
+## Summary: all approaches (in-sample, same data)
+
+```{r}
+#| label: day01-logistic-summary-table
+#| echo: false
+#| results: asis
+pred_class_glm <- function(model, data) {
+  prob <- predict(model, newdata = data, type = "response")
+  factor(ifelse(prob > 0.5, "Present", "Absent"), levels = c("Absent", "Present"))
+}
+pred_lasso_prob <- as.numeric(predict(lasso_log_fit, newx = X_log_s, type = "response"))
+pred_lasso_cls <- factor(
+  ifelse(pred_lasso_prob > 0.5, "Present", "Absent"),
+  levels = c("Absent", "Present")
+)
+
+log_summary_row <- function(pred, label, aic = NA_real_, n_coef = NA_integer_) {
+  data.frame(
+    Model = label,
+    n_coef = n_coef,
+    AIC = aic,
+    Accuracy_in = mean(pred == y_log),
+    Error_rate_in = mean(pred != y_log)
+  )
+}
+
+knitr::kable(
+  bind_rows(
+    log_summary_row(
+      pred_class_glm(null_glm, bio_scaled), "Null (intercept only)",
+      AIC(null_glm), length(coef(null_glm))
+    ),
+    log_summary_row(
+      pred_class_glm(full_glm, bio_scaled), "GLM full",
+      AIC(full_glm), length(coef(full_glm))
+    ),
+    log_summary_row(
+      pred_class_glm(backward_glm, bio_scaled), "AIC backward",
+      AIC(backward_glm), length(coef(backward_glm))
+    ),
+    log_summary_row(
+      pred_class_glm(forward_glm, bio_scaled), "AIC forward",
+      AIC(forward_glm), length(coef(forward_glm))
+    ),
+    log_summary_row(
+      pred_lasso_cls, "Lasso (lambda.1se, LOO-CV)",
+      NA_real_, sum(coef(lasso_log_fit) != 0) - 1L
+    )
+  ),
+  digits = 3,
+  caption = "In-sample classification on all n samples (holdout evaluation: Tuesday)"
+)
+```

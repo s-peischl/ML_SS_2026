@@ -1,0 +1,197 @@
+**Gene × disease** — describe data → null vs full `glm` → AIC forward/backward (all $n$ samples).
+
+- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)
+
+```{r}
+#| label: day01-logistic-libs
+#| include: false
+suppressPackageStartupMessages({
+  library(broom)
+  library(glmnet)
+  library(recipes)
+  library(dplyr)
+  library(ggplot2)
+  library(GGally)
+  library(MASS)
+  library(rlang)
+  library(rcartocolor)
+})
+```
+
+## Gene × disease: the dataset
+
+Causal roles for **Gene1**, **Gene3**, **Gene4** and a Gene1×Gene3 interaction in the generative linear predictor.
+
+```{r}
+#| label: day01-logistic-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 200
+p <- 10
+gene_names <- paste0("Gene", 1:p)
+genes_data <- data.frame(matrix(rnorm(n * p), nrow = n))
+colnames(genes_data) <- gene_names
+disease_presence <- ifelse(
+  0.5 * genes_data$Gene1 + 0.8 * genes_data$Gene3 - 0.3 * genes_data$Gene4 -
+    genes_data$Gene1 * genes_data$Gene3 * 2 + rnorm(n, sd = 0.5) > 0,
+  1, 0
+)
+disease_presence <- factor(disease_presence, levels = c(0, 1), labels = c("Absent", "Present"))
+bio_data <- data.frame(genes_data, disease_presence)
+```
+
+```{r}
+#| label: day01-ggpairs-logistic
+#| echo: false
+#| fig-height: 5.2
+#| fig-width: 8
+ggpairs(bio_data, columns = 1:5, aes(color = disease_presence)) +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-logistic-prep-full
+#| echo: false
+#| results: hide
+rec_scale_log <- recipe(disease_presence ~ ., data = bio_data) |>
+  step_normalize(all_numeric_predictors())
+bio_scaled <- bake(prep(rec_scale_log, bio_data), bio_data)
+y_log <- bio_data$disease_presence
+y_bin <- ifelse(y_log == "Present", 1, 0)
+X_log_s <- as.matrix(dplyr::select(bio_scaled, -disease_presence))
+n_obs_log <- nrow(bio_scaled)
+```
+
+## Null model (intercept only)
+
+Predicts the overall disease rate — ignores genes → **underfitting**.
+
+```{r}
+#| label: day01-logistic-null
+#| echo: false
+#| results: hide
+null_glm <- glm(disease_presence ~ 1, data = bio_scaled, family = binomial())
+```
+
+## Full logistic model (all genes)
+
+```{r}
+#| label: day01-logistic-full
+#| echo: false
+#| results: hide
+full_glm <- glm(disease_presence ~ ., data = bio_scaled, family = binomial())
+```
+
+```{r}
+#| label: day01-logistic-boundary
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 7
+plot_decision_boundary_logistic <- function(model, data, feature1, feature2) {
+  r1 <- range(data[[feature1]])
+  r2 <- range(data[[feature2]])
+  grid <- expand.grid(
+    seq(r1[1] - 1, r1[2] + 1, length.out = 160),
+    seq(r2[1] - 1, r2[2] + 1, length.out = 160)
+  )
+  names(grid) <- c(feature1, feature2)
+  for (feat in setdiff(names(data), c(feature1, feature2, "disease_presence"))) {
+    grid[[feat]] <- mean(data[[feat]])
+  }
+  grid$response_prob <- predict(model, newdata = grid, type = "response")
+  grid$response_cls <- factor(
+    ifelse(grid$response_prob > 0.5, "Present", "Absent"),
+    levels = c("Absent", "Present")
+  )
+  ggplot(data, aes(!!sym(feature1), !!sym(feature2))) +
+    geom_tile(
+      data = grid,
+      aes(!!sym(feature1), !!sym(feature2), fill = response_cls),
+      alpha = 0.28,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(fill = disease_presence), shape = 21, color = "black", size = 2.5) +
+    scale_fill_manual(values = c(Absent = "turquoise", Present = "magenta")) +
+    theme_minimal() +
+    labs(
+      title = "Logistic boundary (Gene1 vs Gene3; other genes at mean)",
+      x = feature1, y = feature2, fill = "Class"
+    )
+}
+print(plot_decision_boundary_logistic(full_glm, bio_scaled, "Gene1", "Gene3"))
+```
+
+## Null vs full: in-sample misclassification
+
+```{r}
+#| label: day01-logistic-null-vs-full
+#| echo: false
+#| fig-height: 3.5
+#| fig-width: 6.5
+class_err <- function(model, data) {
+  prob <- predict(model, newdata = data, type = "response")
+  pred <- factor(ifelse(prob > 0.5, "Present", "Absent"), levels = c("Absent", "Present"))
+  mean(pred != data$disease_presence)
+}
+cmp_log <- data.frame(
+  model = c("Null (intercept only)", "Full (all genes)"),
+  AIC = c(AIC(null_glm), AIC(full_glm)),
+  error_rate = c(class_err(null_glm, bio_scaled), class_err(full_glm, bio_scaled))
+)
+ggplot(cmp_log, aes(x = reorder(model, -error_rate), y = error_rate, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "In-sample misclassification: null vs full",
+    subtitle = "Null ignores genes; full uses all predictors",
+    x = NULL, y = "Misclassification rate (same n samples)"
+  ) +
+  theme_minimal()
+```
+
+## AIC: backward and forward selection
+
+```{r}
+#| label: day01-logistic-step-aic
+#| echo: false
+#| results: hide
+backward_glm <- stepAIC(full_glm, direction = "backward", trace = FALSE)
+forward_glm <- stepAIC(
+  null_glm,
+  direction = "forward",
+  scope = list(lower = null_glm, upper = full_glm),
+  trace = FALSE
+)
+```
+
+```{r}
+#| label: day01-logistic-aic-sizes
+#| echo: false
+#| fig-height: 3.2
+#| fig-width: 6.5
+aic_log_tbl <- data.frame(
+  approach = c("Null", "GLM full", "AIC backward", "AIC forward"),
+  n_terms = c(
+    length(coef(null_glm)),
+    length(coef(full_glm)),
+    length(coef(backward_glm)),
+    length(coef(forward_glm))
+  ),
+  AIC = c(AIC(null_glm), AIC(full_glm), AIC(backward_glm), AIC(forward_glm))
+)
+ggplot(aic_log_tbl, aes(x = reorder(approach, AIC), y = AIC, fill = approach)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "AIC across logistic models (same data)", x = NULL, y = "AIC (lower is better)") +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-logistic-aic-terms
+#| echo: false
+#| results: asis
+fmt_f <- function(f) paste(deparse(f), collapse = " ")
+cat("**Backward AIC formula:** `", fmt_f(formula(backward_glm)), "`\n\n", sep = "")
+cat("**Forward AIC formula:** `", fmt_f(formula(forward_glm)), "`\n\n", sep = "")
+```

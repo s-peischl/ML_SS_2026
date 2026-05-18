@@ -1,0 +1,68 @@
+Lasso figures for gene × trait (run after the lasso intro slide in the deck).
+
+```{r}
+#| label: day01-lasso-cv
+#| echo: false
+#| results: hide
+lam_seq <- 10^seq(-3, -0.1, length.out = 25)
+cv_lasso <- cv.glmnet(X_s, y, alpha = 1, lambda = lam_seq, nfold = n_obs)
+best_lam <- cv_lasso$lambda.1se
+lasso_fit <- glmnet(X_s, y, alpha = 1, lambda = best_lam)
+```
+
+## Lasso: cross-validated choice of $\lambda$
+
+```{r}
+#| label: day01-lasso-cv-plot
+#| echo: false
+#| fig-height: 4
+#| fig-width: 6.5
+plot(cv_lasso, main = "Lasso: choose lambda by leave-one-out CV")
+```
+
+## Lasso coefficient paths
+
+```{r}
+#| label: day01-lasso-coef-path
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 7
+fit_lasso_path <- glmnet(X_s, y, alpha = 1, lambda = lam_seq)
+plot(fit_lasso_path, xvar = "lambda", label = TRUE, main = "Lasso coefficients vs log(lambda)")
+```
+
+## Summary: all approaches (in-sample, same data)
+
+```{r}
+#| label: day01-trait-summary-table
+#| echo: false
+#| results: asis
+pred_lasso <- as.numeric(predict(lasso_fit, newx = X_s))
+trait_summary_row <- function(model, label, pred = NULL) {
+  if (is.null(pred)) pred <- predict(model, newdata = data_scaled)
+  data.frame(
+    Model = label,
+    n_coef = length(coef(model)),
+    AIC = tryCatch(AIC(model), error = function(e) NA_real_),
+    RMSE_in = sqrt(mean((y - pred)^2)),
+    R2_in = cor(y, pred)^2
+  )
+}
+knitr::kable(
+  bind_rows(
+    trait_summary_row(null_lm, "Null (intercept only)"),
+    trait_summary_row(full_lm, "OLS full"),
+    trait_summary_row(backward_model, "AIC backward"),
+    trait_summary_row(forward_model, "AIC forward"),
+    data.frame(
+      Model = "Lasso (lambda.1se, LOO-CV)",
+      n_coef = sum(coef(lasso_fit) != 0) - 1L,
+      AIC = NA_real_,
+      RMSE_in = sqrt(mean((y - pred_lasso)^2)),
+      R2_in = cor(y, pred_lasso)^2
+    )
+  ),
+  digits = 3,
+  caption = "In-sample comparison on all n samples (holdout evaluation: Tuesday)"
+)
+```

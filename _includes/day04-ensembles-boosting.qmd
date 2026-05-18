@@ -1,0 +1,50 @@
+## Bagging: random forests
+
+- **Many trees** on **bootstrap** samples of rows; each split sees only a **random subset** of predictors → lower variance than one deep tree.
+- **`rand_forest(mtry = …, trees = …, min_n = …) |> set_engine("ranger")`**
+
+## Boosting: gradient boosted trees
+
+- Trees are added **sequentially**; each new tree targets **errors left by the ensemble** so far.
+- **`boost_tree(trees = …, tree_depth = …, learn_rate = …) |> set_engine("xgboost")`**
+- **`learn_rate`**: shrink each tree’s contribution (smaller → more trees needed, often smoother).
+
+## Same folds, three engines (quick comparison)
+
+```{r}
+#| label: day04-ensemble-prep
+#| echo: false
+#| results: hide
+tree_spec <- decision_tree(tree_depth = 4, min_n = 5) |>
+  set_engine("rpart") |> set_mode("classification")
+rf_spec <- rand_forest(mtry = 3, trees = 400, min_n = 2) |>
+  set_engine("ranger", importance = "impurity") |>
+  set_mode("classification")
+xgb_spec <- boost_tree(trees = 150, tree_depth = 3, learn_rate = 0.05) |>
+  set_engine("xgboost") |> set_mode("classification")
+
+wf_tree <- workflow() |> add_recipe(rec_base) |> add_model(tree_spec)
+wf_rf <- workflow() |> add_recipe(rec_base) |> add_model(rf_spec)
+wf_xgb <- workflow() |> add_recipe(rec_base) |> add_model(xgb_spec)
+```
+
+```{r}
+#| label: day04-ensemble-resamples
+#| echo: true
+#| message: false
+set.seed(7)
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_cls)
+rs_rf <- fit_resamples(wf_rf, folds, metrics = metrics_cls)
+rs_xgb <- fit_resamples(wf_xgb, folds, metrics = metrics_cls)
+
+bind_rows(
+  collect_metrics(rs_tree) |> mutate(model = "Single tree"),
+  collect_metrics(rs_rf) |> mutate(model = "Random forest"),
+  collect_metrics(rs_xgb) |> mutate(model = "XGBoost")
+) |>
+  filter(.metric == "roc_auc") |>
+  select(model, mean, std_err) |>
+  arrange(desc(mean))
+```
+
+Fixed settings here for speed — in projects, wrap each spec in **`tune_grid()`** like [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).

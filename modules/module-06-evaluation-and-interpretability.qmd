@@ -34,8 +34,9 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 ## Course links
 
-- **Slides:** [Thursday deck](../slides/day-03-thursday.qmd) (metrics, imbalance, SHAP sections)
-- **Notebooks — penguins:** [three-species](../notebooks/penguins-species-multiclass.Rmd) (which species is hardest after a train/test split?), [sex](../notebooks/penguins-sex-classification.Rmd) (binary sex after dropping incomplete rows)
+- **Slides:** [Day 4 deck](../slides/day-04-thursday.qmd) (VIP, imputation, imbalance, metrics pointers)
+- **Primary penguin lab (multiclass + confusion patterns):** [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd). Other penguin labs: [notebook index](../notebooks/index.qmd#palmer-penguins-continuity).
+- **Metric choice in `tidymodels` (accuracy vs kappa vs ROC AUC):** [Module 07](module-07-penguins-choose-metrics.qmd)
 - **Data:** [Palmer Penguins](../dataset-penguins.qmd)
 - **Curriculum:** Thursday consolidation and humility prompts in [curriculum outline](../curriculum-outline.qmd)
 - **Module library:** [Back to all modules](index.qmd)

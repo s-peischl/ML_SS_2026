@@ -16,7 +16,7 @@ library(ggplot2)
 library(GGally)
 library(rpart)
 library(rpart.plot)
-library(caret)
+library(tidymodels)
 library(tidyr)
 library(rlang)
 theme_set(theme_classic())
@@ -25,6 +25,8 @@ theme_set(theme_classic())
 # Overview
 
 This notebook predicts **`sex`** (female vs male) from **morphometrics and island / year only**. We **deliberately omit `species`** as a predictor so the task is not trivially solved by species–sex composition differences alone (in exercises you can add `species` and compare accuracy — then discuss **leakage** and what you are willing to claim scientifically).
+
+**Models:** `glm` and `rpart`. **Train/test split and confusion tables:** `tidymodels` (`initial_split`, `yardstick::conf_mat`). For a full Adelie-vs-Gentoo pipeline, see [Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit).
 
 See **[Palmer Penguins — about the dataset](../dataset-penguins.qmd)** and the related notebooks (mass, species, multiclass).
 
@@ -59,9 +61,9 @@ GGally::ggpairs(
 
 ```{r}
 set.seed(11)
-tr_idx <- caret::createDataPartition(pg$sex, p = 0.75, list = FALSE)[, 1]
-train <- pg[tr_idx, ]
-test <- pg[-tr_idx, ]
+split <- initial_split(pg, prop = 0.75, strata = sex)
+train <- training(split)
+test <- testing(split)
 ```
 
 ## Logistic regression (no `species` in formula)
@@ -78,7 +80,8 @@ summary(log_fit)
 ```{r}
 p_test <- predict(log_fit, newdata = test, type = "response")
 pred_sex <- factor(ifelse(p_test > 0.5, levels(train$sex)[2], levels(train$sex)[1]), levels = levels(train$sex))
-caret::confusionMatrix(pred_sex, test$sex)
+tibble(truth = test$sex, .pred_class = pred_sex) |>
+  conf_mat(truth = truth, estimate = .pred_class)
 ```
 
 ## Classification tree
@@ -94,7 +97,8 @@ rpart.plot(tree_fit, type = 4, extra = 104, main = "Sex from morphology (trainin
 
 ```{r}
 pred_t <- predict(tree_fit, test, type = "class") |> factor(levels = levels(test$sex))
-caret::confusionMatrix(pred_t, test$sex)
+tibble(truth = test$sex, .pred_class = pred_t) |>
+  conf_mat(truth = truth, estimate = .pred_class)
 ```
 
 ## 2D view (bill length vs flipper; other predictors at training medians / modes)

@@ -8,14 +8,43 @@ These pages **follow the same story as the slides**, but you can read them slowl
 
 We use **two kinds of examples**: **simulated genes** (we wrote the rules, so we know what is true) and **[Palmer Penguins](../dataset-penguins.qmd)** (real measurements you can plot and argue about).
 
-| Module | Day focus | In plain language |
-|--------|-----------|-------------------|
-| [01 — Foundations](#module-01-foundations-and-generalization) | Monday | Train vs test, “too wiggly” models, one-page **data description** habit |
-| [02 — Regularization](#module-02-regularization) | Monday | Ridge, lasso, and stepwise/AIC — when to shrink coefficients or drop predictors |
-| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Tuesday | Two ways of thinking about statistics + **decision trees** (“if–then” rules) |
-| [04 — Modeling pipeline in R](#module-04-tidymodels-pipeline) | Tuesday | **Same step-by-step code as Tuesday’s slides**: preprocess, fit, tune, and plot a penguin classifier (uses the `tidymodels` packages) |
-| [05 — Advanced models](#module-05-advanced-models) | Thursday | Stronger “black box” models (random forest, boosting, neural nets) — **same checking discipline**, bigger capacity |
-| [06 — Metrics & explanations](#module-06-metrics-imbalance-and-shap) | Thursday | Picking scores that match the biology/clinic question, imbalance, and reading **SHAP** plots carefully |
+::: {.callout-note appearance="simple"}
+## Modules vs notebooks {#modules-vs-notebooks}
+
+- **Modules** (this page, 01–08): **objectives-first** site pages — concepts, links to slides/data, and **short or canonical code** (especially **`tidymodels`** on penguins in **04** — train/test + Tuesday include — and **07–08**).
+- **Notebooks** ([`notebooks/`](../notebooks/index.qmd)): **long IDE labs** — many chunks, heavy plots, **simulated genes**, and classical **`lm` / `glm` / `rpart` / `glmnet`** on penguins (knit locally or submit if the course asks).
+
+**Format inventory (site spine)**
+
+| Asset | Primary role |
+|-------|----------------|
+| [Home](../index.qmd) | Navigation |
+| [Curriculum outline](../curriculum-outline.qmd) | Concept |
+| [Monday slides](../slides/day-01-monday.qmd) | Concept |
+| [Tuesday slides](../slides/day-02-tuesday.qmd) | Concept + **Canonical_code** (shared pipeline with Module 04) |
+| [Day 4 slides](../slides/day-04-thursday.qmd) | Concept + code |
+| [Notebook index](../notebooks/index.qmd) | **Lab_exploration** (+ homework when assigned) |
+
+**Format inventory (modules 01–08)** — tag = main job of the page
+
+| Module | Primary role |
+|--------|----------------|
+| [01](#module-01-foundations-and-generalization)–[03](#module-03-trees-and-two-cultures) | Concept |
+| [04](#module-04-tidymodels-pipeline) | **Canonical_code** (train/test + full tuned pipeline; same include as Tuesday slides) |
+| [05](#module-05-advanced-models)–[06](#module-06-metrics-imbalance-and-shap) | Concept |
+| [07](#module-07-penguins-pick-your-metric)–[08](#module-08-penguins-compare-learners) | **Canonical_code** (metrics while tuning; compare engines) |
+:::
+
+| Module | Day focus | In plain language | Role |
+|--------|-----------|-------------------|------|
+| [01 — Foundations](#module-01-foundations-and-generalization) | Monday | Train vs test, “too wiggly” models, one-page **data description** habit | Concept |
+| [02 — Regularization](#module-02-regularization) | Monday | Ridge, lasso, and stepwise/AIC — when to shrink coefficients or drop predictors | Concept |
+| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Tuesday | Two ways of thinking about statistics + **decision trees** (“if–then” rules) | Concept |
+| [04 — Modeling pipeline in R](#module-04-tidymodels-pipeline) | Tuesday | **Train/test + `glm`** first, then the **same tuned-tree code as Tuesday’s slides** (shared include; `tidymodels`) | Canonical_code |
+| [05 — Advanced models](#module-05-advanced-models) | Thursday | Stronger “black box” models (random forest, boosting, neural nets) — **same checking discipline**, bigger capacity | Concept |
+| [06 — Metrics & explanations](#module-06-metrics-imbalance-and-shap) | Thursday | Picking scores that match the biology/clinic question, imbalance, and reading **SHAP** plots carefully | Concept |
+| [07 — Pick your metric](#module-07-penguins-pick-your-metric) | Tuesday / lab | **Tune once**, track **accuracy**, **kappa**, and **ROC AUC**; see how `select_best()` changes when you change the metric | Canonical_code |
+| [08 — Compare learners](#module-08-penguins-compare-learners) | Thursday / lab | Same folds + recipe, compare **random forest**, **XGBoost**, **small MLP** (`fit_resamples`) | Canonical_code |
 
 ---
 
@@ -45,7 +74,7 @@ Two traditions in statistics (interpretable models vs flexible prediction), then
 
 ## Module 04: Modeling pipeline in R {#module-04-tidymodels-pipeline}
 
-The **same worked example as Tuesday’s deck**: Adelie vs Gentoo penguins, with **plots after tuning** (accuracy-type scores, variable importance, tree picture, ROC curve). All code lives in one shared file so slides and this page **never drift apart**.
+**[Train/test + `glm` →](module-04-pipeline.qmd#train-test-last-fit)** then the **[same tuned-tree code as Tuesday’s deck](module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared include so slides and this page **never drift apart**).
 
 **[Open Module 04 →](module-04-pipeline.qmd)**
 
@@ -64,3 +93,19 @@ Random forests, boosting, and neural nets as **more flexible** learners. Emphasi
 Choosing **numbers that match the decision** (miss a case vs call a false alarm), **class imbalance**, and using **SHAP** and importance plots as **descriptions** — not as proof you should intervene in a biological system.
 
 **[Open Module 06 →](module-06-evaluation-and-interpretability.qmd)**
+
+---
+
+## Module 07: Pick the score you care about {#module-07-penguins-pick-your-metric}
+
+One **tuned** classification tree on the same Adelie vs Gentoo table, but **three metrics at once** (accuracy, Cohen’s kappa, ROC AUC) so you can see **`select_best()`** pick different hyperparameters when you change the optimization target.
+
+**[Open Module 07 →](module-07-penguins-choose-metrics.qmd)**
+
+---
+
+## Module 08: Compare a few strong models {#module-08-penguins-compare-learners}
+
+Hold the **recipe and folds** fixed; swap **random forest**, **XGBoost**, and a **small neural net** — fair **`fit_resamples`** comparison on the same penguin task used in Modules 04 and 07.
+
+**[Open Module 08 →](module-08-penguins-compare-models.qmd)**

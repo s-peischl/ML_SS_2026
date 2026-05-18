@@ -45,7 +45,12 @@ data(penguins, package = "palmerpenguins")
 - **Same table everywhere** — Monday exploratory plots, Tuesday’s full **fit–check–tune** example in R, Thursday’s discussion of scores and explanations.
 - You can practice **regression** (for example predicting **body mass**), **two-group classification** (one species pair, or **sex**), and **three-species** classification on one familiar dataset.
 
-## Student notebooks (Palmer Penguins only)
+## Student notebooks vs `tidymodels` modules (Palmer Penguins)
+
+- **Notebooks** (`.Rmd` in [`notebooks/`](notebooks/index.qmd)): long **IDE labs** — **`lm` / `glm` / `rpart` / `glmnet`** for models; **`tidymodels`** (`rsample`, `recipes`, `yardstick`) for splits, scaling, and confusion tables.
+- **Modules** [04 — train/test](modules/module-04-pipeline.qmd#train-test-last-fit) and [04 — Tuesday pipeline](modules/module-04-pipeline.qmd#canonical-pipeline-tuesday) (shared include with slides), [07](modules/module-07-penguins-choose-metrics.qmd), [08](modules/module-08-penguins-compare-models.qmd): **`tidymodels`** walk-throughs on the **same Adelie vs Gentoo** task as the slides.
+
+### Student notebooks (Palmer Penguins only)
 
 - [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — explore the data, then predict **body mass** from bill and flipper measurements (with shrinkage methods you can compare to `lm`).  
 - [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression and a classification tree, confusion table, simple 2D “who would we call Gentoo?” picture.  

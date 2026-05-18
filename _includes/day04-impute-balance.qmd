@@ -1,0 +1,49 @@
+## Missing data: impute inside the recipe
+
+- **`step_impute_mean()`** / **`step_impute_median()`** for numerics; **`step_impute_mode()`** for factors — statistics computed on **analysis** folds only when resampled.
+- **Never** fill NA using test rows before scoring.
+
+```{r}
+#| label: day04-impute-demo
+#| echo: true
+#| message: false
+peng_na <- peng_cls
+set.seed(2)
+na_idx <- sample(which(!is.na(peng_na$bill_length_mm)), size = 12)
+peng_na$bill_length_mm[na_idx] <- NA
+
+rec_impute <- recipe(y ~ ., data = peng_na) |>
+  step_impute_median(bill_length_mm) |>
+  step_impute_mode(all_nominal_predictors()) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+prep_impute <- prep(rec_impute, peng_na)
+sum(is.na(bake(prep_impute, peng_na)$bill_length_mm))
+```
+
+## Class imbalance: upsample in the recipe
+
+- **`themis::step_upsample(y)`** draws extra **minority** rows **inside training** only (with replacement) before fitting.
+- Alternatives: **`step_smote()`**, **class weights** in the engine, **threshold tuning** on predicted probabilities.
+
+```{r}
+#| label: day04-upsample-recipe
+#| echo: true
+rec_up <- recipe(y ~ ., data = peng_cls) |>
+  step_upsample(y) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+When **false negatives** cost more (miss a rare disease), tune **recall** / **sensitivity** and report **PR-AUC** — not accuracy alone ([Module 07](../modules/module-07-penguins-choose-metrics.qmd)).
+
+## Metrics and deployment (reminders)
+
+- Pick **metrics before** peeking at holdout data; report **subgroup** tables when ethically appropriate.
+- **Data card:** document NA handling and class prevalence **before** modeling.
+- **Model card:** intended use, limits, monitoring — finish the draft you started Monday.
+
+Continue: [Module 06 — Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 pipeline](../slides/day-02-tuesday.qmd).

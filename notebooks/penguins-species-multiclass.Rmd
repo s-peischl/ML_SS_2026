@@ -17,14 +17,14 @@ library(GGally)
 library(nnet)
 library(rpart)
 library(rpart.plot)
-library(caret)
+library(tidymodels)
 library(tidyr)
 theme_set(theme_classic())
 ```
 
 # Overview
 
-Here we treat **`species`** as a **three-level** outcome (Adelie, Chinstrap, Gentoo) using **multinomial logistic regression** (`nnet::multinom`) and a **multiclass classification tree** (`rpart`). This complements the **binary** Adelie-vs-Gentoo notebook (`penguins-classification.Rmd`).
+Here we treat **`species`** as a **three-level** outcome (Adelie, Chinstrap, Gentoo) using **multinomial logistic regression** (`nnet::multinom`) and a **multiclass classification tree** (`rpart`). This complements the **binary** Adelie-vs-Gentoo notebook (`penguins-classification.Rmd`). For **metrics and multiclass intuition** on the site, see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
 
 See **[Palmer Penguins — about the dataset](../dataset-penguins.qmd)**.
 
@@ -58,9 +58,9 @@ GGally::ggpairs(
 
 ```{r}
 set.seed(24)
-tr_idx <- caret::createDataPartition(pg$species, p = 0.75, list = FALSE)[, 1]
-train <- pg[tr_idx, ]
-test <- pg[-tr_idx, ]
+split <- initial_split(pg, prop = 0.75, strata = species)
+train <- training(split)
+test <- testing(split)
 ```
 
 ## Multinomial logistic regression
@@ -78,11 +78,18 @@ summary(multi_fit)
 
 ```{r}
 pred_multi <- predict(multi_fit, newdata = test)
-caret::confusionMatrix(pred_multi, test$species)
+tibble(truth = test$species, .pred_class = pred_multi) |>
+  conf_mat(truth = truth, estimate = .pred_class)
 ```
 
 ```{r fig.width=5.5, fig.height=4.5}
-cm <- as.data.frame(caret::confusionMatrix(pred_multi, test$species)$table)
+cm <- conf_mat(
+  tibble(truth = test$species, .pred_class = pred_multi),
+  truth = truth,
+  estimate = .pred_class
+) |>
+  as_tibble() |>
+  dplyr::rename(Reference = truth, Prediction = .pred_class, Freq = n)
 ggplot(cm, aes(Reference, Prediction, fill = Freq)) +
   geom_tile(color = "gray80") +
   geom_text(aes(label = Freq), color = "gray15") +
@@ -107,7 +114,8 @@ rpart.plot(tree_fit, type = 4, extra = 104, box.palette = "GnYlRd", main = "Thre
 
 ```{r}
 pred_t <- predict(tree_fit, test, type = "class") |> factor(levels = levels(test$species))
-caret::confusionMatrix(pred_t, test$species)
+tibble(truth = test$species, .pred_class = pred_t) |>
+  conf_mat(truth = truth, estimate = .pred_class)
 ```
 
 ## Takeaways

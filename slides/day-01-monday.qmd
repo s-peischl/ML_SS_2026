@@ -7,14 +7,17 @@ format:
     incremental: true
     scrollable: true
     slide-level: 2
+    html-math-method: katex
 ---
 
 ## Learning objectives
 
-- Set up a **prediction** problem the same way you would set up an experiment: what is \(y\), what are the \(x\)’s, and which rows are for **training vs checking**?
-- Diagnose **underfitting** and **overfitting** with plots and simple scores (ideas you already know from linear models).
-- See **logistic regression** as the natural extension when \(y\) is yes/no.
-- See **ridge and lasso** as ways to stabilize coefficients when predictors overlap.
+- Navigate **RStudio / Positron**: open a project, load a table, and make a simple **`ggplot2`** figure  
+- Know **which other tools** we use this week (tidyverse, **tidymodels** from Tuesday onward)  
+- Work through **two synthetic gene datasets** (continuous trait; binary disease) with known ground truth  
+- See **underfitting** (intercept-only) vs **overfitting risk** (all predictors) on the **same** data  
+- Use **forward and backward AIC** selection, then **lasso** as a continuous alternative  
+- Understand $\lambda$ and choosing it by **leave-one-out CV** (`cv.glmnet`, `nfold = n`) — not a train/test split today  
 
 ## Navigation
 
@@ -23,101 +26,165 @@ format:
 - [Module Library](../modules/index.qmd)
 - [Next: Tuesday deck](day-02-tuesday.qmd)
 
-## Why start simple?
+## Tools we use this week
 
-- Simple models give transparent baselines
-- Baselines expose feature quality and data leakage risk
-- You need calibration before model complexity
+- **R** — language for statistics, graphics, and reproducible scripts  
+- **RStudio or Positron** — console, editor, projects, and **Render** for `.qmd` / `.Rmd`  
+- **tidyverse** — shared data and plot grammar (`dplyr`, `ggplot2`, …); you will see the pipe `|>` in notebooks  
+- **tidymodels** — recipes, workflows, and resampling for modeling pipelines (**Tuesday onward**); **Monday** stays mostly familiar **`lm`** / **`glm`**  
+- Install **`palmerpenguins`** before Tuesday — we use it in the penguin notebooks, not in today’s gene simulations  
 
-## Linear regression as baseline
+Details and installs: [Student notebooks](../notebooks/index.qmd) 
 
-- Use as first supervised model to discuss fit quality
-- Frame the bias-variance tradeoff
-- Compare train vs validation error as complexity grows
+## Overview
 
-## Linear model: matrix form
+- Day 1:
+  - Classical statistics recap  
+  - Toy linear regression (diagnostics)  
+  - **Gene × trait** — null → full → AIC → lasso (LOO CV for $\lambda$)  
+  - **Gene × disease** — same logic with logistic regression  
+- Day 2:
+  - Algorithmic modelling culture  
+  - Decision Trees  
+  - A first pipeline (Palmer Penguins, **train/test holdout**)  
+- Day 3: 
+  - Mini Symposium, social event  
+- Day 4: 
+  - From trees to forests: Boosting and Bagging  
+  - Neural Networks and more  
+  - Interpretability and variable importance  
 
-- Response vector \(y \in \mathbb{R}^n\); design matrix \(X\) with rows as samples and columns as predictors (plus intercept column).
-- Ordinary least squares minimizes \(\|y - X\beta\|_2^2\) over \(\beta\).
-- Closed form (when \(X'X\) is invertible): \(\hat\beta = (X'X)^{-1} X'y\).
-- Predictions on new \(X_{\text{new}}\): \(\hat y_{\text{new}} = X_{\text{new}} \hat\beta\).
+## Getting started in RStudio
 
-## What OLS gives you (and what it assumes)
+Short walk-through: what the IDE is, install, load a table, write a script, and make a **`ggplot2`** figure — then we move to statistics and the gene simulations.
 
-- **Interpretation:** each \(\hat\beta_j\) is a *conditional* slope: expected change in \(y\) when predictor \(j\) increases by one unit, holding others fixed (in our **gene simulation**, each column is a gene; morphometrics play that role in **Palmer Penguins**).
-- **Linearity:** effects combine additively in the predictor space you specify (interactions only if you engineer them).
-- **Collinearity:** if predictors are nearly redundant, variances of \(\hat\beta_j\) explode and coefficients become unstable—regularization is one response.
-- **High \(p\), low \(n\):** OLS is not unique or behaves badly; shrinkage or explicit sparsity becomes necessary.
+{{< include ../_includes/day01-rstudio-intro.qmd >}}
 
-## Discrete complexity control: AIC stepwise search
+## Classical statistics 
 
-- **AIC** trades log-likelihood against model size: \(\mathrm{AIC} = 2k - 2\log L\). Lower is better; compare models on the *same* data with care.
-- **Backward** starts at the full linear model and drops terms if AIC improves.
-- **Forward** starts at the intercept-only model and adds terms greedily up to a declared upper scope.
-- Unlike ridge/lasso, this is a **discrete** search over subsets of predictors; it can miss good subsets and is more aggressive about *which* \(k\) counts as complexity.
+- Data are **noisy**; models are **simplifying sentences** about patterns, not automatic truths about biology  
+- We **estimate** unknown quantities and (when the design supports it) quantify **uncertainty** (standard errors, intervals)  
+- **Association** $\neq$ **causation** — a significant coefficient is still conditional on everything else in the model and on what was actually measured  
 
-## Logistic regression for classification
+## Classical vs predictive wording (same `lm` engine)
 
-- Introduce probability modeling via log-odds
-- Connect decision threshold to false positive/false negative tradeoff
-- Discuss model assumptions and where they break
+- **Classical question:** *Given this model, what do we learn about slope $\beta_j$, and how fragile is it?*  
+- **Prediction question:** *If we freeze this fitted equation, how well does it score on **new** rows?*  
+- **Today:** all models are fit and compared on the **same** simulated samples; **Tuesday** introduces honest **held-out** evaluation (Palmer Penguins / tidymodels)  
+
+## Multiple linear regression (one sentence + notation)
+
+- **Outcome** $y$; **predictors** $x_1, \ldots, x_p$ (today: simulated **gene expression** columns)  
+- **Linear model:** $\mathbb{E}(y \mid X) = \beta_0 + \beta_1 x_1 + \cdots + \beta_p x_p$ — additivity in the **chosen** predictor columns (curvature only if you build it in)  
+
+## Key assumptions (sanity checklist, not a theorem quiz)
+
+- **Mean structure:** if the truth is strongly curved, a single plane leaves **patterned residuals** — check the toy **residuals vs fitted** slide above  
+- **Independent rows** (idealisation): violated by repeated measures, batches, or spatial proximity — then naive intervals lie  
+- **Comparable error spread** across fitted values (heteroscedasticity $\Rightarrow$ cautious intervals)  
+- **Roughly normal errors** — check the toy **Q–Q** plot; matters most for **small-$n$** intervals  
+- **Influence:** a handful of extreme points can **pull** slopes — always look at diagnostics before you tell a story  
+
+## Reading $\hat{\beta}_j$ (and when it wiggles)
+
+- Each slope is **“holding other predictors constant”** — interpretable only in that mathematical sense, not as a controlled experiment unless design matches  
+- **Correlated predictors** inflate standard errors and swap signs easily — **regularization** (lasso, later today) is one honest response  
+- **Many predictors, modest $n$:** plain OLS is unstable or non-unique; shrinkage or sparsity becomes attractive  
+
+## Linear model: matrix form (compact)
+
+- $y \in \mathbb{R}^n$; design matrix $X$ (rows = samples, columns = predictors + intercept)  
+- **OLS** minimizes $\lVert y - X\beta \rVert_2^2$; if $X^{\top}X$ is invertible, $\hat{\beta} = (X^{\top}X)^{-1} X^{\top}y$  
+- **Predict:** $\hat{y}_{\mathrm{new}} = X_{\mathrm{new}} \hat{\beta}$ — same object, whether your goal is inference or scoring new data  
+
+## Seeing linear regression (toy data)
+
+Short visuals: one predictor (line + spread), **Q–Q** and **residuals vs fitted**, then two predictors and a **plane** in 3D.
+
+{{< include ../_includes/day01-linear-regression-intro.qmd >}}
+
+## Gene × trait (continuous outcome)
+
+- **Simulated** expression and a continuous **trait** — instructors know ground truth (**GeneA** / **GeneB**)  
+- Same story as [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)  
+- **Next:** describe the data, then compare models of increasing complexity on **all** samples  
 
 ## Overfitting vs underfitting
 
-- Underfitting: both train and validation errors high
-- Overfitting: train error low, validation error high
-- Good fit: balanced complexity and stable generalization
+- **Underfitting:** model too simple — high error even on data used to fit (e.g. intercept-only, ignores genes)  
+- **Overfitting risk:** model very flexible — can fit noise; unstable coefficients when predictors overlap  
+- **Today:** compare fits **in-sample**; **Tuesday:** hold out data you never fit on  
 
-## Practical diagnostics
+## Too few vs too many predictors
 
-- Train/validation/test split as default
-- Cross-validation for robust performance estimates
-- Learning curves to detect data-limited regimes
+- **Null model** (`trait ~ 1`): one parameter, ignores all genes → underfitting  
+- **Full model** (`trait ~ .`): all genes → lower training error, but many correlated predictors → shaky $\hat{\beta}_j$  
+- **Goal:** find a complexity level that balances fit and stability — stepwise AIC, then lasso  
 
-## Regularization motivation
+## Discrete complexity control: AIC stepwise search
 
-- Correlated predictors destabilize coefficient estimates
-- High-dimensional data increases variance
-- Regularization trades a bit of bias for lower variance
+- **AIC** trades log-likelihood against model size: $\mathrm{AIC} = 2k - 2\log L$. Lower is better on the *same* data.  
+- **Backward** starts at the full model and drops terms if AIC improves.  
+- **Forward** starts at the intercept-only model and adds terms greedily up to the full model.  
 
-## Ridge and lasso
+{{< include ../_includes/day01-gene-trait-linear.qmd >}}
 
-- Ridge: shrinks all coefficients, rarely to exact zero
-- Lasso: can set coefficients to zero (feature selection)
-- Choice depends on sparsity assumptions and interpretability needs
+## Lasso as an alternative to discrete search
 
-## Course examples: genes (known truth) + Palmer Penguins
+- **Idea:** penalize large coefficients — lasso adds $\lambda \sum_j |\beta_j|$ to the usual loss  
+- **$\lambda$** controls strength: larger $\lambda$ $\Rightarrow$ simpler model (more shrinkage toward zero)  
+- **Choosing $\lambda$:** leave-one-out cross-validation — `cv.glmnet(..., nfold = n)` holds out one row at a time  
+- This is **not** a train/test split; it only picks $\lambda$ on the same $n$ rows (honest holdout: **Tuesday**)  
 
-The next slides include **two blocks**: (1) **synthetic gene** simulations for LASSO / ridge / AIC (same as the gene notebooks), then (2) a short **Palmer Penguins** teaser — full penguin workflows live in separate notebooks linked below.
+{{< include ../_includes/day01-gene-trait-lasso.qmd >}}
 
-{{< include ../_includes/day01-lasso-ridge-logistic.qmd >}}
+## Logistic regression (binary outcome)
+
+- **Outcome** $y \in \{0, 1\}$ (here: disease absent / present)  
+- Model **log-odds** as linear in predictors: $\log\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x_1 + \cdots$  
+- **Link** gives probabilities in $(0, 1)$; classify with a **threshold** (often 0.5)  
+- Same modeling arc as trait: **null → full → AIC → lasso** on all samples  
+
+## Gene × disease (binary outcome)
+
+- **Simulated** genes with known causal roles (**Gene1**, **Gene3**, **Gene4**, interaction)  
+- Same workflow as trait block; notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)  
+
+{{< include ../_includes/day01-gene-disease-logistic.qmd >}}
+
+## Lasso for classification
+
+- Same $\lambda$ story: `glmnet(..., family = "binomial", nfold = n)` for leave-one-out CV  
+- Then compare null, full `glm`, AIC models, and lasso in one **in-sample** summary table  
+
+{{< include ../_includes/day01-gene-disease-lasso.qmd >}}
 
 ## Elastic net (bridge between ridge and lasso)
 
-- `glmnet` uses mixing parameter \(\alpha\in[0,1]\): \(\alpha=0\) is pure ridge, \(\alpha=1\) is pure lasso, values in between blend \(L_1\) and \(L_2\) penalties.
-- Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).
-- In teaching: mention it as the default “I am not sure” regularization path before students reach black-box models.
+- `glmnet` uses mixing parameter $\alpha \in [0, 1]$: $\alpha = 0$ is pure ridge, $\alpha = 1$ is pure lasso, values in between blend $L_1$ and $L_2$ penalties.  
+- Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).  
 
-## Student notebooks (genes + penguins)
+## Later this week: Palmer Penguins
 
-- **Data reference:** [Palmer Penguins — about the dataset](../dataset-penguins.qmd)  
-- **Genes (unchanged):** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)  
-- **Penguins:** [body mass](../notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd), [three species](../notebooks/penguins-species-multiclass.Rmd)  
-- **Index:** [notebooks/index.qmd](../notebooks/index.qmd)
+Monday stays on **synthetic genes**; from **Tuesday** we use the real [Palmer Penguins](../dataset-penguins.qmd) table in tidymodels pipelines and notebooks:
 
-## Demo: regularization paths (live or board)
+- [Body mass](../notebooks/penguins-body-mass.Rmd) · [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd) · [Sex](../notebooks/penguins-sex-classification.Rmd) · [Three species](../notebooks/penguins-species-multiclass.Rmd)  
 
-- Optional in-class demo: sketch how ridge vs lasso shrink coefficients as penalty increases (whiteboard or one short live `glmnet` plot in the student notebook).
+## Student notebooks (Day 1 focus)
+
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)  
+- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)  
+- **Index:** [notebooks/index.qmd](../notebooks/index.qmd)  
 
 ## End-of-day checklist (before you leave the room)
 
-- Can you explain **train vs validation** error for your favorite plot in the deck?
-- Can you contrast **discrete** model search (AIC) with **continuous** shrinkage (ridge/lasso)?
-- Can you name one situation where **lasso** beats **ridge** and one where the opposite is true?
-- Did you open at least one **student `.Rmd`** and run all chunks?
+- Can you explain **null vs full** on the same data — which underfits, which risks overfitting?  
+- Can you contrast **discrete** model search (AIC) with **continuous** shrinkage (lasso)?  
+- What does $\lambda$ do, and how does **leave-one-out CV** help choose it?  
+- Did you open at least one **student `.Rmd`** and run all chunks?  
 
 ## End-of-day takeaway
 
-- Regression models are a conceptual launchpad for classification
-- Regularization is essential before moving to more flexible algorithms
-- Exercises are handled separately
+- Two synthetic gene stories with the same arc: describe data → null → full → AIC → lasso (LOO CV for $\lambda$)  
+- Honest **holdout** evaluation and tidymodels pipelines start **Tuesday**  
+- Exercises are handled separately  

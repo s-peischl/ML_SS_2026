@@ -1,0 +1,43 @@
+Short **tidyverse** refresher before the `tidymodels` pipeline (same pipe grammar as recipes and workflows).
+
+```{r}
+#| label: day02-tidy-intro-setup
+#| include: false
+suppressPackageStartupMessages(library(tidyverse))
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+## Tidy data and the pipe `|>`
+
+- Each **column** is one variable; each **row** is one penguin (or one sample)
+- **`x |> f()`** means: take the result of `x` and pass it as the **first argument** to `f()`
+- Read chains **top to bottom** — same habit you will use for `recipe() |> step_*()`
+
+## Example: `filter` and `select`
+
+```{r}
+#| label: day02-tidy-filter-select
+#| echo: true
+pg <- palmerpenguins::penguins |>
+  filter(!is.na(sex), !is.na(bill_length_mm), !is.na(bill_depth_mm)) |>
+  select(species, island, sex, bill_length_mm, bill_depth_mm, body_mass_g)
+
+head(pg, 4)
+```
+
+## Example: `mutate` (new columns)
+
+```{r}
+#| label: day02-tidy-mutate
+#| echo: true
+pg |>
+  mutate(bill_ratio = bill_length_mm / bill_depth_mm) |>
+  select(species, bill_length_mm, bill_depth_mm, bill_ratio) |>
+  head(4)
+```
+
+## Same grammar in `tidymodels`
+
+- **Table pipelines:** `penguins |> filter(...) |> mutate(...)`
+- **Preprocessing:** `recipe(y ~ ., data = train) |> step_dummy() |> step_normalize()`
+- **Modeling objects:** `workflow() |> add_recipe(rec) |> add_model(spec)` — here you chain **objects**, not tables, but the **read left-to-right** habit is the same

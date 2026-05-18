@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE)
   
 In this analysis, we simulate a biological dataset where gene expression levels influence the presence or absence of a disease trait. We generate synthetic gene expression data, create a response variable (`disease_presence`), and fit logistic regression and decision tree models. Finally, we evaluate and visualize the models.
 
+**Concept companions (short reads on the site):** [Module 01 — Foundations](../modules/module-01-foundations.qmd) (splits and generalization) and [Module 03 — Trees](../modules/module-03-trees-and-cultures.qmd) — this file is the **long gene lab** with all simulation and plots.
+
 # Summary of the Script
 ## Dataset Generation:
 
@@ -48,7 +50,7 @@ We simulate gene expression data for 200 samples and 10 genes. `Gene1`, `Gene3`,
 
 ```{r data-generation, message=FALSE, warning=FALSE}
 # Load required libraries
-library(caret)
+library(yardstick)
 library(rpart)
 library(ggplot2)
 library(rlang)
@@ -117,11 +119,10 @@ rpart_pred <- predict(rpart_model, type = "class", newdata = bio_data)
 logistic_pred <- factor(ifelse(logistic_pred > 0.5, "Present", "Absent"), levels = c("Absent", "Present"))
 rpart_pred <- factor(rpart_pred, levels = levels(disease_presence))
 
-# Evaluate model performance
-logistic_accuracy <- confusionMatrix(logistic_pred, bio_data$disease_presence)$overall["Accuracy"]
-rpart_accuracy <- confusionMatrix(rpart_pred, bio_data$disease_presence)$overall["Accuracy"]
+# Evaluate model performance (yardstick)
+logistic_accuracy <- mean(logistic_pred == bio_data$disease_presence)
+rpart_accuracy <- mean(rpart_pred == bio_data$disease_presence)
 
-# Display accuracy
 cat("Logistic Regression Accuracy:", logistic_accuracy, "\n")
 cat("Decision Tree (rpart) Accuracy:", rpart_accuracy, "\n")
 

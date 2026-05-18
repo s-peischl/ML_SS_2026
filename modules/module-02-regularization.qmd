@@ -37,8 +37,8 @@ title: "Module 02: Regularization"
 ## Course links
 
 - **Slides:** [Monday deck](../slides/day-01-monday.qmd) (ridge, lasso, AIC, elastic net slides)
-- **Notebooks — genes:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) — uses **`glmnet`** for penalized regression and **`MASS::stepAIC`** in the code for stepwise AIC.  
-- **Notebooks — penguins:** [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd) — ridge/LASSO on **body mass** with the same `glmnet` idea on real, correlated measurements.
+- **Primary gene lab (penalties + AIC on known-truth simulation):** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) — **`glmnet`**, **`MASS::stepAIC`**.  
+- **Penguin lab (same shrinkage ideas on real measurements):** [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd) — ridge/LASSO on **body mass** with `glmnet`.
 - **Curriculum:** regularization and model-selection beats under Monday in [curriculum outline](../curriculum-outline.qmd)
 - **Module library:** [Back to all modules](index.qmd)
 

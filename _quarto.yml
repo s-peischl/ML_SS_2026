@@ -19,8 +19,8 @@ website:
         text: Monday
       - href: slides/day-02-tuesday.qmd
         text: Tuesday
-      - href: slides/day-03-thursday.qmd
-        text: Thursday
+      - href: slides/day-04-thursday.qmd
+        text: Day 4
       - href: modules/index.qmd
         text: Modules
       - text: Notebooks

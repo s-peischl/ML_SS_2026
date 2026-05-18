@@ -1,0 +1,102 @@
+```{r}
+#| label: day04-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(palmerpenguins)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(rlang)
+  library(vip)
+  library(purrr)
+  library(themis)
+})
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+
+peng_cls <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
+  tidyr::drop_na()
+
+folds <- vfold_cv(peng_cls, v = 5, strata = y)
+metrics_cls <- metric_set(roc_auc, accuracy, sens, yardstick::spec)
+
+rec_base <- recipe(y ~ ., data = peng_cls) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+plot_prob_boundary <- function(
+    model,
+    data,
+    f1 = "bill_length_mm",
+    f2 = "bill_depth_mm",
+    title = NULL
+) {
+  r1 <- range(data[[f1]], na.rm = TRUE)
+  r2 <- range(data[[f2]], na.rm = TRUE)
+  grid <- expand.grid(
+    seq(r1[1] - 0.5, r1[2] + 0.5, length.out = 120),
+    seq(r2[1] - 0.5, r2[2] + 0.5, length.out = 120)
+  )
+  names(grid) <- c(f1, f2)
+  for (nm in setdiff(names(data), c(f1, f2, "y"))) {
+    v <- data[[nm]]
+    grid[[nm]] <- if (is.numeric(v)) stats::median(v, na.rm = TRUE) else {
+      tab <- table(v)
+      names(tab)[which.max(tab)]
+    }
+  }
+  grid$prob <- predict(model, new_data = grid, type = "prob")$.pred_Gentoo
+  ggplot(data, aes(!!sym(f1), !!sym(f2))) +
+    geom_raster(
+      data = grid,
+      aes(!!sym(f1), !!sym(f2), fill = prob),
+      interpolate = TRUE,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(color = y), size = 2.2) +
+    scale_fill_gradient(low = "turquoise", high = "magenta", name = "P(Gentoo)") +
+    scale_color_manual(values = c(Adelie = "black", Gentoo = "white"), name = "Species") +
+    theme_minimal() +
+    labs(title = title, x = f1, y = f2)
+}
+
+save_day04_composite <- function(model, data, title, chunk_id, f1 = "bill_length_mm", f2 = "bill_depth_mm") {
+  path <- paste0(knitr::fig_chunk(chunk_id), ".png")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(path, width = 10, height = 5, units = "in", res = 120)
+  } else {
+    png(path, width = 10, height = 5, units = "in", res = 120)
+  }
+  on.exit(dev.off(), add = TRUE)
+  layout(matrix(1:2, nrow = 1, ncol = 2))
+  par(mar = c(1, 1, 3, 1))
+  if (inherits(model, "workflow")) {
+    fit_obj <- extract_fit_parsnip(model)
+    if (inherits(fit_obj$fit, "rpart")) {
+      rpart.plot::rpart.plot(fit_obj$fit, type = 4, extra = 104, main = title, cex = 0.8)
+    } else {
+      plot(1, type = "n", xlab = "", ylab = "", main = title)
+      text(1, 1, "Tree plot: rpart engine only", cex = 0.9)
+    }
+  } else {
+    plot(1, type = "n", xlab = "", ylab = "", main = title)
+    text(1, 1, "See boundary panel", cex = 0.9)
+  }
+  print(plot_prob_boundary(model, data, f1, f2))
+  path
+}
+```

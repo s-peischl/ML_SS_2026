@@ -7,7 +7,7 @@ Static site + slide decks + student `.Rmd` notebooks. **Shiny / Shinylive apps a
 From this directory:
 
 ```bash
-Rscript -e "install.packages(c('knitr','rmarkdown','glmnet','caret','dplyr','ggplot2','GGally','rlang','MASS','rpart','rpart.plot','rcartocolor'), repos='https://cloud.r-project.org')"
+Rscript -e "install.packages(c('knitr','rmarkdown','glmnet','tidymodels','dplyr','ggplot2','GGally','rlang','MASS','rpart','rpart.plot','rcartocolor','ranger','xgboost','themis'), repos='https://cloud.r-project.org')"
 quarto preview
 ```
 

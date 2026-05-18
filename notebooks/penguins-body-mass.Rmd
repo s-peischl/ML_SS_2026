@@ -15,7 +15,7 @@ library(dplyr)
 library(ggplot2)
 library(GGally)
 library(glmnet)
-library(caret)
+library(tidymodels)
 library(tidyr)
 theme_set(theme_classic())
 ```
@@ -24,7 +24,7 @@ theme_set(theme_classic())
 
 This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** as a **continuous outcome** example: we predict **`body_mass_g`** from bill and flipper measurements (and simple factors).
 
-It complements the **synthetic gene** linear / LASSO notebook (`linear-regression-lasso.Rmd`), where we know the ground truth. Here we work with **real measurements** and the usual messiness (correlation, nonlinear hints, missing values).
+It complements the **synthetic gene** linear / LASSO notebook (`linear-regression-lasso.Rmd`), where we know the ground truth. Here we work with **real measurements** and the usual messiness (correlation, nonlinear hints, missing values). Concepts for shrinkage sit in [Module 02](../modules/module-02-regularization.qmd); this file is the **long lab** to run in the IDE.
 
 ## Load and clean
 
@@ -74,15 +74,21 @@ y <- pred_df$body_mass_g
 X <- model.matrix(body_mass_g ~ ., data = pred_df)[, -1] # drop intercept column; dummy coding
 
 set.seed(42)
-tr_idx <- createDataPartition(y, p = 0.8, list = FALSE)[, 1]
-X_train <- X[tr_idx, , drop = FALSE]
-y_train <- y[tr_idx]
-X_test <- X[-tr_idx, , drop = FALSE]
-y_test <- y[-tr_idx]
+split <- initial_split(pred_df, prop = 0.8)
+train_df <- training(split)
+test_df <- testing(split)
+rm(split)
 
-pre <- preProcess(X_train, method = c("center", "scale"))
-X_train_s <- predict(pre, X_train)
-X_test_s <- predict(pre, X_test)
+rec_scale <- recipe(body_mass_g ~ ., data = train_df) |>
+  step_normalize(all_numeric_predictors())
+prep_fit <- prep(rec_scale, train_df)
+train_b <- bake(prep_fit, train_df)
+test_b <- bake(prep_fit, test_df)
+
+y_train <- train_b$body_mass_g
+y_test <- test_b$body_mass_g
+X_train_s <- model.matrix(body_mass_g ~ ., data = train_b)[, -1]
+X_test_s <- model.matrix(body_mass_g ~ ., data = test_b)[, -1]
 ```
 
 ## Ridge and LASSO with cross-validation
@@ -104,8 +110,11 @@ fit_lasso <- glmnet(X_train_s, y_train, alpha = 1, lambda = best_lam_lasso)
 pred_ridge <- as.numeric(predict(fit_ridge, newx = X_test_s))
 pred_lasso <- as.numeric(predict(fit_lasso, newx = X_test_s))
 
-postResample(pred_ridge, y_test)
-postResample(pred_lasso, y_test)
+reg_metrics <- metric_set(rmse, rsq, mae)
+tibble(truth = y_test, .pred = pred_ridge) |>
+  reg_metrics(truth, .pred)
+tibble(truth = y_test, .pred = pred_lasso) |>
+  reg_metrics(truth, .pred)
 ```
 
 ## Coefficient path (LASSO)

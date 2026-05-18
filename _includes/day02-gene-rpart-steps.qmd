@@ -1,0 +1,290 @@
+**Gene × disease — decision trees (`rpart`)** on the same simulation as Monday ([logistic notebook](../notebooks/logistic-regression-gene-disease.Rmd)).
+
+```{r}
+#| label: day02-gene-rpart-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(rpart)
+  library(rpart.plot)
+  library(ggplot2)
+  library(rlang)
+})
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+
+plot_rpart_boundary <- function(model, data, feature1, feature2, title = NULL) {
+  r1 <- range(data[[feature1]])
+  r2 <- range(data[[feature2]])
+  grid <- expand.grid(
+    seq(r1[1] - 1, r1[2] + 1, length.out = 180),
+    seq(r2[1] - 1, r2[2] + 1, length.out = 180)
+  )
+  names(grid) <- c(feature1, feature2)
+  for (feat in setdiff(names(data), c(feature1, feature2, "disease_presence"))) {
+    grid[[feat]] <- mean(data[[feat]])
+  }
+  grid$response <- predict(model, newdata = grid, type = "class")
+  grid$response <- factor(grid$response, levels = c("Absent", "Present"))
+  ggplot(data, aes(!!sym(feature1), !!sym(feature2))) +
+    geom_tile(
+      data = grid,
+      aes(!!sym(feature1), !!sym(feature2), fill = response),
+      alpha = 0.32,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(fill = disease_presence), shape = 21, color = "black", size = 2.2) +
+    scale_fill_manual(values = c(Absent = "turquoise", Present = "magenta")) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = feature1,
+      y = feature2,
+      fill = "Predicted"
+    )
+}
+
+save_growth_composite <- function(model, depth, chunk_id, feature1 = "Gene1", feature2 = "Gene3") {
+  path <- paste0(knitr::fig_chunk(chunk_id), ".png")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(path, width = 12, height = 6, units = "in", res = 120)
+  } else {
+    png(path, width = 12, height = 6, units = "in", res = 120)
+  }
+  on.exit(dev.off(), add = TRUE)
+  layout(matrix(1:2, nrow = 1, ncol = 2))
+  par(mar = c(1, 1, 3, 1))
+  rpart.plot(
+    model,
+    type = 4,
+    extra = 102,
+    box.palette = "BuGn",
+    fallen.leaves = TRUE,
+    main = paste0("Tree (maxdepth = ", depth, ")"),
+    cex = 0.85
+  )
+  print(
+    plot_rpart_boundary(
+      model, bio_data, feature1, feature2,
+      title = paste0("Partition after depth ", depth)
+    )
+  )
+  path
+}
+
+describe_top_split <- function(model) {
+  if (is.null(model$splits) || nrow(model$splits) == 0) {
+    return("At this depth the tree matches the previous level (no new split).")
+  }
+  var <- rownames(model$splits)[1]
+  cut <- model$splits[1, "index"]
+  paste0("Top split: **", var, "** at ", signif(cut, 3), " (left vs right branches in the tree plot).")
+}
+```
+
+```{r}
+#| label: day02-gene-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 200
+p <- 10
+gene_names <- paste0("Gene", 1:p)
+genes_data <- data.frame(matrix(rnorm(n * p), nrow = n))
+colnames(genes_data) <- gene_names
+disease_presence <- ifelse(
+  0.5 * genes_data$Gene1 + 0.8 * genes_data$Gene3 - 0.3 * genes_data$Gene4 -
+    genes_data$Gene1 * genes_data$Gene3 * 2 + rnorm(n, sd = 0.5) > 0,
+  1, 0
+)
+disease_presence <- factor(disease_presence, levels = c(0, 1), labels = c("Absent", "Present"))
+bio_data <- data.frame(genes_data, disease_presence)
+```
+
+```{r}
+#| label: day02-rpart-final
+#| echo: false
+#| results: hide
+rpart_model <- rpart(
+  disease_presence ~ .,
+  data = bio_data,
+  method = "class",
+  control = rpart.control(cp = 0.01, minsplit = 10)
+)
+```
+
+## Final decision surface (Gene1 vs Gene3)
+
+Other genes fixed at their sample means — same 2D slice as Monday’s logistic boundary.
+
+```{r}
+#| label: day02-rpart-final-boundary
+#| echo: false
+#| fig-height: 5
+#| fig-width: 8
+print(
+  plot_rpart_boundary(
+    rpart_model, bio_data, "Gene1", "Gene3",
+    title = "rpart: predicted class in the Gene1–Gene3 plane"
+  )
+)
+```
+
+## Final tree (`rpart.plot`)
+
+```{r}
+#| label: day02-rpart-final-tree
+#| echo: false
+#| fig-height: 6
+#| fig-width: 8
+par(mar = c(1, 1, 3, 1))
+rpart.plot(
+  rpart_model,
+  type = 4,
+  extra = 102,
+  box.palette = "BuGn",
+  fallen.leaves = TRUE,
+  main = "Final classification tree (all genes)"
+)
+```
+
+```{r}
+#| label: day02-rpart-step-prep
+#| echo: false
+#| results: hide
+max_step_depth <- 5L
+for (d in seq_len(max_step_depth)) {
+  tree_d <- rpart(
+    disease_presence ~ .,
+    data = bio_data,
+    method = "class",
+    control = rpart.control(maxdepth = d, cp = 0.001, minsplit = 15)
+  )
+  assign(paste0("tree_depth_", d), tree_d)
+}
+```
+
+## Growing the tree (step by step)
+
+One split level at a time: **tree diagram** (left) and **decision surface** in Gene1 × Gene3 (right).
+
+## Growing the tree: depth 1
+
+```{r}
+#| label: day02-rpart-step-1-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_growth_composite(get("tree_depth_1"), 1, "day02-rpart-step-1-fig"))
+```
+
+```{r}
+#| label: day02-rpart-step-1-text
+#| echo: false
+#| results: asis
+cat(describe_top_split(get("tree_depth_1")), "\n")
+```
+
+## Growing the tree: depth 2
+
+```{r}
+#| label: day02-rpart-step-2-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_growth_composite(get("tree_depth_2"), 2, "day02-rpart-step-2-fig"))
+```
+
+```{r}
+#| label: day02-rpart-step-2-text
+#| echo: false
+#| results: asis
+cat(describe_top_split(get("tree_depth_2")), "\n")
+```
+
+## Growing the tree: depth 3
+
+```{r}
+#| label: day02-rpart-step-3-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_growth_composite(get("tree_depth_3"), 3, "day02-rpart-step-3-fig"))
+```
+
+```{r}
+#| label: day02-rpart-step-3-text
+#| echo: false
+#| results: asis
+cat(describe_top_split(get("tree_depth_3")), "\n")
+```
+
+## Growing the tree: depth 4
+
+```{r}
+#| label: day02-rpart-step-4-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+#| out-width: 100%
+knitr::include_graphics(save_growth_composite(get("tree_depth_4"), 4, "day02-rpart-step-4-fig"))
+```
+
+```{r}
+#| label: day02-rpart-step-4-text
+#| echo: false
+#| results: asis
+cat(describe_top_split(get("tree_depth_4")), "\n")
+```
+
+## Growing the tree: depth 5
+
+```{r}
+#| label: day02-rpart-step-5-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5.5
+#| out-width: 100%
+knitr::include_graphics(save_growth_composite(get("tree_depth_5"), 5, "day02-rpart-step-5-fig"))
+```
+
+```{r}
+#| label: day02-rpart-step-5-text
+#| echo: false
+#| results: asis
+cat(describe_top_split(get("tree_depth_5")), "\n")
+```
+
+## Tree vs logistic (same data, in-sample accuracy)
+
+```{r}
+#| label: day02-rpart-accuracy
+#| echo: false
+#| results: asis
+logistic_model <- glm(disease_presence ~ ., data = bio_data, family = binomial())
+log_prob <- predict(logistic_model, type = "response")
+log_pred <- factor(
+  ifelse(log_prob > 0.5, "Present", "Absent"),
+  levels = c("Absent", "Present")
+)
+rpart_pred <- predict(rpart_model, type = "class")
+knitr::kable(
+  data.frame(
+    Model = c("Logistic (glm)", "Decision tree (rpart)"),
+    Accuracy_in = c(
+      mean(log_pred == bio_data$disease_presence),
+      mean(rpart_pred == bio_data$disease_presence)
+    )
+  ),
+  digits = 3,
+  caption = "In-sample accuracy on all n rows (Monday vs Tuesday model class)"
+)
+```

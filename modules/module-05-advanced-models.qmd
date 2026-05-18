@@ -6,42 +6,48 @@ title: "Module 05: Advanced Models"
 
 - Name **random forests**, **gradient boosting** (e.g. XGBoost), and **neural networks** as the usual “strong tabular learners” after single trees.
 - Explain the **capacity vs validation** tradeoff: more flexibility needs tighter resampling, more careful tuning, and clearer metrics.
-- Describe how to **swap the type of model** (still in R, still with the same validation plan) inside the **Tuesday / Module 04 workflow** you already saw — in code this is changing the **model specification** object (`mod_spec` in `tidymodels`).
+- Describe how to **swap the model spec** inside the **Tuesday / Module 04 `workflow()`** — change `parsnip` + `set_engine()`, keep recipe and folds.
 
 ## Key messages
 
-- **Same preprocessing + cross-validation + score sheet**, different **fitting engine** underneath — that is how you compare methods fairly in class projects.
+- **Same preprocessing + cross-validation + score sheet**, different **fitting engine** underneath.
 - **Never** skip the “what would break on small *n* penguins?” conversation when demoing huge models.
+
+## Model families (quick reference)
+
+| `parsnip` spec | Idea | Typical engine | Use when… |
+|----------------|------|----------------|-----------|
+| `rand_forest()` | Bagged trees + random features | `ranger` | Strong tabular default, few knobs |
+| `boost_tree()` | Sequential error correction | `xgboost` | Max accuracy with tuning budget |
+| `mlp()` | Single hidden layer net | `nnet` | API literacy; often weak on tiny *n* |
+| `decision_tree()` | One interpretable tree | `rpart` | Teaching splits; Tuesday baseline |
+
+Discover hyperparameters: `extract_parameter_set_dials(spec)` · [tidymodels model list](https://www.tidymodels.org/find/parsnip/).
 
 ## Concept outline
 
 ### Random forests
 
-- Bagged trees + feature subsampling; lower variance than one tree; often strong defaults.
+- Bagged trees + feature subsampling; lower variance than one tree.
 
-### Boosting (XGBoost, etc.)
+### Boosting (XGBoost)
 
-- Sequential error correction; strong performance with tuning burden; watch overfitting on small data.
+- Sequential trees targeting residuals; **boosting boundary** slides on [Day 4](../slides/day-04-thursday.qmd) show surfaces sharpening round by round.
 
 ### Neural networks (tabular)
 
-- Flexible function class; needs careful scaling, architecture choices, and often more data than penguins provide — use as **API literacy**, not “win every Kaggle on 300 rows.”
+- Flexible but data-hungry — compare honestly with forests in [Module 08](module-08-penguins-compare-models.qmd).
 
-### Practical teaching path
+### Recipe extensions (Day 4)
 
-- Start from [Module 04](module-04-pipeline.qmd): in the code, replace the single **classification tree** with a **random forest** or **gradient boosting** model on the **same Adelie/Gentoo penguin table**; keep the same cross-validation grid discipline.
+- **`step_pca()`** — dimensionality reduction inside CV
+- **`step_impute_*()`**, **`step_upsample()`** — missing data and imbalance without leakage
 
 ## Course links
 
-- **Slides:** [Thursday — Advanced models and explainability](../slides/day-03-thursday.qmd)
-- **Pipeline reference:** [Module 04](module-04-pipeline.qmd) (same code block as Tuesday slides)
-- **Notebooks:** any [penguin classification](../notebooks/penguins-classification.Rmd) notebook as the **prediction task** you reuse when swapping engines
-- **Curriculum:** Thursday progression in [curriculum outline](../curriculum-outline.qmd)
-- **Module library:** [Back to all modules](index.qmd)
-
-::: {.callout-note appearance="minimal"}
-## Draft / TODO
-
-- Add **one** compact table: model family → R package you will see in tutorials → “use when…” (optional `parsnip` function names for instructors).
-- Optional: link to official **tidymodels** tutorials for `xgboost` and `torch` when the course adds a lab machine with GPU.
-:::
+- **Slides (executable):** [Day 4 — Advanced models](../slides/day-04-thursday.qmd) — includes under `_includes/day04-*.qmd`
+- **Pipeline reference:** [Module 04](module-04-pipeline.qmd)
+- **Compare three engines:** [Module 08](module-08-penguins-compare-models.qmd)
+- **Metrics & SHAP:** [Module 06](module-06-evaluation-and-interpretability.qmd)
+- **Notebook (glm + rpart, tidymodels splits):** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)
+- [Module library](index.qmd)

@@ -7,132 +7,160 @@ format:
     incremental: true
     scrollable: true
     slide-level: 2
+    html-math-method: katex
 ---
 
 ## Learning objectives
 
-- Contrast two traditions: **write-down models** vs **flexible prediction** — both need honest checking on new data.
-- Build intuition for **decision trees** (sequences of simple “if–then” rules on measurements).
-- Use R’s **`tidymodels`** tools to **bundle preprocessing, fitting, and scoring** so comparisons stay fair (builds on **`lm`** / **`glm`**).
+- Frame **Breiman’s two cultures**: same goals and problems, different **modeling approaches** (not “stats vs ML”)
+- Build intuition for **decision trees** (`rpart`): recursive splits, partitions, and interpretable rules
+- Walk through **gene × disease** (classification) and **gene × trait** (regression) trees step by step
+- Read **`|>`** chains for tidy tables and `tidymodels` preprocessing
+- Use **`tidymodels`** on **Palmer Penguins**: recipes, workflows, resampling, and tuning with honest holdout thinking
 
 ## Navigation
 
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
-- [Module Library](../modules/index.qmd)
+- [Module 03 — Trees & cultures](../modules/module-03-trees-and-cultures.qmd)
+- [Module 04 — Pipeline](../modules/module-04-pipeline.qmd)
 - [Back: Monday deck](day-01-monday.qmd)
-- [Next: Thursday deck](day-03-thursday.qmd)
+- [Next: Day 4 deck](day-04-thursday.qmd)
 
-## Two cultures framing
+## Two cultures (Breiman, 2001)
 
-- **Classical / generative view:** start with assumptions you can defend, then quantify uncertainty (close to how many of you were taught statistics).
-- **Algorithmic / predictive view:** start with flexible patterns, then worry hard about **error on new data** (common in ML competitions).
-- Good applied work **mixes both**: clear measurements + careful evaluation.
+Leo Breiman’s [*Statistical Modeling: The Two Cultures*](https://projecteuclid.org/journals/statistical-science/volume-16/issue-3/Statistical-Modeling--The-Two-Cultures/10.1214/ss/1009213726) argues the useful split is **not** “statistics vs machine learning.”
 
-## Why trees now?
+- Scientists often share the **same goals** (learn patterns, predict, support decisions) and work on the **same kinds of data**
+- What differs is **how you build a model** — what you assume up front and what you optimize
 
-- Trees model nonlinear effects and interactions naturally
-- Easy to explain split logic to students
-- Great bridge from parametric models to ensembles
+## Data modeling culture
 
-## Decision tree mechanics
+- Start with a **stochastic model** you can write down (Monday: `lm`, `glm`, lasso on known structure)
+- Emphasize **parameters**, uncertainty, and whether the **model class** is adequate
+- Strength: transparent assumptions; risk: the model may be wrong in shape even when it fits “well”
 
-- Recursive partitioning of feature space
-- Impurity criteria (Gini, entropy)
-- Stopping rules and pruning to control complexity
+## Algorithmic modeling culture
 
-## Demo: tree splitting intuition
+- Treat the data-generating mechanism as **largely unknown**
+- Let a **flexible algorithm** find structure; judge it by **predictive performance** on data not used to fit (today: trees; soon: cross-validation on penguins)
+- Strength: captures interactions and nonlinear boundaries; risk: needs **careful evaluation** so flexibility does not fool you on the training rows
 
-- Optional: draw one 2D partition by hand or use a single `rpart` plot in the console; full coding practice belongs in exercises.
+## Why trees today?
 
-## Pipeline mindset
+- **Nonlinear** boundaries and **interactions** without hand-written product terms (contrast Monday’s additive `glm`)
+- **Readable rules:** each path is an if–then story on measurements
+- Bridge from parametric models to **ensembles** (Thursday: forests, boosting)
 
-- **Reproducibility** and **leakage** first: if a step “learns” from the data (means, categories, PCs), it must be repeated correctly inside each train/test split.
-- Treat **cleaning and scaling** as part of the model, not something you do once by hand and forget.
-- **Decide how you will score mistakes** before you hunt for the best tuning knobs.
+## `rpart` in one slide
 
-## Tuesday roadmap (then the R package names)
+- **Classification:** `rpart(factor_y ~ ., data = ..., method = "class")` — splits improve class purity (Gini)
+- **Regression:** `rpart(trait ~ GeneA + GeneB, data = ...)` — numeric $y$ uses **`method = "anova"`** (within-node variance); each leaf predicts a **mean** trait
+- **`cp`:** complexity penalty — larger `cp` → simpler tree (see trait block after disease)
+- **`control`:** `maxdepth`, `cp`, `minsplit` — same levers you will tune inside `tidymodels` later
 
-- **Split rows** so some penguins are only used to *check* performance, never to *choose* settings dishonestly.
-- **Write preprocessing once** (e.g. turn factors into 0/1 columns, scale bill length) and apply the same rules on each split.
-- **Name the model family** (here: classification tree) **before** fitting — including which settings you will try later.
-- **Glue preprocessing + model** into one object so the computer resamples the **whole** process, not half of it.
+## Gene × disease (same simulation as Monday)
 
-## Split your training and test rows (`rsample`)
+- Binary **disease** from simulated **gene expression** — instructors know causal genes (**Gene1**, **Gene3**, **Gene4**, interaction)
+- **Today:** classification tree on **all genes**, visualized in the **Gene1 × Gene3** plane (other genes at means)
+- **Next:** classification tree grows **one split level at a time** (tree + partition side by side)
+- Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 
-- **Goal — hide future rows from past rows:** `initial_split(data, prop = 0.8, strata = outcome)` records which rows are for **training** vs **testing** (an `rsplit` object in code).
-- `training(split)` and `testing(split)` materialize the two tibbles. **Never** preprocess the full dataset before splitting if steps learn from data (means, factor levels, PCA loadings).
-- For repeated estimates of generalization error, use `vfold_cv(training(split), v = 10, strata = outcome)` or nested resampling when tuning within an outer loop.
+{{< include ../_includes/day02-gene-rpart-steps.qmd >}}
 
-## Preprocessing as a reusable checklist (`recipes`)
+## Gene × trait (Monday simulation, regression tree)
 
-- **Goal — a reusable checklist of preprocessing:** `recipe(outcome ~ predictors, data = train_data) |> step_*()` lists steps in order.
-- **Roles:** `all_numeric_predictors()`, `all_nominal_predictors()`, `all_outcomes()` select columns by role instead of fragile name vectors.
-- Common steps: `step_impute_*`, `step_normalize`, `step_dummy`, `step_zv` (zero-variance), `step_corr` (remove redundant columns), `step_log`, `step_ns` (splines).
-- `prep(recipe, training = train_data)` learns constants from training rows; `bake(prep, new_data = ...)` applies the same rules to validation/test rows. This is what prevents leakage.
+- Continuous **trait** from **GeneA** / **GeneB** — same ground truth as Monday’s `lm` / lasso block
+- **`rpart(trait ~ GeneA + GeneB, cp = ...)`** — sweep **`cp`** from `$cptable` to show how the predicted **surface** and tree change
+- Notebook: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
 
-## Name the model family before you fit (`parsnip`)
+{{< include ../_includes/day02-gene-rpart-trait.qmd >}}
 
-- **Goal — separate “what model?” from “fit it now”:** the **specification** names the family and unknown settings (example in slides: penalized logistic with `glmnet` engine).
-- `set_engine()` picks the computational backend (`"glmnet"`, `"ranger"`, `"xgboost"`, `"keras"`). Same user-facing call can map to different packages.
-- `translate()` shows how the **same R call** maps to the **underlying package** (handy when a blog post uses `xgboost` arguments verbatim).
-- **Fit** happens later via `fit(workflow, data = train_data)` or `last_fit`, after workflows bundle preprocessing + model.
+## From trees to pipelines (Palmer Penguins)
 
-## One object that runs preprocessing + model together (`workflows`)
+- Monday compared models **on all rows** (in-sample); choosing lasso’s $\lambda$ used **leave-one-out CV** on the same $n$
+- **Today (second half):** **hold out** some penguins for an honest test score; bundle preprocessing + model so resampling cannot leak
+- Real data: [Palmer Penguins](../dataset-penguins.qmd) — Adelie vs Gentoo; we use **bill + island + sex + year** (not flipper/mass) so **hyperparameter tuning** shows a real tradeoff on the slides
 
-- **Goal — one object to resample:** `workflow() |> add_recipe(rec) |> add_model(mod)` packages preprocessing + model so cross-validation always runs both.
-- Benefits: the resampler sees the *whole* estimation chain; tuning grids can include recipe parameters (e.g. spline degrees) alongside model hyperparameters.
-- `workflow() |> add_formula(y ~ .) |> add_model(mod)` skips a recipe when you only need a bare formula, but recipes remain the right place for learned steps.
+{{< include ../_includes/day02-tidyverse-intro.qmd >}}
 
-## Try settings honestly; score with the same metrics (`tune`, `dials`, `yardstick`)
+## Pipeline mindset (three ideas)
 
-- **Goal — try several settings honestly:** mark unknowns with `tune()`, build a candidate grid, and score each with the **same** metric set (e.g. ROC AUC + sensitivity) on held-out folds.
-- `extract_parameter_set_dials(wf)` + `grid_regular()` / `grid_space_filling()` build candidate grids; `tune_grid(wf, resamples = folds, grid = ..., metrics = metric_set(roc_auc, pr_auc))` evaluates them.
-- `collect_metrics()`, `autoplot()`, and `select_best()` summarize results; `finalize_workflow(wf, best_params)` plugs in winners.
-- `yardstick::metric_set` keeps evaluation consistent across models; choose metrics **before** peeking at test data.
+- **Split first** when any step learns from data (means, dummy levels, scaling)
+- **One workflow object** runs preprocessing and the model together on each resample fold
+- **Pick metrics before** you chase the best tuning knobs
 
-## Tidymodels blueprint (overview)
+## How the pieces fit together
 
-- **Preprocessing steps** (`recipes`) — impute, encode, normalize, and the like
-- **Model specification** (`parsnip`) — choose the *family* before fitting
-- **Workflow** (`workflows`) — bind preprocessing + model so resampling sees both
-- **Splits + tuning** (`rsample`, `tune`) — cross-validation and hyperparameter search
+| Package | Job in plain language |
+|---------|------------------------|
+| **`rsample`** | Decide which rows are for **fitting** vs **scoring** (holdout split, CV folds) |
+| **`recipes`** | Describe **preprocessing** as a reusable checklist (dummy code factors, scale numbers, …) |
+| **`parsnip`** | Name the **model family** and which knobs are still unknown — **no fit yet** |
+| **`workflows`** | Glue recipe + model into **one** object so resampling never “forgets” preprocessing |
+| **`tune`** | Try many knob settings; each try is scored only on **held-out** fold rows |
+| **`yardstick`** | Turn predictions into numbers (ROC AUC, accuracy, sensitivity, …) with one grammar |
 
-## Mental checklist before you `fit`
+The walk-through below uses the same order: **data → recipe → spec → workflow → tune → fit → figures**.
 
-1. Decide how you will **split** and (if needed) **cross-validate**.
-2. Build preprocessing on **training** rows only; check each step makes scientific sense.
-3. Pick the **model family** + software **engine**; wrap in a **workflow**.
-4. Pick **scores** that match the biology or clinic question; tune if needed.
-5. Fit the final workflow on **all training data**; assess **once** on the held-out test set (or use nested CV for serious tuning comparisons).
+## `rsample` — who gets to teach the model?
 
-## Reusable classification template
+- **`initial_split(data, prop = 0.8, strata = outcome)`** — randomly hold out ~20% of rows as a **test** set you touch **once** at the end; `strata = outcome` keeps Adelie/Gentoo balance in both parts
+- **`training(split)`** / **`testing(split)`** — extract the two tables from that split object
+- **`vfold_cv(training(split), v = 5, strata = outcome)`** — chop the **training** rows into 5 folds for **cross-validation** while tuning; each fold is “train on 4 chunks, score on the 5th” so you never tune on the final test rows
 
-- One recipe skeleton
-- One resampling object
-- Plug-in model specs (tree, forest, boosting, neural net)
-- Comparable metrics and tuning framework
+**Why it matters:** scaling bill length to mean 0 uses **only** the rows in the current training fold — not future test penguins.
 
-## Shared pipeline template (single source)
+## `recipes` — preprocessing as a checklist
 
-The **next slides** are a **slow walk-through** of the same **Adelie vs Gentoo** penguin example as [Module 04](../modules/module-04-pipeline.qmd) and the [classification notebook](../notebooks/penguins-classification.Rmd): each stage has a **short intuition slide**, then **R code** (shared file used here and in Module 04), then **four figure** slides. Say out loud: in research you keep a final **test** set; some plots here reuse **fit rows** for speed. For **sex** or **three-species** notebooks, see the **Data** page.
+- **`recipe(y ~ ., data = train)`** — declare the prediction task: outcome `y`, every other column is a predictor (like a formula in `lm`, but for **steps** not coefficients)
+- **`step_dummy(all_nominal_predictors())`** — turn **island** and **sex** into numeric 0/1 columns so `rpart` can split on them
+- **`step_normalize(all_numeric_predictors())`** — subtract mean and divide by SD **per numeric column** so mm, g, and year live on a comparable scale
+- **`step_zv(all_predictors())`** — drop columns with **zero variance** (e.g. a dummy level that never appears in a small fold)
+- Read the chain **top to bottom** with `|>`: data → step → step
+
+**Two verbs students will see in docs:** `prep(recipe, training_data)` **learns** the rules (means, levels, scaling) from training rows only; `bake(recipe, new_data)` **applies** those same rules to validation or test rows. In a **workflow**, tidymodels calls these inside each CV fold for you.
+
+## `parsnip` — model blueprint (not the fitted tree)
+
+- **`decision_tree(tree_depth = tune(), min_n = tune())`** — “we want a classification tree; **depth** and **minimum leaf size** are still unknown” (`tune()` marks a knob for later)
+- **`set_engine("rpart")`** — which **implementation** fits the tree (same idea as choosing `glm` vs another optimizer)
+- **`set_mode("classification")`** — match a **factor** outcome (Adelie vs Gentoo), not a numeric one
+
+**Nothing is fitted yet** — `parsnip` only stores the **family** and hyperparameters. Fitting happens after you plug in tuned values and call `fit()`.
+
+## `workflows` — one object for the whole pipeline
+
+- **`workflow() |> add_recipe(rec) |> add_model(mod_spec)`** — bundle preprocessing + model so every resample refit runs **both** in the right order
+- **Why one object?** If you scaled bill length using **all** penguins before CV, test-fold information leaked into training — the workflow forces “prep on analysis rows, predict on assessment rows” automatically
+
+## `tune` + `yardstick` — search knobs, score honestly
+
+- **`tune()`** in the spec — marks which arguments `tune_grid()` should vary (here: `tree_depth`, `min_n`)
+- **`tune_grid(workflow, resamples = folds, grid = ..., metrics = metrics)`** — for each knob combination, fit the **whole workflow** on each CV analysis set and score on the held-out assessment fold
+- **`metric_set(roc_auc, accuracy, sens, spec)`** — commit to **these** scores before peeking at test data; `yardstick` computes them from predicted probabilities and class labels the same way every time
+- **`select_best(tune_res, metric = "roc_auc")`** — pick the winning knob values from CV only
+- **`finalize_workflow(wf, best)`** — insert those values into the unfitted workflow; **`fit(..., data = train)`** (or `last_fit` with a split) actually trains the final model
+
+## Shared pipeline walk-through (penguins)
+
+The next slides run the **canonical Adelie vs Gentoo** pipeline (same code as [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)): recipe → tuned `rpart` tree → diagnostic figures.
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}
 
-## If you already know `caret` (optional bridge)
+## Comparing many models (`workflowsets`, `stacks`)
 
-- Older **`caret::train()`** often mixed **preprocessing**, **model choice**, and **resampling** in one call; **`tidymodels`** splits those into clearer pieces so cross-validation cannot accidentally skip a step.
-- Rough map: training control \(\rightarrow\) `control_*()` helpers; method string \(\rightarrow\) model spec + `set_engine()`; `preProcess` \(\rightarrow\) recipe steps; variable importance \(\rightarrow\) `vip` or engine-specific summaries.
-- The payoff is the same idea as good lab practice: **every transformation is scripted and replayed** the same way on each fold.
+- **`workflowsets`** — several model recipes on the **same** CV folds
+- **`stacks`** — combine tuned models with a simple meta-learner (capstone after forests)
 
-## Comparing many models fairly (`workflowsets`, `stacks`)
+## Transition to Day 4
 
-- **`workflowsets`** — run **several** preprocessing + model combinations on the **same** cross-validated folds (fair homework comparisons).
-- **`stacks`** — treat a few tuned models as **candidates**, then learn a **simple combination** (meta-learner) on top — a nice capstone after forests and boosting.
-- Pedagogy: introduce **one** workflowset example after students are comfortable with a **single** workflow.
+- Tuesday: pipeline **backbone** on penguins
+- Day 4: **forests, boosting, neural nets**, PCA/impute/upsample in recipes, VIP and metrics
 
-## Transition to Thursday
+## End-of-day checklist
 
-- Tuesday gives the pipeline backbone
-- Thursday swaps in stronger learners and richer evaluation
-- Exercises are handled separately
+- Can you name Breiman’s **two cultures** in one sentence each?
+- For the gene **classification** tree: what does **one split** do to the Gene1–Gene3 partition?
+- For the gene **trait** tree: what does a larger **`cp`** do to the number of regions?
+- What is the difference between **training**, **CV**, and **test** rows in the penguin workflow?

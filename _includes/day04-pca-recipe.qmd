@@ -1,0 +1,40 @@
+## PCA inside a recipe
+
+- **`step_pca(all_numeric_predictors(), num_comp = k)`** learns orthogonal directions from **training rows only** (inside each CV fold when resampled).
+- Use when you have **many correlated** measurements and want a compact input layer for a flexible model.
+- **Tradeoff:** components are **not** “bill length” anymore — harder to tell a biological story from loadings alone.
+
+```{r}
+#| label: day04-pca-recipe-code
+#| echo: true
+rec_pca <- recipe(y ~ ., data = peng_cls) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = 3)
+
+rec_pca
+```
+
+```{r}
+#| label: day04-pca-fit
+#| echo: true
+#| message: false
+xgb_pca_spec <- boost_tree(trees = 100, tree_depth = 3, learn_rate = 0.05) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+wf_pca <- workflow() |>
+  add_recipe(rec_pca) |>
+  add_model(xgb_pca_spec)
+
+set.seed(8)
+rs_pca <- fit_resamples(wf_pca, folds, metrics = metrics_cls)
+collect_metrics(rs_pca) |>
+  filter(.metric == "roc_auc") |>
+  select(mean, std_err)
+```
+
+Compare to **no PCA** XGBoost from the ensemble slide — similar AUC is common here because we only have a few bill + year numerics after dummy coding.
+
+**Leakage check:** never `step_pca()` on the **full** table before splitting; always inside **`workflow()`** + **`fit_resamples()`** or train-only `fit()`.

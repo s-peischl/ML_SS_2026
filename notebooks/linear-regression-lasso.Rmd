@@ -12,7 +12,7 @@ engine: knitr
 ```{r setup, include=FALSE,cache=FALSE, results=FALSE, warning=FALSE, comment=NA, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(glmnet)
-library(caret)
+library(tidymodels)
 library(dplyr)
 library(GGally)
 library(knitr)
@@ -29,6 +29,8 @@ my_pal <- rcartocolor::carto_pal(n = 9, name = "Bold")
 The goal of this notebook is to illustrate Lasso and Model selection based on AIC.
 
 We use a synthetic dataset for illustrative purposes. This has the advantage that we know exactly what's going on.
+
+**Concept companion (short read on the site):** [Module 02 — Regularization](../modules/module-02-regularization.qmd) frames ridge, lasso, and AIC in the same vocabulary as Monday’s slides — run this notebook when you want the **long runnable lab**.
 
 In this simulated dataset, GeneA and GeneB are genes that directly influence a specific biological trait, while GeneC and GeneD are noise genes that are correlated with the trait but do not contribute causally. GeneJ is in strongly correlated to GeneA but not causally linked to the trait. Other genes act as irrelevant noise variables or have correlations among themselves.
 
@@ -119,22 +121,21 @@ We now split the data into test and training, and then fit a Lasso model and tes
 
 ```{r FitLasso, cache=FALSE, comment=NA, warning=FALSE,out.width="100%"}
 
-# Split data into features and target
-X <- as.matrix(data %>% select(-trait))
-y <- data$trait
+set.seed(123)
+split <- initial_split(data, prop = 0.8)
+train <- training(split)
+test <- testing(split)
 
-# Split into training and testing data
+rec_scale <- recipe(trait ~ ., data = train) |>
+  step_normalize(all_numeric_predictors())
+prep_fit <- prep(rec_scale, train)
+train_scaled <- bake(prep_fit, train)
+test_scaled <- bake(prep_fit, test)
 
-trainIndex <- createDataPartition(y, p = .8, list = FALSE)
-X_train <- X[trainIndex, ]
-y_train <- y[trainIndex]
-X_test <- X[-trainIndex, ]
-y_test <- y[-trainIndex]
-
-# Standardize the data
-preproc <- preProcess(X_train, method = c("center", "scale"))
-X_train_scaled <- predict(preproc, X_train)
-X_test_scaled <- predict(preproc, X_test)
+X_train_scaled <- as.matrix(dplyr::select(train_scaled, -trait))
+y_train <- train_scaled$trait
+X_test_scaled <- as.matrix(dplyr::select(test_scaled, -trait))
+y_test <- test_scaled$trait
 
 # Apply LASSO regression
 # alpha=1 for LASSO in glmnet

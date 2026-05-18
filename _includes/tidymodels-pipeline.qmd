@@ -1,6 +1,8 @@
 ## Tidymodels walk-through — what you will see
 
-We use **one table** all the way through: Palmer Penguins restricted to **Adelie vs Gentoo** (same as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)).
+We use **one table** all the way through: Palmer Penguins restricted to **Adelie vs Gentoo** (same species contrast as [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)).
+
+We **omit flipper length and body mass** on purpose: with those columns, almost any tree passes cross-validation at ~99% — the tuning plot looks flat. **Bill size, island, sex, and year** still separate the species well enough to learn from, but **`tree_depth`** and **`min_n`** now matter.
 
 Each **next block** follows the same rhythm: **first** intuition tied to penguin columns, **then** the matching R code (uses the **`tidymodels`** packages — names like `recipe` and `workflow` are just helpers around ideas you know from `lm`/`glm`).
 
@@ -19,7 +21,7 @@ You will move through: **data → recipe → model spec → workflow → resampl
 ## Step 0 — The prediction task (Palmer Penguins)
 
 - **Outcome `y`:** species with two levels, Adelie then Gentoo (so later ROC uses **Gentoo** as the second / “event” level).
-- **Predictors:** bill length & depth, flipper length, body mass (all mm or g), plus **island**, **sex**, and **year** — mixed **numeric** and **nominal** columns, like most real labs.
+- **Predictors:** **bill length & depth** (mm), plus **island**, **sex**, and **year** — no flipper or body mass here (see intro above).
 - **Complete cases only:** `drop_na()` drops rows missing sex or measurements (talk in class about how much *N* you lose).
 
 
@@ -46,7 +48,7 @@ peng_cls <- palmerpenguins::penguins |>
     y = factor(species, levels = c("Adelie", "Gentoo")),
     year = as.numeric(year)
   ) |>
-  dplyr::select(-species) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
   tidyr::drop_na()
 ```
 
@@ -68,7 +70,7 @@ Use **`glimpse`** so students see **types** (double vs factor) before we talk ab
 
 - **`recipe(y ~ ., data = peng_cls)`** means: “every other column helps predict `y`.”
 - **`step_dummy(all_nominal_predictors())`** turns **island** and **sex** into numeric **0/1** columns so the tree engine can split on them.
-- **`step_normalize(all_numeric_predictors())`** puts bill length, flipper length, body mass, year on a comparable scale before the tree sees them (important when you mix mm, g, and year).
+- **`step_normalize(all_numeric_predictors())`** puts bill length, bill depth, and year on a comparable scale before the tree sees them.
 - **`step_zv(all_predictors())`** drops **zero-variance** dummies if a level barely appears — avoids useless columns.
 
 All of this is **declared now** and **fitted inside each cross-validation fold** later, which is what prevents **leakage** from future rows.
@@ -91,6 +93,7 @@ rec <- recipe(y ~ ., data = peng_cls) |>
 - Here we pick a **classification tree** (`rpart` under the hood): good for teaching **splits** you can draw on the board.
 - **`tree_depth = tune()`** and **`min_n = tune()`** say: “we will **try several** tree sizes and let cross-validation pick,” instead of guessing once by hand.
 - **`set_mode("classification")`** matches our factor outcome **`y`** (Adelie / Gentoo).
+- Expect a **tradeoff** in the tuning plot: **`tree_depth = 1`** underfits; **small `min_n`** with deeper trees fits tightly; **large `min_n`** prunes leaves and can hurt sensitivity.
 
 Nothing is **fitted** yet — this is only the **blueprint** (parsnip’s job).
 
@@ -133,6 +136,7 @@ wf <- workflow() |>
 - **`vfold_cv(peng_cls, v = 5, strata = y)`**: five folds; **`strata = y`** tries to keep Adelie/Gentoo **balanced** in each fold so no fold is “all one species.”
 - **`metric_set(roc_auc, accuracy, sens, spec)`**: we commit to **these** scores before looking at a true test set — good classroom habit.
 - **`tune_grid(...)`**: for each combination of `tree_depth` and `min_n` in the grid, fit the **whole workflow** on each analysis set and score on each assessment set.
+- Grid spans **underfit → complex**: `tree_depth` from **1 to 6**, `min_n` from **2 to 50** (four levels each) so the autoplot shows movement, not a flat plateau.
 
 
 ## Step 4 — Run cross-validation and tuning (code)
@@ -147,9 +151,9 @@ tune_res <- tune_grid(
   wf,
   resamples = folds,
   grid = grid_regular(
-    tree_depth(range = c(2, 6)),
-    min_n(range = c(2, 20)),
-    levels = 3
+    tree_depth(range = c(1, 6)),
+    min_n(range = c(2, 50)),
+    levels = 4
   ),
   metrics = metrics
 )
@@ -188,7 +192,8 @@ final_fit <- fit(final_wf, data = peng_cls)
 ## Figure 1 — How to read the **tuning** plot (Penguins)
 
 - Each panel shows how **one metric** moves over the **grid** of `tree_depth` and `min_n`.
-- Ask students: “Did ROC AUC and accuracy **agree** on the best region, or trade off?” — small *N* penguins often make metrics a bit noisy.
+- You should see **lower** ROC AUC along the **`tree_depth = 1`** row (stump) and when **`min_n`** is large (heavy pruning) — **higher** scores in the corner with **deeper trees** and **small `min_n`**, with some **sensitivity vs specificity** disagreement.
+- Ask: “Where is the sweet spot if you care about catching Gentoo (**sens**) vs avoiding false Gentoo labels (**spec**)?”
 
 
 ## Figure 1 — Tuning results (code)
@@ -203,7 +208,7 @@ tune_res |>
   theme_minimal() +
   labs(
     title = "Hyperparameter tuning",
-    subtitle = "ROC AUC, accuracy, sensitivity, specificity across tree depth and min_n"
+    subtitle = "Bill + island + sex + year only — depth and min_n should separate in the heatmap"
   )
 ```
 
@@ -236,7 +241,7 @@ final_fit |>
 
 ## Figure 3 — **Tree plot** — connect to real penguins (concepts)
 
-- Each box is a **region** of predictor space after a **split** (e.g. flipper length below / above a threshold).
+- Each box is a **region** of predictor space after a **split** (e.g. bill length below / above a threshold).
 - Ask: “Where do Adelie vs Gentoo **separate first** in this fitted tree?”
 
 

@@ -39,8 +39,9 @@ title: "Module 01: Foundations and Generalization"
 
 - **Slides:** [Monday — Foundations and regularization](../slides/day-01-monday.qmd)
 - **Curriculum:** [Curriculum outline](../curriculum-outline.qmd) (Monday: Foundations and Regularization)
-- **Notebooks — genes:** [linear + LASSO](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd) (same packages appear in the code: `glmnet`, `glm`, `rpart`, …)
-- **Notebooks — penguins:** [body mass](../notebooks/penguins-body-mass.Rmd), [classification](../notebooks/penguins-classification.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd), [three species](../notebooks/penguins-species-multiclass.Rmd)
+- **Primary gene lab — regression, penalties, AIC:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) (`glmnet`, `MASS::stepAIC`, …)
+- **Primary gene lab — binary outcome + tree:** [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd) (`glm`, `rpart`, …)
+- **Penguin labs (classical models, long IDE path):** [Notebook index — Palmer Penguins](../notebooks/index.qmd#palmer-penguins-continuity)
 - **Data reference:** [Palmer Penguins](../dataset-penguins.qmd)
 - **Module library:** [Back to all modules](index.qmd)
 

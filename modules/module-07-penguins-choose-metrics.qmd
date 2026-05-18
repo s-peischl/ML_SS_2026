@@ -1,0 +1,121 @@
+---
+title: "Module 07: Pick the score you care about (accuracy, kappa, ROC AUC)"
+---
+
+## Learning objectives
+
+- Run **one** tuning exercise while asking R to track **several** metrics at once (`accuracy`, Cohen’s **`kappa`**, **`roc_auc`**).
+- Use **`select_best()`** with different `metric =` arguments and see that the **best hyperparameters** need not agree across scores.
+- Say in one sentence when **accuracy** misleads, why **kappa** adjusts for “getting lucky” on skewed labels, and what **ROC AUC** measures.
+
+## Before you start
+
+Build on [Module 04](module-04-pipeline.qmd#train-test-last-fit) (train/test + `glm`) and [Module 04 — canonical pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday) (recipe + tree + `tune_grid` from the shared include). Here we keep **cross-validated tuning** on the **full** `peng_cls` table (teaching default — in a paper you would nest tuning inside training after a test lockbox).
+
+**Packages:** same as Module 04 (`tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`).
+
+[← Module 04 (train/test beat)](module-04-pipeline.qmd#train-test-last-fit) · [Module library](index.qmd) · [Next: compare models →](module-08-penguins-compare-models.qmd)
+
+```{r}
+#| label: m07m-setup
+#| message: false
+#| warning: false
+library(tidymodels)
+library(palmerpenguins)
+library(dplyr)
+library(tidyr)
+
+peng_cls <- palmerpenguins::penguins |>
+  dplyr::filter(species %in% c("Adelie", "Gentoo")) |>
+  dplyr::mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species) |>
+  tidyr::drop_na()
+
+rec <- recipe(y ~ ., data = peng_cls) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+mod_spec <- decision_tree(
+  tree_depth = tune(),
+  min_n = tune()
+) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+wf <- workflow() |>
+  add_recipe(rec) |>
+  add_model(mod_spec)
+
+folds <- vfold_cv(peng_cls, v = 5, strata = y)
+
+metrics_all <- metric_set(accuracy, kap, roc_auc)
+```
+
+## One grid, three metrics
+
+`kap` is **Cohen’s kappa**: it subtracts what you would expect from guessing the majority class, so it is often more informative than raw **accuracy** when class counts differ.
+
+```{r}
+#| label: m07m-tune
+set.seed(42)
+tune_res <- tune_grid(
+  wf,
+  resamples = folds,
+  grid = grid_regular(
+    tree_depth(range = c(2, 6)),
+    min_n(range = c(2, 20)),
+    levels = 3
+  ),
+  metrics = metrics_all
+)
+```
+
+## What cross-validation reported (mean per setting)
+
+```{r}
+#| label: m07m-collect
+collect_metrics(tune_res) |>
+  dplyr::filter(.metric %in% c("accuracy", "kap", "roc_auc")) |>
+  dplyr::arrange(.metric, desc(mean))
+```
+
+## Same tuning run — three different “winners”
+
+```{r}
+#| label: m07m-select-best
+best_acc <- select_best(tune_res, metric = "accuracy")
+best_kap <- select_best(tune_res, metric = "kap")
+best_auc <- select_best(tune_res, metric = "roc_auc")
+
+best_acc
+best_kap
+best_auc
+```
+
+If the three tibbles differ, that is the lesson: **the metric is part of the scientific question**, not an afterthought.
+
+## Optional — tuning surface (one panel per metric)
+
+`autoplot()` draws **one** metric at a time here; re-run the chunk with `metric = "accuracy"` or `"kap"` to compare shapes.
+
+```{r}
+#| label: m07m-autoplot
+#| fig-width: 9
+#| fig-height: 4.5
+autoplot(tune_res, metric = "roc_auc")
+```
+
+## Takeaways
+
+- You can **commit to several metrics** before tuning, then **declare** which one picks hyperparameters for this exercise (or use a rule: e.g. maximize **kappa** subject to **sensitivity** ≥ some floor).
+- **ROC AUC** ranks risk; **accuracy** counts hard calls; **kappa** penalizes “always guess the common species” shortcuts.
+- [Module 08](module-08-penguins-compare-models.qmd) holds the **metric** fixed and swaps **model families**.
+
+## Course links
+
+- **Concepts:** [Module 06 — Metrics & SHAP](module-06-evaluation-and-interpretability.qmd)
+- **Day 4 slides:** [Metrics toolbox](../slides/day-04-thursday.qmd)

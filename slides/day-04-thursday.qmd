@@ -1,0 +1,74 @@
+---
+title: "Day 4 (Thursday): Advanced Models, Preprocessing, and Evaluation"
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: true
+    scrollable: true
+    slide-level: 2
+    html-math-method: katex
+---
+
+## Learning objectives
+
+- Find **model specs and hyperparameters** in **`parsnip`** / [tidymodels.org](https://www.tidymodels.org/find/parsnip/)
+- Explain **bagging (random forests)** and **boosting (XGBoost)** and see boosting **sharpen** a decision boundary round by round
+- Add **PCA**, **imputation**, and **upsampling** as **recipe steps** inside the same **`workflow()`** as Tuesday
+- Fit a **small neural network** with the same resampling discipline
+- Read **variable importance** and connect **metrics / SHAP** to deployment questions (not causation)
+
+## Navigation
+
+- [Teaching Hub](../index.qmd)
+- [Curriculum Outline](../curriculum-outline.qmd)
+- [Module 05 — Advanced models](../modules/module-05-advanced-models.qmd)
+- [Module 08 — Compare learners](../modules/module-08-penguins-compare-models.qmd)
+- [Back: Tuesday deck](day-02-tuesday.qmd)
+
+## Same template as Tuesday — swap the engine
+
+- **`peng_cls`:** Adelie vs Gentoo; **bill + island + sex + year** (same as [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday))
+- Keep **`recipe()` + `workflow()` + `fit_resamples()`** — change **`parsnip` spec** and optional recipe steps (PCA, impute, upsample)
+
+{{< include ../_includes/day04-penguins-setup.qmd >}}
+
+{{< include ../_includes/day04-model-catalog.qmd >}}
+
+{{< include ../_includes/day04-ensembles-boosting.qmd >}}
+
+{{< include ../_includes/day04-boosting-boundary-steps.qmd >}}
+
+{{< include ../_includes/day04-pca-recipe.qmd >}}
+
+{{< include ../_includes/day04-mlp-quick.qmd >}}
+
+{{< include ../_includes/day04-vip-importance.qmd >}}
+
+{{< include ../_includes/day04-impute-balance.qmd >}}
+
+## Metrics toolbox (when accuracy lies)
+
+- **Accuracy:** fine when classes are balanced and errors cost the same
+- **Precision / recall / F1:** screening vs confirmation
+- **ROC-AUC:** ranking across thresholds
+- **PR-AUC:** often clearer when the positive class is **rare**
+- Details: [Module 07](../modules/module-07-penguins-choose-metrics.qmd)
+
+## SHAP and local explanations (pointers)
+
+- **SHAP:** which inputs pushed **this** prediction away from a baseline — **communication**, not causation
+- **TreeSHAP** for forests/boosting; **KernelSHAP** for other engines
+- Limits and plots: [Module 06](../modules/module-06-evaluation-and-interpretability.qmd) · prior prose in curriculum
+
+## Nested resampling (when tuning gets serious)
+
+- **Outer** CV for performance; **inner** CV for hyperparameters inside each analysis fold
+- Avoid tuning and scoring on the same held-out rows
+
+## End-of-day checklist
+
+- Where do you look up **`tune()`** knobs for `rand_forest` and `boost_tree`?
+- What changes in the **boosting boundary** slides as `trees` increases?
+- Why must **`step_impute_*()`** and **`step_pca()`** live **inside** the recipe?
+- One reason **VIP** on correlated bills is **not** a causal claim

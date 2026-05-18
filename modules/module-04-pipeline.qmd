@@ -2,15 +2,95 @@
 title: "Module 04: Modeling pipeline in R"
 ---
 
-- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, cross-validate, then read diagnostic plots.
-- **Key message:** keep **preprocessing, fitting, and scoring** in one reproducible object so every model you compare is treated **fairly** — same idea as Tuesday’s slides and the [penguin classification notebook](../notebooks/penguins-classification.Rmd). Under the hood this uses the **`tidymodels`** packages (`recipe`, `workflow`, `tune_grid`, …).
+- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, evaluate honestly, then (below) cross-validate and tune like Tuesday’s slides.
+- **Key message:** keep **preprocessing, fitting, and scoring** in one reproducible object so every model you compare is treated **fairly** — same **scientific task** (Adelie vs Gentoo) as the [penguin classification notebook](../notebooks/penguins-classification.Rmd), but that notebook uses **classical `glm` / `rpart`** with **all** morphometrics; **this page** uses **bill + island + sex + year** so **tree tuning** shows a real bias–variance tradeoff (flipper and body mass make CV scores too flat). Follow-up labs: [Module 07](module-07-penguins-choose-metrics.qmd) (several metrics while tuning), [Module 08](module-08-penguins-compare-models.qmd) (compare RF / XGBoost / MLP).
 
-## How to read the code below
+## How to read this page
 
-You already know **`lm`** and **`glm`**. Here, R uses a slightly richer vocabulary: a **recipe** is “the list of preprocessing steps,” a **workflow** glues those steps to a **model specification**, and **`tune_grid`** tries several settings using **cross-validation**. Read the **concept slide** before each **code chunk** — the chunk names match the Tuesday deck.
+You already know **`lm`** and **`glm`**. Here, R uses a slightly richer vocabulary: a **recipe** is “the list of preprocessing steps,” a **workflow** glues those steps to a **model specification**, and **`tune_grid`** tries several settings using **cross-validation**.
+
+1. **First section** — one **train/test split**, **no tuning**: smallest honest **`last_fit`** story (logistic regression) on the **same `peng_cls` columns** as below.  
+2. **Second section** — the **same** Tuesday walk-through as the slides: tuned **classification tree**, wider `tune_grid`, figures (shared include).
 
 [← Module library (all modules)](index.qmd)
 
-## Canonical code (same as Tuesday slides)
+---
+
+## First: one split, one model, no tuning (`last_fit`) {#train-test-last-fit}
+
+Tuesday’s deck focuses on **cross-validation + tuning** (faster to teach one rhythm in the room). If you want the **smallest** end-to-end `tidymodels` example first — **hold out test rows**, fit on training only, then score — work through this block.
+
+**Predictors (both sections):** **bill length & depth**, **island**, **sex**, **year** — we **drop flipper length and body mass** so the tuned tree section below is not “everything wins at 99%.” The [classification notebook](../notebooks/penguins-classification.Rmd) still uses full morphology for classical `glm` / `rpart` plots.
+
+**Packages:** `tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`.
+
+```{r}
+#| label: m04-tt-setup
+#| message: false
+#| warning: false
+library(tidymodels)
+library(palmerpenguins)
+library(dplyr)
+library(tidyr)
+
+peng_cls <- palmerpenguins::penguins |>
+  dplyr::filter(species %in% c("Adelie", "Gentoo")) |>
+  dplyr::mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
+  tidyr::drop_na()
+```
+
+```{r}
+#| label: m04-tt-split
+set.seed(11)
+p_split <- initial_split(peng_cls, prop = 0.75, strata = y)
+train <- training(p_split)
+test <- testing(p_split)
+
+count(train, y, name = "n_train")
+count(test, y, name = "n_test")
+```
+
+```{r}
+#| label: m04-tt-recipe
+rec_tt <- recipe(y ~ ., data = train) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+```{r}
+#| label: m04-tt-model
+mod_glm <- logistic_reg() |>
+  set_engine("glm") |>
+  set_mode("classification")
+
+wf_tt <- workflow() |>
+  add_recipe(rec_tt) |>
+  add_model(mod_glm)
+```
+
+```{r}
+#| label: m04-tt-last-fit
+fit_split <- last_fit(wf_tt, split = p_split, metrics = metric_set(accuracy, roc_auc))
+collect_metrics(fit_split)
+```
+
+```{r}
+#| label: m04-tt-conf-mat
+collect_predictions(fit_split) |>
+  conf_mat(truth = y, estimate = .pred_class)
+```
+
+When you continue to the **canonical pipeline** below, you **redefine `peng_cls` in the include** with the same columns (the chunk is self-contained for slides) and **cross-validation + `tune_grid`** replace this single split — same vocabulary, heavier machinery. Expect **`tree_depth`** and **`min_n`** to move metrics in the tuning heatmap.
+
+---
+
+## Canonical pipeline (Tuesday slides + tuning) {#canonical-pipeline-tuesday}
+
+Read the **concept slide** before each **code chunk** in the include — chunk names match the Tuesday deck. Tuning uses **`tree_depth` 1–6** and **`min_n` 2–50** (four levels each).
 
 {{< include ../_includes/tidymodels-pipeline.qmd >}}

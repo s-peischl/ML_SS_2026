@@ -1,0 +1,117 @@
+## Boosting: watch the boundary sharpen
+
+We fix **`tree_depth = 2`** and **`learn_rate = 0.3`**, then increase **`trees`** from 1 to 6. Each round adds small trees that correct leftover mistakes — the **Gentoo probability surface** becomes more **nonlinear**.
+
+```{r}
+#| label: day04-boost-boundary-prep
+#| echo: false
+#| results: hide
+boost_trees <- 1:6
+for (i in boost_trees) {
+  spec_i <- boost_tree(
+    trees = i,
+    tree_depth = 2,
+    learn_rate = 0.3
+  ) |>
+    set_engine("xgboost") |>
+    set_mode("classification")
+  wf_i <- workflow() |>
+    add_recipe(rec_base) |>
+    add_model(spec_i)
+  assign(paste0("boost_fit_", i), fit(wf_i, peng_cls))
+}
+```
+
+## Boosting round 1
+
+```{r}
+#| label: day04-boost-step-1
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_1"), peng_cls,
+    title = "XGBoost after 1 tree (bill length × bill depth)"
+  )
+)
+```
+
+One shallow tree: rough split — mostly **underfits** the Gentoo cloud.
+
+## Boosting round 2
+
+```{r}
+#| label: day04-boost-step-2
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_2"), peng_cls,
+    title = "XGBoost after 2 trees"
+  )
+)
+```
+
+## Boosting round 3
+
+```{r}
+#| label: day04-boost-step-3
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_3"), peng_cls,
+    title = "XGBoost after 3 trees"
+  )
+)
+```
+
+## Boosting round 4
+
+```{r}
+#| label: day04-boost-step-4
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_4"), peng_cls,
+    title = "XGBoost after 4 trees"
+  )
+)
+```
+
+## Boosting round 5
+
+```{r}
+#| label: day04-boost-step-5
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_5"), peng_cls,
+    title = "XGBoost after 5 trees"
+  )
+)
+```
+
+## Boosting round 6
+
+```{r}
+#| label: day04-boost-step-6
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_6"), peng_cls,
+    title = "XGBoost after 6 trees"
+  )
+)
+```
+
+Contrast **bagging**: a random forest **averages** many independent trees — boundaries are often **smoother** than boosting’s staged corrections.

@@ -1,0 +1,262 @@
+**Gene × trait** — describe data → null vs full model → AIC forward/backward (all on the same $n$ samples).
+
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
+
+```{r}
+#| label: day01-trait-libs
+#| include: false
+suppressPackageStartupMessages({
+  library(broom)
+  library(glmnet)
+  library(recipes)
+  library(dplyr)
+  library(ggplot2)
+  library(GGally)
+  library(MASS)
+  library(rcartocolor)
+  library(tidyr)
+})
+my_pal <- carto_pal(12, "Bold")
+theme_set(theme_classic())
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+```
+
+## Gene × trait: the dataset
+
+**GeneA** and **GeneB** drive the trait; correlated noise genes; **GeneJ** correlated with GeneA but not causal.
+
+```{r}
+#| label: day01-linear-sim-data
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 150
+p <- 10
+gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
+gene_data <- matrix(rnorm(n * p), nrow = n)
+colnames(gene_data) <- gene_names
+trait <- -0.5 * gene_data[, "GeneA"] + 0.8 * gene_data[, "GeneB"] + rnorm(n, sd = 0.3)
+gene_data[, "GeneC"] <- gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneD"] <- -0.3 * gene_data[, "GeneB"] + rnorm(n, sd = 0.2)
+for (i in 5:p) gene_data[, gene_names[i]] <- rnorm(n)
+gene_data[, "GeneF"] <- gene_data[, "GeneE"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneH"] <- -0.5 * gene_data[, "GeneG"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneJ"] <- 0.7 * gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+data_trait <- as.data.frame(cbind(gene_data, trait))
+```
+
+```{r}
+#| label: day01-correlation-heatmap
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 8
+correlation_matrix <- cor(data_trait)
+cor_data <- as.data.frame(as.table(correlation_matrix)) |>
+  dplyr::rename(variable1 = Var1, variable2 = Var2, correlation = Freq)
+ggplot(cor_data, aes(variable1, variable2, fill = correlation)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(
+    low = "dodgerblue", high = "firebrick4", mid = "white",
+    midpoint = 0, limit = c(-1, 1), name = "r"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(title = "Correlation among genes and trait")
+```
+
+```{r}
+#| label: day01-ggpairs-snippet
+#| echo: false
+#| fig-height: 5.5
+#| fig-width: 8
+ggpairs(
+  data_trait,
+  upper = list(continuous = wrap("cor", size = 2.2)),
+  aes(alpha = 0.15)
+) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+#| label: day01-trait-prep-full
+#| echo: false
+#| results: hide
+rec_scale <- recipe(trait ~ ., data = data_trait) |>
+  step_normalize(all_numeric_predictors())
+data_scaled <- bake(prep(rec_scale, data_trait), data_trait)
+X_s <- as.matrix(dplyr::select(data_scaled, -trait))
+y <- data_scaled$trait
+n_obs <- nrow(data_scaled)
+```
+
+## Null model (intercept only)
+
+Too simple: ignores genes → **underfitting**.
+
+```{r}
+#| label: day01-lm-null
+#| echo: false
+#| results: hide
+null_lm <- lm(trait ~ 1, data = data_scaled)
+```
+
+## Full model (all genes)
+
+Every gene in the model — flexible, but many correlated predictors → unstable coefficients (**overfitting risk**).
+
+```{r}
+#| label: day01-lm-full
+#| echo: false
+#| results: hide
+full_lm <- lm(trait ~ ., data = data_scaled)
+```
+
+## Regression table (full model)
+
+```{r}
+#| label: day01-lm-regression-table
+#| echo: false
+#| results: asis
+reg_tbl <- broom::tidy(full_lm)
+knitr::kable(head(reg_tbl, 6), digits = 3, caption = "OLS summary (first terms; all genes in notebook)")
+```
+
+```{r}
+#| label: day01-lm-coef-plot
+#| echo: false
+#| fig-height: 4.2
+#| fig-width: 8
+cf <- coef(full_lm)
+cf <- cf[names(cf) != "(Intercept)"]
+ci <- tryCatch(
+  confint(full_lm, parm = names(cf)),
+  error = function(e) matrix(NA_real_, length(cf), 2, dimnames = list(names(cf), c("2.5 %", "97.5 %")))
+)
+coef_tbl <- data.frame(
+  gene = names(cf),
+  estimate = as.numeric(cf),
+  lo = as.numeric(ci[, 1]),
+  hi = as.numeric(ci[, 2])
+)
+ggplot(coef_tbl, aes(x = estimate, y = reorder(gene, estimate))) +
+  geom_vline(xintercept = 0, linetype = 2, color = "gray50") +
+  geom_pointrange(aes(xmin = lo, xmax = hi), fatten = 3) +
+  labs(
+    title = "OLS coefficients ± 95% CI (all predictors)",
+    x = "Effect on trait (scaled gene units)", y = NULL
+  ) +
+  theme_minimal()
+```
+
+## Null vs full: in-sample fit
+
+```{r}
+#| label: day01-null-vs-full-complexity
+#| echo: false
+#| fig-height: 3.5
+#| fig-width: 6.5
+cmp_tbl <- data.frame(
+  model = c("Null (intercept only)", "Full (all genes)"),
+  AIC = c(AIC(null_lm), AIC(full_lm)),
+  RMSE_in = c(
+    sqrt(mean(residuals(null_lm)^2)),
+    sqrt(mean(residuals(full_lm)^2))
+  )
+)
+ggplot(cmp_tbl, aes(x = reorder(model, -RMSE_in), y = RMSE_in, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "In-sample RMSE: too few vs too many predictors",
+    subtitle = "Null underfits; full fits training data tighter (more parameters)",
+    x = NULL, y = "RMSE (same n samples)"
+  ) +
+  theme_minimal()
+```
+
+## AIC: backward and forward selection
+
+```{r}
+#| label: day01-step-aic
+#| echo: false
+#| results: hide
+backward_model <- stepAIC(full_lm, direction = "backward", trace = FALSE)
+forward_model <- stepAIC(
+  null_lm,
+  direction = "forward",
+  scope = list(lower = null_lm, upper = full_lm),
+  trace = FALSE
+)
+```
+
+```{r}
+#| label: day01-aic-model-sizes
+#| echo: false
+#| fig-height: 3.2
+#| fig-width: 6.5
+aic_tbl <- data.frame(
+  approach = c("Null", "OLS full", "AIC backward", "AIC forward"),
+  n_terms = c(
+    length(coef(null_lm)),
+    length(coef(full_lm)),
+    length(coef(backward_model)),
+    length(coef(forward_model))
+  ),
+  AIC = c(AIC(null_lm), AIC(full_lm), AIC(backward_model), AIC(forward_model))
+)
+ggplot(aic_tbl, aes(x = reorder(approach, AIC), y = AIC, fill = approach)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "AIC across models (same data)", x = NULL, y = "AIC (lower is better)") +
+  theme_minimal()
+```
+
+```{r}
+#| label: day01-aic-terms-text
+#| echo: false
+#| results: asis
+fmt_f <- function(f) paste(deparse(f), collapse = " ")
+cat("**Backward AIC formula:** `", fmt_f(formula(backward_model)), "`\n\n", sep = "")
+cat("**Forward AIC formula:** `", fmt_f(formula(forward_model)), "`\n\n", sep = "")
+```
+
+## AIC vs full OLS: coefficients (±2 SE)
+
+Dashed lines: known effects for **GeneB** (0.8) and **GeneA** (−0.5).
+
+```{r}
+#| label: day01-aic-coef-compare
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 9
+eff_plot <- bind_rows(
+  broom::tidy(backward_model) %>% mutate(model = "Backward"),
+  broom::tidy(forward_model) %>% mutate(model = "Forward"),
+  broom::tidy(full_lm) %>% mutate(model = "Full")
+) %>%
+  filter(term != "(Intercept)")
+
+ggplot(eff_plot, aes(x = estimate, y = term, color = model)) +
+  geom_point(size = 2) +
+  geom_errorbar(
+    aes(xmin = estimate - 2 * std.error, xmax = estimate + 2 * std.error),
+    width = 0.15,
+    linewidth = 0.5
+  ) +
+  geom_vline(xintercept = c(0.8, -0.5), linetype = "dashed", color = "gray45") +
+  geom_vline(xintercept = 0, linetype = "dotted", color = "gray70") +
+  coord_flip() +
+  scale_color_manual(values = my_pal[c(1, 4, 8)]) +
+  labs(
+    title = "Coefficient estimates: full vs AIC backward vs AIC forward",
+    x = "Estimate (scaled gene units)", y = NULL, color = NULL
+  ) +
+  theme_minimal()
+```

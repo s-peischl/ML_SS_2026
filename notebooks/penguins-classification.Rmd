@@ -16,7 +16,7 @@ library(ggplot2)
 library(GGally)
 library(rpart)
 library(rpart.plot)
-library(caret)
+library(tidymodels)
 library(tidyr)
 library(rlang)
 theme_set(theme_classic())
@@ -24,7 +24,11 @@ theme_set(theme_classic())
 
 # Overview
 
-This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** for **classification**. We use a **binary** task — **Adelie vs Gentoo** — after dropping Chinstrap (cleaner boundaries in 2D plots; you can extend to three species in `tidymodels`).
+This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** for **classification**. We use a **binary** task — **Adelie vs Gentoo** — after dropping Chinstrap (cleaner boundaries in 2D plots; for **three species** see [`penguins-species-multiclass.Rmd`](penguins-species-multiclass.Rmd)).
+
+**Models:** `glm` logistic regression and an `rpart` tree. **Splits and metrics:** `tidymodels` / `yardstick` (`conf_mat`).
+
+**Same scientific task with `tidymodels`:** preprocessing + workflow + resampling live on the website in [Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit) (starts with train/test + `glm`, then the [Tuesday tuned-tree pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)), with follow-ups [Module 07](../modules/module-07-penguins-choose-metrics.qmd) (pick a metric) and [Module 08](../modules/module-08-penguins-compare-models.qmd) (compare RF / XGBoost / MLP).
 
 The **synthetic gene / disease** notebook (`logistic-regression-gene-disease.Rmd`) stays the place for **known-truth** logistic stories.
 
@@ -76,7 +80,8 @@ rpart.plot(tree_fit, type = 4, extra = 104, main = "Adelie vs Gentoo (rpart)")
 
 ```{r}
 pred_class <- predict(tree_fit, type = "class")
-confusionMatrix(pred_class, pg$species)
+tibble(truth = pg$species, .pred_class = pred_class) |>
+  conf_mat(truth = truth, estimate = .pred_class)
 ```
 
 ## Decision-region sketch (logistic)

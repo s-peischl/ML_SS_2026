@@ -1,0 +1,223 @@
+**Gene × trait — regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
+
+```{r}
+#| label: day02-trait-rpart-setup
+#| include: false
+plot_trait_surface <- function(model, data, title = NULL) {
+  geneA_values <- seq(-3.5, 3.5, length.out = 100)
+  geneB_values <- seq(-3.5, 3.5, length.out = 100)
+  grid_data <- expand.grid(GeneA = geneA_values, GeneB = geneB_values)
+  grid_data$Predicted <- as.numeric(predict(model, newdata = grid_data))
+  ggplot() +
+    geom_raster(
+      data = grid_data,
+      aes(x = GeneA, y = GeneB, fill = Predicted),
+      interpolate = TRUE
+    ) +
+    geom_point(
+      data = data,
+      aes(x = GeneA, y = GeneB, color = trait),
+      size = 2.4,
+      inherit.aes = FALSE
+    ) +
+    scale_fill_gradient(
+      low = "turquoise",
+      high = "magenta",
+      name = "Predicted trait"
+    ) +
+    scale_color_gradient(
+      low = "turquoise",
+      high = "magenta",
+      name = "Observed trait"
+    ) +
+    theme_minimal() +
+    labs(title = title, x = "Gene A", y = "Gene B")
+}
+
+save_trait_composite <- function(model, cp, chunk_id) {
+  path <- paste0(knitr::fig_chunk(chunk_id), ".png")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(path, width = 12, height = 6, units = "in", res = 120)
+  } else {
+    png(path, width = 12, height = 6, units = "in", res = 120)
+  }
+  on.exit(dev.off(), add = TRUE)
+  layout(matrix(1:2, nrow = 1, ncol = 2))
+  par(mar = c(1, 1, 3, 1))
+  rpart.plot(
+    model,
+    type = 4,
+    extra = 101,
+    box.palette = "BuGn",
+    fallen.leaves = TRUE,
+    main = paste0("Regression tree (cp = ", signif(cp, 3), ")"),
+    cex = 0.85
+  )
+  print(
+    plot_trait_surface(
+      model,
+      X_train,
+      title = "Predicted trait in the GeneA × GeneB plane"
+    )
+  )
+  path
+}
+
+describe_trait_cp <- function(model, cp) {
+  n_split <- max(0L, nrow(model$frame) - 1L)
+  paste0(
+    "**cp = ", signif(cp, 3), "** — ", n_split, " split",
+    if (n_split == 1L) "" else "s",
+    ". Each region predicts a **constant** trait (piecewise average); ",
+    "background colour is the model’s prediction on a grid."
+  )
+}
+```
+
+```{r}
+#| label: day02-trait-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 150
+gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
+gene_data <- matrix(rnorm(n * length(gene_names)), nrow = n)
+colnames(gene_data) <- gene_names
+trait <- -0.5 * gene_data[, "GeneA"] + 0.8 * gene_data[, "GeneB"] + rnorm(n, sd = 0.3)
+gene_data[, "GeneC"] <- gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneD"] <- -0.3 * gene_data[, "GeneB"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneJ"] <- 0.7 * gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+data_trait <- as.data.frame(cbind(gene_data, trait))
+X_train <- data_trait[, c("GeneA", "GeneB", "trait")]
+```
+
+```{r}
+#| label: day02-trait-cp-prep
+#| echo: false
+#| results: hide
+trait_fit0 <- rpart(trait ~ GeneA + GeneB, data = X_train)
+cps_all <- trait_fit0$cptable[, "CP"]
+cps_all <- cps_all[-1]
+if (length(cps_all) == 0L) {
+  cps_all <- 0.01
+}
+n_trait_show <- min(4L, length(cps_all))
+idx <- unique(round(seq(1, length(cps_all), length.out = n_trait_show)))
+trait_cps <- cps_all[idx]
+while (length(trait_cps) < 4L) {
+  trait_cps <- c(trait_cps, tail(trait_cps, 1))
+}
+trait_cps <- trait_cps[1:4]
+for (i in seq_along(trait_cps)) {
+  cp_i <- trait_cps[i]
+  tree_i <- rpart(trait ~ GeneA + GeneB, data = X_train, cp = cp_i)
+  assign(paste0("trait_tree_", i), tree_i)
+  assign(paste0("trait_cp_", i), cp_i)
+}
+```
+
+## Gene × trait (continuous outcome)
+
+- Same story as **Monday**: trait = $-0.5 \times$ **GeneA** $+ 0.8 \times$ **GeneB** + noise (linear truth)
+- **`rpart(trait ~ GeneA + GeneB, ...)`** — default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
+- Contrast with disease block: **`method = "class"`** for a factor outcome
+- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
+
+## Complexity penalty `cp` (pruning)
+
+- Fit a **large** tree first; **`cp`** in `rpart(..., cp = ...)` keeps splits only if they improve the fit enough relative to tree size
+- **`$cptable`** lists candidate **`cp`** values (we skip the first row, as in the notebook)
+- **Larger `cp`** → **simpler** tree (fewer splits); **smaller `cp`** → more regions, smoother mosaic of predicted trait
+
+## Trait tree: step 1 of 4
+
+```{r}
+#| label: day02-rpart-trait-1-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_1"), get("trait_cp_1"), "day02-rpart-trait-1-fig"))
+```
+
+```{r}
+#| label: day02-rpart-trait-1-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_1"), get("trait_cp_1")), "\n")
+```
+
+## Trait tree: step 2 of 4
+
+```{r}
+#| label: day02-rpart-trait-2-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_2"), get("trait_cp_2"), "day02-rpart-trait-2-fig"))
+```
+
+```{r}
+#| label: day02-rpart-trait-2-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_2"), get("trait_cp_2")), "\n")
+```
+
+## Trait tree: step 3 of 4
+
+```{r}
+#| label: day02-rpart-trait-3-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_3"), get("trait_cp_3"), "day02-rpart-trait-3-fig"))
+```
+
+```{r}
+#| label: day02-rpart-trait-3-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_3"), get("trait_cp_3")), "\n")
+```
+
+## Trait tree: step 4 of 4
+
+```{r}
+#| label: day02-rpart-trait-4-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_4"), get("trait_cp_4"), "day02-rpart-trait-4-fig"))
+```
+
+```{r}
+#| label: day02-rpart-trait-4-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_4"), get("trait_cp_4")), "\n")
+```
+
+## Trait: tree vs linear (in-sample RMSE)
+
+```{r}
+#| label: day02-rpart-trait-rmse
+#| echo: false
+#| results: asis
+lm_ab <- lm(trait ~ GeneA + GeneB, data = X_train)
+pred_lm <- predict(lm_ab, newdata = X_train)
+pred_tree <- predict(get(paste0("trait_tree_", length(trait_cps))), newdata = X_train)
+rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
+knitr::kable(
+  data.frame(
+    Model = c("Linear (GeneA + GeneB)", paste0("rpart (cp = ", signif(tail(trait_cps, 1), 3), ")")),
+    RMSE_in = c(rmse(X_train$trait, pred_lm), rmse(X_train$trait, pred_tree))
+  ),
+  digits = 3,
+  caption = "In-sample RMSE on all n rows — same genes as Monday’s simple linear model"
+)
+```

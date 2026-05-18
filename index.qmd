@@ -10,7 +10,7 @@ format:
 # Welcome
 
 ::: {.hub-tagline}
-Slides, notebooks, and a short map of the week — all in one place.
+Slides, **modules**, notebooks, and a short map of the week — all in one place.
 :::
 
 ::: {.hub-lead}
@@ -22,7 +22,7 @@ Use this site **during and after class**: open today’s deck, then try the matc
 ## Start here (2 minutes)
 
 1. **Open today’s slides** — we follow **Monday → Tuesday → Thursday** in class.
-2. **When you’re ready**, pick a notebook from the menu — same R you already use (RStudio or Positron is fine).
+2. **When you’re ready**, open a **module** for a short guided page, or a **notebook** for a long IDE lab — same R you already use (RStudio or Positron is fine).
 3. **Skim “Your week”** below for the story of the three days — no jargon quiz attached.
 :::
 
@@ -34,7 +34,7 @@ Palmer Penguins
 ### Our real-data running example
 
 - **[About the dataset](dataset-penguins.qmd)** — variables, biology, caveats, and how we reuse penguins **Monday → Thursday**  
-- Links to **penguin-only** notebooks from that page (mass, binary species, sex, three-class species)
+- Links to **penguin-only** notebooks from that page (mass, binary species, sex, three-class species); **`tidymodels`** walk-throughs live as **Module 04** (+ **07–08** follow-ups; see [module library](modules/index.qmd)).
 
 Synthetic **gene** notebooks are there so we **know the true story behind the data** (which “genes” really matter) while we teach LASSO, ridge, and AIC.
 :::
@@ -47,7 +47,7 @@ Class slides
 
 - **[Monday](slides/day-01-monday.qmd)** — from questions to simple models: when a straight line (or curve) helps, and when a model is “trying too hard.”  
 - **[Tuesday](slides/day-02-tuesday.qmd)** — branching decisions (trees), and how to keep your code organized so Thursday still makes sense.  
-- **[Thursday](slides/day-03-thursday.qmd)** — richer models, what to measure when the world is messy, and how to talk about a prediction without overselling it.  
+- **[Day 4](slides/day-04-thursday.qmd)** — forests, boosting, neural nets, PCA/imputation in recipes, variable importance, and evaluation.  
 
 Each deck links back here from the **footer** if you get lost.
 :::
@@ -58,11 +58,12 @@ Hands-on notebooks
 :::
 ### Try the code yourself
 
-- **[Notebook home](notebooks/index.qmd)** — all notebooks + setup in plain steps  
+- **[Notebook home](notebooks/index.qmd)** — long `.Rmd` labs (**classical** `lm` / `glm` / `rpart` / `glmnet` on genes + penguins)  
+- **`tidymodels` on penguins (site modules):** [Module 04](modules/module-04-pipeline.qmd#train-test-last-fit) (train/test, then [Tuesday pipeline](modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)), [07](modules/module-07-penguins-choose-metrics.qmd) (metrics), [08](modules/module-08-penguins-compare-models.qmd) (compare RF / XGB / MLP)  
 - **Genes (simulation where we know the answers):** [linear + LASSO](notebooks/linear-regression-lasso.Rmd), [logistic + tree](notebooks/logistic-regression-gene-disease.Rmd)  
-- **Palmer Penguins:** [body mass regression](notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](notebooks/penguins-classification.Rmd), [sex prediction](notebooks/penguins-sex-classification.Rmd), [three species](notebooks/penguins-species-multiclass.Rmd)  
+- **Palmer Penguins (notebooks):** [body mass](notebooks/penguins-body-mass.Rmd), [Adelie vs Gentoo](notebooks/penguins-classification.Rmd), [sex](notebooks/penguins-sex-classification.Rmd), [three species](notebooks/penguins-species-multiclass.Rmd)  
 
-Go as fast or slow as you like; the notebooks are for **you**, not for a grade on this site.
+Go as fast or slow as you like; notebooks and modules are for **you**, not for a grade on this site.
 :::
 
 ::: {.hub-card}
@@ -72,7 +73,7 @@ Outline & modules
 ### If you want more structure
 
 - **[Curriculum outline](curriculum-outline.qmd)** — how the three days connect (also useful if you miss a session)  
-- **[Module library](modules/index.qmd)** — six short topic pages (01–06): [Foundations](modules/index.qmd#module-01-foundations-and-generalization), [Regularization](modules/index.qmd#module-02-regularization), [Trees](modules/index.qmd#module-03-trees-and-two-cultures), [**Modeling pipeline in R**](modules/index.qmd#module-04-tidymodels-pipeline) (Tuesday walk-through, `tidymodels`), [Advanced models](modules/index.qmd#module-05-advanced-models), [Metrics & explanations](modules/index.qmd#module-06-metrics-imbalance-and-shap)  
+- **[Module library](modules/index.qmd)** — eight topic pages: **01–06** concepts + **04** canonical `tidymodels` pipeline (train/test beat + same include as Tuesday slides); **07–08** short **`tidymodels`** labs (metrics while tuning; compare learners). See [modules vs notebooks](modules/index.qmd#modules-vs-notebooks) on that page for how we split formats.  
 
 Your instructors may point you to extra readings or exercises; those live wherever the course announces them.
 :::

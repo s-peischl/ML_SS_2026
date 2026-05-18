@@ -7,8 +7,9 @@ Description: Not an R package; exists so r-lib/actions/setup-r-dependencies can
 License: CC0-1.0
 Encoding: UTF-8
 Imports:
+    broom,
+    scatterplot3d,
     glmnet,
-    caret,
     dplyr,
     ggplot2,
     GGally,
@@ -23,4 +24,9 @@ Imports:
     vip,
     palmerpenguins,
     tidyr,
-    nnet
+    nnet,
+    ragg,
+    tidyverse,
+    ranger,
+    xgboost,
+    themis

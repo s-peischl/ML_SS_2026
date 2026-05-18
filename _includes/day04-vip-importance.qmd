@@ -1,0 +1,30 @@
+## Variable importance (random forest)
+
+- **`vip`** on a fitted **`ranger`** model: how often splits use each **baked** predictor (impurity).
+- **Correlated** bill measures can **share** importance — not proof that changing one bill mm **causes** species shift.
+
+```{r}
+#| label: day04-vip-prep
+#| echo: false
+#| results: hide
+rf_fit <- fit(wf_rf, peng_cls)
+```
+
+```{r}
+#| label: day04-vip-plot
+#| echo: true
+#| fig-width: 9
+#| fig-height: 5
+rf_fit |>
+  extract_fit_parsnip() |>
+  vip(geom = "point", num_features = 12) +
+  theme_minimal() +
+  labs(
+    title = "Variable importance (random forest)",
+    subtitle = "Adelie vs Gentoo — descriptive ranking, not causal"
+  )
+```
+
+**Model-agnostic alternative:** **permutation importance** (shuffle one column, watch metric drop) — see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
+
+**Local explanations:** SHAP (TreeSHAP for forests) — same module; treat as **communication**, not intervention.

@@ -32,14 +32,9 @@ title: "Module 03: Trees and Two Cultures"
 ## Course links
 
 - **Slides:** [Tuesday — Trees and pipelines](../slides/day-02-tuesday.qmd)
-- **Notebooks — penguins:** [Adelie vs Gentoo](../notebooks/penguins-classification.Rmd) (`rpart` + logistic boundary sketch), [three species](../notebooks/penguins-species-multiclass.Rmd), [sex](../notebooks/penguins-sex-classification.Rmd)
+- **Primary penguin lab (single tree + logistic sketch):** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (`rpart` + `glm`). More penguin variants: [notebook index](../notebooks/index.qmd#palmer-penguins-continuity).
 - **Data:** [Palmer Penguins](../dataset-penguins.qmd)
-- **Next module:** [Module 04 — Modeling pipeline in R](module-04-pipeline.qmd) (full tuned-tree example on penguins)
+- **Next — full `tidymodels` pipeline (same task, website + slides):** [Module 04 — pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday); optional [train/test warm-up](module-04-pipeline.qmd#train-test-last-fit); then [07](module-07-penguins-choose-metrics.qmd)–[08](module-08-penguins-compare-models.qmd) for shorter labs.
 - **Module library:** [Back to all modules](index.qmd)
 
-::: {.callout-note appearance="minimal"}
-## Draft / TODO
-
-- One **hand-drawn style** figure of 2D partition (optional asset) or link to whiteboard photo policy from instructors.
-- Cross-link to Tuesday slides on **comparing many models fairly** (`workflowsets` / `stacks` in the code) when students are ready for a capstone.
-:::
+Tuesday slides include a **step-by-step gene × disease `rpart` walk-through** (tree diagram + decision surface in Gene1 × Gene3) before the Palmer Penguins `tidymodels` block.

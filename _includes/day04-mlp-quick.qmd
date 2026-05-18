@@ -1,0 +1,30 @@
+## Neural network (small MLP) — API literacy
+
+- **`mlp(hidden_units = …, penalty = …, epochs = …) |> set_engine("nnet")`** — one hidden layer, weight decay, counts passes through the data.
+- **Requires scaling** (already in `rec_base` via `step_normalize`).
+- On **small tabular** data, trees often match or beat MLPs — still worth knowing the **same workflow** interface.
+
+```{r}
+#| label: day04-mlp-spec
+#| echo: true
+mlp_spec <- mlp(hidden_units = 8, penalty = 0.1, epochs = 150) |>
+  set_engine("nnet", trace = FALSE) |>
+  set_mode("classification")
+
+wf_mlp <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(mlp_spec)
+```
+
+```{r}
+#| label: day04-mlp-resamples
+#| echo: true
+#| message: false
+set.seed(9)
+rs_mlp <- fit_resamples(wf_mlp, folds, metrics = metrics_cls)
+collect_metrics(rs_mlp) |>
+  filter(.metric %in% c("roc_auc", "accuracy")) |>
+  select(.metric, mean, std_err)
+```
+
+Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).
