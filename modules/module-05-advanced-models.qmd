@@ -4,50 +4,100 @@ title: "Module 05: Advanced Models"
 
 ## Learning objectives
 
-- Name **random forests**, **gradient boosting** (e.g. XGBoost), and **neural networks** as the usual “strong tabular learners” after single trees.
-- Explain the **capacity vs validation** tradeoff: more flexibility needs tighter resampling, more careful tuning, and clearer metrics.
-- Describe how to **swap the model spec** inside the **Tuesday / Module 04 `workflow()`** — change `parsnip` + `set_engine()`, keep recipe and folds.
+- Name **random forests**, **gradient boosting**, and **small neural nets** as standard tabular learners after a single tree.
+- **Swap `parsnip` specs** inside the Tuesday **`workflow()`** — same recipe and folds.
+- Know which **Day 4** blocks demo PCA, imputation, imbalance, and VIP.
 
-## Key messages
+[← Module library](index.qmd) · [Module 04 — Pipeline](module-04-pipeline.qmd) · [Module 08 — Compare learners](module-08-penguins-compare-models.qmd)
 
-- **Same preprocessing + cross-validation + score sheet**, different **fitting engine** underneath.
-- **Never** skip the “what would break on small *n* penguins?” conversation when demoing huge models.
+---
 
-## Model families (quick reference)
+## On the slides (Day 4)
 
-| `parsnip` spec | Idea | Typical engine | Use when… |
-|----------------|------|----------------|-----------|
-| `rand_forest()` | Bagged trees + random features | `ranger` | Strong tabular default, few knobs |
-| `boost_tree()` | Sequential error correction | `xgboost` | Max accuracy with tuning budget |
-| `mlp()` | Single hidden layer net | `nnet` | API literacy; often weak on tiny *n* |
-| `decision_tree()` | One interpretable tree | `rpart` | Teaching splits; Tuesday baseline |
+| Part | Topic | Slide link |
+|------|--------|------------|
+| A | Recap `rec_base`, stressed scenarios | [Day 4 deck](../slides/day-04-thursday.qmd) |
+| B | RF, XGB, MLP, model catalog, **accuracy** compare | [Part B — Models](../slides/day-04-thursday.html#/part-b-models) |
+| C | `step_pca()` | [Part C — PCA](../slides/day-04-thursday.html#/part-c-pca) |
+| D | `step_impute_*()` | [Part D — Impute](../slides/day-04-thursday.html#/part-d-impute) |
+| E | Imbalance + metrics | [Part E — Metrics](../slides/day-04-thursday.html#/part-e-metrics) |
+| F | VIP | [Part F — VIP](../slides/day-04-thursday.html#/part-f-vip) |
 
-Discover hyperparameters: `extract_parameter_set_dials(spec)` · [tidymodels model list](https://www.tidymodels.org/find/parsnip/).
+Lecture uses **`metrics_acc <- metric_set(accuracy)`** in Parts B–D; full metric set in Part E.
 
-## Concept outline
+---
 
-### Random forests
+## Key message
 
-- Bagged trees + feature subsampling; lower variance than one tree.
+**Same preprocessing + cross-validation + score sheet**, different **fitting engine**. More flexibility demands **stricter** resampling — not skipping the “tiny \(n\) penguins” conversation.
+
+---
+
+## Parsnip: type → engine → mode
+
+| Model type | Valid engines (examples) | Mode |
+|------------|--------------------------|------|
+| `decision_tree()` | `rpart`, `C5.0` | classification, regression |
+| `rand_forest()` | `ranger`, `randomForest` | classification, regression |
+| `boost_tree()` | `xgboost`, `lightgbm` | classification, regression |
+| `logistic_reg()` | `glm`, `glmnet` | classification |
+| `mlp()` | `nnet`, `keras` | classification, regression |
+
+Discover knobs: `extract_parameter_set_dials(spec)` · [tidymodels model list](https://www.tidymodels.org/find/parsnip/).
+
+---
+
+## Model families
+
+### Random forests (bagging)
+
+Many trees on **bootstrap** samples; each split sees a **random subset** of predictors → lower variance than one tree.
+
+Example intuition: with 5 predictors, a forest might sample 2 at each split. One tree may overreact to a noisy bill measurement; averaging 400 trees makes that noise average out.
 
 ### Boosting (XGBoost)
 
-- Sequential trees targeting residuals; **boosting boundary** slides on [Day 4](../slides/day-04-thursday.qmd) show surfaces sharpening round by round.
+Trees added **sequentially** to correct previous errors. [Boosting boundary slides](../slides/day-04-thursday.html#/part-b-models) show probability surfaces sharpening over rounds.
+
+Toy narrative: round 1 misses several borderline Gentoo points, round 2 focuses extra split capacity on those residual errors, and later rounds refine that boundary.
 
 ### Neural networks (tabular)
 
-- Flexible but data-hungry — compare honestly with forests in [Module 08](module-08-penguins-compare-models.qmd).
+`mlp()` with `nnet` — flexible but data-hungry; compare honestly in [Module 08](module-08-penguins-compare-models.qmd).
 
-### Recipe extensions (Day 4)
+On small tabular \(n\), gains can be unstable because nets depend heavily on tuning, scaling, and feature representation; trees often match or beat them with less tuning effort.
 
-- **`step_pca()`** — dimensionality reduction inside CV
-- **`step_impute_*()`**, **`step_upsample()`** — missing data and imbalance without leakage
+---
+
+## Recipe extensions (same workflow)
+
+| Step | Purpose |
+|------|---------|
+| `step_pca()` | Compress correlated morphometrics / OTUs inside CV |
+| `step_impute_*()` | Fill missing values without dropping rows before split |
+| `step_upsample()` / `step_downsample()` | Training-time class balance — not always helpful if classes are already separable |
+
+Details: [Module 06 — Metrics](module-06-evaluation-and-interpretability.qmd).
+
+```{r}
+#| echo: true
+#| eval: false
+rec_ext <- recipe(y ~ ., data = train) |>
+  step_impute_median(all_numeric_predictors()) |>
+  step_impute_mode(all_nominal_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = 10)
+
+wf_ext <- workflow() |>
+  add_recipe(rec_ext) |>
+  add_model(boost_tree() |> set_engine("xgboost") |> set_mode("classification"))
+```
+
+---
 
 ## Course links
 
-- **Slides (executable):** [Day 4 — Advanced models](../slides/day-04-thursday.qmd) — includes under `_includes/day04-*.qmd`
-- **Pipeline reference:** [Module 04](module-04-pipeline.qmd)
-- **Compare three engines:** [Module 08](module-08-penguins-compare-models.qmd)
+- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
+- **Pipeline:** [Module 04](module-04-pipeline.qmd)
+- **Compare engines:** [Module 08](module-08-penguins-compare-models.qmd)
 - **Metrics & SHAP:** [Module 06](module-06-evaluation-and-interpretability.qmd)
-- **Notebook (glm + rpart, tidymodels splits):** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)
-- [Module library](index.qmd)
+- **Notebook:** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)

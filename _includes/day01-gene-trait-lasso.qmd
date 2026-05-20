@@ -1,5 +1,3 @@
-Lasso figures for gene × trait (run after the lasso intro slide in the deck).
-
 ```{r}
 #| label: day01-lasso-cv
 #| echo: false

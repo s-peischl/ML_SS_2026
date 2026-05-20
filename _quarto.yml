@@ -4,6 +4,9 @@ project:
   render:
     - "**/*.qmd"
     - "notebooks/*.Rmd"
+    - "exercises/mlss2026-lab-exercises.qmd"
+    - "exercises/index.qmd"
+    - "exercises/solutions/*.{Rmd,qmd}"
 
 website:
   title: "Machine Learning Summer School 2026"
@@ -16,11 +19,13 @@ website:
       - href: dataset-penguins.qmd
         text: Data
       - href: slides/day-01-monday.qmd
-        text: Monday
+        text: Day 1 (Monday)
       - href: slides/day-02-tuesday.qmd
-        text: Tuesday
+        text: Day 2 (Tuesday)
       - href: slides/day-04-thursday.qmd
-        text: Day 4
+        text: Day 4 (Thursday)
+      - href: exercises/index.qmd
+        text: Lab exercises
       - href: modules/index.qmd
         text: Modules
       - text: Notebooks

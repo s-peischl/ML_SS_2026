@@ -1,0 +1,530 @@
+---
+title: "ML Summer School 2026 — Lab exercises handbook"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-tools: true
+---
+
+::: {.callout-tip}
+## Solutions are on this site
+
+Try each block yourself first. When you are stuck, open the matching **solution** from the [Solutions](#solutions) section below or the [lab exercises home](index.qmd). There is no graded submission here — learning matters more than copy-paste.
+:::
+
+# How to use this handbook
+
+| Slot | Duration | Role |
+|------|----------|------|
+| Morning | ~2 h | Lecture (slides on the hub) |
+| Afternoon | ~4 h | Practical exercises below |
+
+**Each day:** work through blocks A–D (plus buffer). Submit deliverables your instructors specify (plots, tables, short data/model card sections).
+
+**Curriculum context:** [Course week outline](../curriculum-outline.qmd)
+
+**Slide decks:**
+
+- [Day 1 (Monday)](../slides/day-01-monday.qmd)
+- [Day 2 (Tuesday)](../slides/day-02-tuesday.qmd)
+- [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
+
+---
+
+# Shared templates
+
+## Data card (start Day 1, revise all week)
+
+One page, plain language:
+
+1. **Source** — where did rows come from? (simulation script / public dataset URL)
+2. **Outcome** — what are you predicting? units / levels?
+3. **Predictors** — what measurements? how many?
+4. **Sample size** — *n*; any missing values?
+5. **Leakage risks** — repeated measures? normalization on full table? selection bias?
+6. **Subgroups** — sex, batch, island, individual ID — for later fairness checks
+
+## Model card (start Day 2, finish Day 4)
+
+1. **Intended use** — screening vs confirmation; who is in / out of scope?
+2. **Metrics** — which scores matter and why (not only accuracy)
+3. **Known failure modes** — rare class, missing data, correlated features
+4. **Limits** — what you will **not** claim (causation, biology “proof”)
+
+---
+
+# Day 1 (Monday) — Foundations without tidymodels
+
+**Lecture:** [Day 1 slides](../slides/day-01-monday.qmd) · **Gene labs:** [linear + lasso](../notebooks/linear-regression-lasso.Rmd), [logistic + tree](../notebooks/logistic-regression-gene-disease.Rmd)
+
+**Design:** Day 1 uses **`lm`**, **`glm`**, **`glmnet`**, **`rpart`**, and **manual loops** only — **no `tidymodels`**. You should *feel* why Day 2’s workflows help.
+
+| Block | Time | Exercise |
+|-------|------|----------|
+| A | 30 min | Data card v0 (gene simulation) |
+| B | 75 min | Regression complexity ladder |
+| C | 75 min | Classification complexity ladder |
+| D | 45 min | Manual 5-fold cross-validation |
+| Buffer | 15 min | Questions |
+
+---
+
+## Day 1 — Block A: Data card v0
+
+| | |
+|---|---|
+| **Time** | 30 min |
+| **Dataset** | Synthetic gene tables (you generate in R; same story as lecture) |
+| **Goal** | Document the simulation before fitting any model. |
+| **Tools** | Markdown / Quarto; no modeling required. |
+
+**Tasks**
+
+1. State that data are **simulated** and name causal genes (trait: GeneA, GeneB; disease: Gene1, Gene3, Gene4).
+2. Record planned *n* (≈150 trait, ≈200 disease) and *p* = 10 genes.
+3. List one **leakage risk** you must avoid later (e.g. tuning on the same rows you test).
+4. Draft sections 1–5 of the data card template above.
+
+**Deliverable** — one-page data card (PDF or QMD).
+
+**Lecture tie-in** — Day 1 Part A (setup) and Overview.
+
+---
+
+## Day 1 — Block B: Regression complexity ladder
+
+| | |
+|---|---|
+| **Time** | 75 min |
+| **Dataset** | Synthetic **trait** ~ GeneA + GeneB (+ noise genes); `set.seed(420)`, *n* ≈ 150 |
+| **Goal** | See **underfitting** vs **overfitting** as you add predictors. |
+| **Tools** | `lm`, `ggplot2`; optional `glmnet` for stretch |
+
+**Tasks**
+
+1. Simulate or reuse the trait dataset from the [lasso notebook](../notebooks/linear-regression-lasso.Rmd).
+2. Split **80% train / 20% test** (`set.seed` documented).
+3. Fit nested models: **intercept only** → **GeneA + GeneB** → **+ correlated genes** → **all 10 genes**.
+4. Table: model, # predictors, train RMSE, test RMSE, test R².
+5. Plot: number of predictors (or model label) vs **test RMSE**.
+
+**Deliverable** — table + plot + 3 sentences interpreting under- vs overfitting.
+
+**Stretch (15 min)** — `cv.glmnet` with `nfold = n`; mark chosen λ on a coefficient path or CV error plot.
+
+**Lecture tie-in** — Gene × trait block; “too few vs too many predictors”.
+
+---
+
+## Day 1 — Block C: Classification complexity ladder
+
+| | |
+|---|---|
+| **Time** | 75 min |
+| **Dataset** | Synthetic **disease** ~ Gene1, Gene3, Gene4; `set.seed(123)`, *n* = 200 |
+| **Goal** | Same complexity story for a **binary** outcome. |
+| **Tools** | `glm(..., family = binomial)`; optional `rpart` |
+
+**Tasks**
+
+1. Simulate or reuse the disease dataset from the [logistic notebook](../notebooks/logistic-regression-gene-disease.Rmd).
+2. Hold out 20% for test.
+3. Fit `glm` models with increasing gene sets (null → causal trio → all genes).
+4. On **test** data: accuracy, confusion matrix, **sensitivity** for `Present`.
+5. Optional: one `rpart` fit; vary `cp` and note tree size vs test accuracy.
+
+**Deliverable** — metrics table + confusion matrix for the full-gene model.
+
+**Stretch** — ROC curve (e.g. `pROC` or manual thresholds); no tidymodels.
+
+**Lecture tie-in** — Gene × disease block.
+
+---
+
+## Day 1 — Block D: Manual k-fold CV
+
+| | |
+|---|---|
+| **Time** | 45 min |
+| **Dataset** | Same trait or disease table as B or C |
+| **Goal** | Implement **5-fold CV in a for-loop** (no `tidymodels`). |
+| **Tools** | Base R loops; compare to `cv.glmnet` or `rpart` cptable |
+
+**Tasks**
+
+1. Write a function or loop: shuffle row indices; split into 5 folds; for each fold, fit on 4/5 and score on 1/5.
+2. Average fold scores (RMSE for regression, accuracy or log-loss for classification).
+3. Compare to a built-in CV helper (`cv.glmnet` or your choice).
+4. **Reflection (5 sentences):** What was easy to get wrong? What would you want a framework to automate?
+
+**Deliverable** — printed CV results + reflection (brings you to Day 2).
+
+**Lecture tie-in** — lasso LOO vs honest holdout discussion.
+
+---
+
+## Day 1 — Optional (fast finishers)
+
+**Palmer Penguins EDA only** — load `palmerpenguins`, plot bill measurements by species; no modeling. [Body-mass notebook](../notebooks/penguins-body-mass.Rmd) intro chunks.
+
+---
+
+# Day 2 (Tuesday) — tidymodels + microbiome
+
+**Lecture:** [Day 2 slides](../slides/day-02-tuesday.qmd) Part C (tidymodels + **`rpart` trees**) · [Module 04 pipeline](../modules/module-04-pipeline.qmd)
+
+**Goal by end of day:** comfortable with `initial_split`, `vfold_cv`, `recipe`, `workflow`, `fit_resamples`, `tune_grid`, `collect_metrics`, `select_best`, `last_fit`.
+
+| Block | Time | Exercise |
+|-------|------|----------|
+| A | 40 min | Microbiome import & EDA |
+| B | 50 min | Baseline tidymodels workflow |
+| C | 70 min | Group CV + tuning |
+| D | 50 min | Refactor a Day 1 CV task with tidymodels |
+| Buffer | 30 min | Model card draft + `quarto render` one file |
+
+---
+
+## Microbiome dataset (Schloss mouse 16S)
+
+**Source:** [Quadram institute — ML with microbiome](https://github.com/quadram-institute-bioscience/datasciencegroup/tree/main/4_machine_learning) (Python workshop; we use **R + tidymodels**).
+
+| File | URL |
+|------|-----|
+| Metadata | `https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/metadata.csv` |
+| OTU table | `https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/otutab_raw.csv` |
+| Taxonomy (optional) | `.../mouse-16s/taxonomy.csv` |
+
+**Outcome:** `Label` = `Early` vs `Late` (community shift over time).
+
+::: {.callout-important}
+## Leakage warning (read before modeling)
+
+Samples are **repeated measures** per mouse (`Individual`). **Do not** use a random row split as your final answer.
+
+- **Research-grade (default):** `group_vfold_cv` with `group = Individual`, or hold out whole mice.
+- **Intro track (simpler):** one row per `Individual` (e.g. last timepoint only) — document the simplification on your data card.
+:::
+
+---
+
+## Day 2 — Block A: Import & EDA
+
+| | |
+|---|---|
+| **Time** | 40 min |
+| **Dataset** | Mouse 16S (URLs above) |
+| **Goal** | Join metadata and OTU abundances; understand *n*, *p*, library sizes. |
+| **Tools** | `readr`, `dplyr`, `ggplot2` |
+
+**Tasks**
+
+1. Load metadata and OTU table; align sample IDs (`#NAME`).
+2. Transpose to **samples × OTUs**; keep samples present in both tables (~282).
+3. Remove OTUs in &lt;10% of samples (prevalence filter).
+4. Plot library size (reads per sample) vs `Label` and `Sex`.
+5. PCA on log-transformed abundances (+ pseudocount); color by `Label`.
+
+**Deliverable** — 2–3 plots + one sentence on class balance.
+
+**Lecture tie-in** — Palmer pipeline motivation (high-dimensional table).
+
+---
+
+## Day 2 — Block B: Baseline workflow
+
+| | |
+|---|---|
+| **Time** | 50 min |
+| **Dataset** | Filtered microbiome matrix + `Label` |
+| **Goal** | First end-to-end **`recipe` + `workflow` + `last_fit`**. |
+| **Tools** | `tidymodels` |
+
+**Tasks**
+
+1. `initial_split(..., strata = Label)` then `training()` / `testing()`.
+2. `recipe(Label ~ .)` with **log1p** or CLR-style transform on OTUs + `step_zv()`.
+3. `decision_tree(...) |> set_engine("rpart") |> set_mode("classification")` + `workflow()`.
+4. `last_fit(split, metrics = metric_set(accuracy))` — more metrics on **Thursday**.
+5. Compare to **majority-class** baseline accuracy.
+
+**Deliverable** — `collect_metrics()` table from `last_fit`.
+
+**Lecture tie-in** — Day 2 pipeline walkthrough (`recipe` → `spec` → `workflow`).
+
+---
+
+## Day 2 — Block C: Group CV + tuning
+
+| | |
+|---|---|
+| **Time** | 70 min |
+| **Dataset** | Same as Block B |
+| **Goal** | Tune a **decision tree** (`rpart`) with **honest grouped CV**. |
+| **Tools** | `group_vfold_cv`, `tune_grid`, `select_best` |
+
+**Tasks**
+
+1. `group_vfold_cv(data, group = Individual, v = 5)` — omit `strata` if the same mouse has both Early and Late samples (typical for this cohort).
+2. `decision_tree(tree_depth = tune(), min_n = tune()) |> set_engine("rpart") |> set_mode("classification")`.
+3. `tune_grid` with a small grid (≤ 12 combinations for speed); **`metric_set(accuracy)`** only.
+4. `select_best(metric = "accuracy")` + `finalize_workflow` + `fit` on training data.
+5. Score once on the **test** split from Block B.
+
+**Deliverable** — best parameters + CV accuracy table.
+
+**Lecture tie-in** — Day 2 tuning slides; [Module 04 canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).
+
+---
+
+## Day 2 — Block D: Refactor Day 1 with tidymodels
+
+| | |
+|---|---|
+| **Time** | 50 min |
+| **Dataset** | Gene trait **or** disease simulation |
+| **Goal** | Repeat Block D’s CV idea in **&lt;15 lines** of tidymodels core code. |
+| **Tools** | `vfold_cv`, `workflow`, `fit_resamples` |
+
+**Tasks**
+
+1. Pick one Day 1 task (lasso regression or logistic classification).
+2. Implement `fit_resamples` with the same metric you used manually.
+3. In the model card, add a subsection: **Manual vs tidymodels** (lines of code, leakage safeguards).
+
+**Deliverable** — annotated model card subsection + knitted snippet.
+
+---
+
+## Day 2 — Warm-up (optional, 20 min)
+
+Reproduce the [Adelie vs Gentoo pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday) from slides before opening the microbiome files.
+
+---
+
+# Day 3 (Wednesday) — Symposium
+
+No graded practical. Optional:
+
+- Read [Schloss miseq SOP](https://mothur.org/wiki/miseq_sop/) background.
+- Prepare three questions for guest speakers.
+- Revise data / model cards.
+
+---
+
+# Day 4 (Thursday) — Models, preprocessing, metrics
+
+**Lecture:** [Day 4 slides](../slides/day-04-thursday.qmd) — order: **many models** → **PCA** → **imputation** → **imbalance + metrics** → **VIP**
+
+**Primary track:** **Schloss mouse 16S microbiome** (same data as Day 2) — ~282 samples, ~200+ OTUs after prevalence filter, outcome `Early` vs `Late`.
+
+::: {.callout-note}
+Day 4 **lecture demos** use Palmer Penguins. This afternoon you reuse **Tuesday’s `recipe` + `workflow()`** pattern: swap **`spec`**, extend the recipe, then choose **metrics** for imbalanced `Late`.
+:::
+
+**CV rule (all blocks):** `group_vfold_cv(group = Individual, v = 5)` — **no `strata`**. See [Day 2 leakage warning](#microbiome-dataset-schloss-mouse-16s).
+
+| Block | Time | Exercise |
+|-------|------|----------|
+| A | 45 min | Model shoot-out (RF, XGB, MLP) — **accuracy** |
+| B | 60 min | PCA inside recipe vs full OTU block — **accuracy** |
+| C | 45 min | Missing data: drop vs impute — **accuracy** |
+| D | 45 min | Imbalance + resampling — **full metric set** |
+| E | 45 min | `select_best` under different metrics |
+| F | 15 min | Model card + VIP humility |
+
+---
+
+## Day 4 — Block A: Model shoot-out
+
+| | |
+|---|---|
+| **Time** | 45 min |
+| **Dataset** | Filtered microbiome (log1p OTUs + `step_zv` + normalize) |
+| **Goal** | Same grouped folds + recipe; **swap `spec`**. |
+| **Tools** | `rand_forest`, `boost_tree`, `mlp`, `fit_resamples` |
+
+**Tasks**
+
+1. Build a baseline recipe (as Day 2) + `group_vfold_cv(..., group = Individual)`.
+2. Fit `rand_forest`, `boost_tree`, and `mlp` workflows (fixed reasonable hyperparameters).
+3. `collect_metrics` with **`metric_set(accuracy)`** → bar chart.
+4. One sentence: what changes in code when you swap models?
+
+**Deliverable** — comparison plot + table.
+
+**Lecture tie-in** — Day 4 Part B; [Module 08](../modules/module-08-penguins-compare-models.qmd).
+
+---
+
+## Day 4 — Block B: PCA inside the recipe
+
+| | |
+|---|---|
+| **Time** | 60 min |
+| **Dataset** | Full filtered OTU matrix |
+| **Goal** | Compare `step_pca` vs no PCA on the **same grouped folds**. |
+| **Tools** | log1p, `step_normalize`, `step_pca`, `fit_resamples` |
+
+**Tasks**
+
+1. Shared preprocessing: log1p OTUs, `step_zv()`, normalize.
+2. Recipe A: `step_pca(all_numeric_predictors(), num_comp = 20)` (tune 15–25 if time).
+3. Recipe B: no PCA.
+4. Same `boost_tree` spec; `collect_metrics` for **`accuracy`**.
+
+**Deliverable** — table + 2 sentences on computation vs interpretability.
+
+**Lecture tie-in** — Day 4 Part C.
+
+---
+
+## Day 4 — Block C: Missing data
+
+| | |
+|---|---|
+| **Time** | 45 min |
+| **Dataset** | Filtered microbiome + ~15% missing `Sex` (manufactured; fixed `set.seed`) |
+| **Goal** | Never impute before split; compare inside **grouped** CV. |
+| **Tools** | `step_impute_mode`, `workflow`, `fit_resamples` |
+
+**Tasks**
+
+1. Load Day 2 microbiome; inject NA in `Sex` for ~15% of rows.
+2. Compare rows lost by `drop_na(Sex)` vs recipe imputation.
+3. Fit on grouped CV: complete-case vs `step_impute_mode(Sex)`.
+4. Table: strategy, mean **`accuracy`**, std err.
+
+**Deliverable** — comparison table + 2 sentences on leakage.
+
+**Lecture tie-in** — Day 4 Part D.
+
+---
+
+## Day 4 — Block D: Imbalance
+
+| | |
+|---|---|
+| **Time** | 45 min |
+| **Dataset** | All `Early` + ~10% of `Late` (`mic_imb`) |
+| **Goal** | Accuracy vs sensitivity; `step_upsample(Label)`; confusion matrix. |
+| **Tools** | `themis::step_upsample`, `yardstick` (`pr_auc`, `sens`, `spec`) |
+
+**Tasks**
+
+1. Build `mic_imb`.
+2. `fit_resamples` without upsampling — record **accuracy, sens, spec, pr_auc**.
+3. Repeat with `step_upsample(Label)`.
+4. Did upsampling help? If not, explain (lecture: separable classes).
+5. Held-out split: **`conf_mat`** for `Late`.
+
+**Deliverable** — metrics table + interpretation for screening vs confirmation.
+
+**Lecture tie-in** — Day 4 Part E; [Module 07](../modules/module-07-penguins-choose-metrics.qmd).
+
+---
+
+## Day 4 — Block E: Metrics and `select_best`
+
+| | |
+|---|---|
+| **Time** | 45 min |
+| **Dataset** | Same as Block D (`mic_imb`) |
+| **Goal** | `select_best` changes when the metric changes. |
+| **Tools** | `tune_grid`, `metric_set(pr_auc, f_meas, accuracy, sens)` |
+
+**Tasks**
+
+1. Tune `boost_tree` on imbalanced data (small grid).
+2. `select_best(metric = "accuracy")` vs `select_best(metric = "pr_auc")`.
+3. Report whether hyperparameters differ.
+4. One paragraph: metric for screening vs methods paper.
+
+**Deliverable** — two parameter rows + paragraph.
+
+**Lecture tie-in** — Day 4 Part E metrics toolbox.
+
+---
+
+## Day 4 — Block F: Model card final
+
+| | |
+|---|---|
+| **Time** | 15 min |
+| **Goal** | Complete model card; VIP humility. |
+
+**Tasks**
+
+1. Finish model card (grouped CV, chosen metric for imbalance, engine choice).
+2. Answer: *What would you not claim from a VIP plot on OTUs or PCA scores?* ([Module 06](../modules/module-06-evaluation-and-interpretability.qmd))
+
+**Lecture tie-in** — Day 4 Part F (VIP).
+
+---
+
+# Appendix
+
+## R packages
+
+| Day | Packages |
+|-----|----------|
+| 1 | `glmnet`, `MASS`, `rpart`, `rpart.plot`, `ggplot2`, `dplyr` |
+| 2+ | `tidymodels`, `ranger`, `xgboost`, `themis`, `readr` |
+| 4 | above + `vip`, `nnet` |
+
+Install from R: `install.packages(c("tidymodels", "glmnet", "ranger", "xgboost", "themis", "vip", "readr"))`
+
+## Alternative public datasets (instructor swap-ins)
+
+| Dataset | R | Use on |
+|---------|---|--------|
+| Pima Indians Diabetes | `mlbench::PimaIndiansDiabetes` | Day 4 imbalance |
+| Breast cancer Wisconsin | `mlbench::BreastCancer` | Day 4 classification |
+
+## Reproducibility checklist (end of each practical day)
+
+- [ ] `set.seed()` documented for every stochastic step
+- [ ] Project folder: `data/`, `scripts/`, `outputs/` (or single `.Rmd` that renders)
+- [ ] `sessionInfo()` saved once
+- [ ] One command rebuilds your report: `quarto render yourfile.qmd`
+
+---
+
+# Solutions
+
+Full index: [lab exercises home](index.qmd). Each link opens the **rendered HTML**; source files are in [`solutions/`](solutions/).
+
+| Exercise | Solution (browse) | Source |
+|----------|-------------------|--------|
+| Day 1 data card | [HTML](solutions/day01-data-card-example.html) | [`.qmd`](solutions/day01-data-card-example.qmd) |
+| Day 1 regression ladder | [HTML](solutions/day01-regression-complexity-ladder.html) | [`.Rmd`](solutions/day01-regression-complexity-ladder.Rmd) |
+| Day 1 classification ladder | [HTML](solutions/day01-classification-complexity-ladder.html) | [`.Rmd`](solutions/day01-classification-complexity-ladder.Rmd) |
+| Day 1 manual CV | [HTML](solutions/day01-manual-kfold-cv.html) | [`.Rmd`](solutions/day01-manual-kfold-cv.Rmd) |
+| Day 2 microbiome EDA | [HTML](solutions/day02-microbiome-eda.html) | [`.Rmd`](solutions/day02-microbiome-eda.Rmd) |
+| Day 2 baseline workflow | [HTML](solutions/day02-microbiome-baseline-workflow.html) | [`.Rmd`](solutions/day02-microbiome-baseline-workflow.Rmd) |
+| Day 2 group CV + tune | [HTML](solutions/day02-microbiome-tune-cv.html) | [`.Rmd`](solutions/day02-microbiome-tune-cv.Rmd) |
+| Day 2 tidymodels refactor | [HTML](solutions/day02-refactor-day1-with-tidymodels.html) | [`.Rmd`](solutions/day02-refactor-day1-with-tidymodels.Rmd) |
+| Day 4 imputation | [HTML](solutions/day04-microbiome-imputation.html) | [`.Rmd`](solutions/day04-microbiome-imputation.Rmd) |
+| Day 4 imbalance | [HTML](solutions/day04-microbiome-imbalance.html) | [`.Rmd`](solutions/day04-microbiome-imbalance.Rmd) |
+| Day 4 PCA | [HTML](solutions/day04-microbiome-pca.html) | [`.Rmd`](solutions/day04-microbiome-pca.Rmd) |
+| Day 4 model compare | [HTML](solutions/day04-microbiome-model-compare.html) | [`.Rmd`](solutions/day04-microbiome-model-compare.Rmd) |
+| Day 4 metrics | [HTML](solutions/day04-microbiome-metrics-select-best.html) | [`.Rmd`](solutions/day04-microbiome-metrics-select-best.Rmd) |
+
+::: {.callout-note collapse="true"}
+## Self-check rubric
+
+| Criterion | What to look for |
+|-----------|------------------|
+| Correct train/test or grouped CV | Microbiome uses `group_vfold_cv(group = Individual)` |
+| Metrics match the question | Imbalance: not only accuracy |
+| Plots labelled and readable | Axes, titles, legend |
+| Data/model card honesty | Leakage, limits, no causal claims from VIP/SHAP |
+:::
+
+### Common mistakes
+
+- Scaling or imputing **before** splitting
+- Ignoring **Individual** in microbiome splits
+- Reporting only **accuracy** on imbalanced `Late` (microbiome) or rare classes generally
+- Causal language from importance plots

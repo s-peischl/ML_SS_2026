@@ -4,37 +4,97 @@ title: "Module 03: Trees and Two Cultures"
 
 ## Learning objectives
 
-- Contrast **statistical** (start with a model you can write down, emphasize uncertainty) and **algorithmic** (start with flexible prediction, still check errors honestly) viewpoints — good practice borrows from both.
-- Explain **decision trees** as a chain of **if–then** rules: each split asks a yes/no question about one predictor; depth and minimum leaf size control how detailed the tree may get.
-- Connect the **tree picture** (rectangular regions in “measurement space”) to what you see in an **`rpart.plot`** for penguins.
+- Contrast **data modeling** vs **algorithmic modeling** (Breiman) without “stats vs ML” slogans.
+- Explain **decision trees** as **if–then** rules and rectangular regions in predictor space.
+- Map Monday **`rpart`** controls to Tuesday **`parsnip` `decision_tree()`** knobs.
 
-## Key messages
+[← Module library](index.qmd) · [Next: Module 04 — Pipeline →](module-04-pipeline.qmd)
 
-- Trees are a **bridge**: interpretable splits today, ensembles and boosting tomorrow.
-- The same **Palmer Penguins** table supports **logistic regression** (Monday feel) and **trees plus Tuesday’s full “fit and tune in R” walk-through** (Module 04).
+---
 
-## Concept outline
+## On the slides (Day 2)
 
-### Two cultures (compressed)
+| Block | Topic | Slide link |
+|-------|--------|------------|
+| Part A | Two cultures, `rpart` intro | [Part A](../slides/day-02-tuesday.html#/part-a-cultures) |
+| Part B | Gene × disease steps, gene × trait `cp` | [Day 2 deck](../slides/day-02-tuesday.qmd) (includes) |
+| Part C | `recipe` → `spec` → `workflow` → tune (**trees only**) | [Part C pipeline](../slides/day-02-tuesday.html#/part-c-pipeline) |
+| Part D | Transition to Thursday | [Wrap-up](../slides/day-02-tuesday.html#/part-d-wrapup) |
 
-- Different priorities on **writing the model first** vs **minimizing prediction error first**; both care about **leakage** and **fair evaluation**.
+Canonical code: [`day02-tidymodels-walkthrough.qmd`](../_includes/day02-tidymodels-walkthrough.qmd) (also [Module 04](module-04-pipeline.qmd)).
 
-### Tree mechanics
+---
 
-- Greedy binary splits; Gini / entropy; stopping vs pruning.
-- **Interactions** show up automatically: a path of splits is already a combination of predictors — you do not have to type `x1:x2` by hand.
+## Two cultures (compressed)
 
-### When trees shine or struggle
+- **Data modeling:** write down a stochastic model, emphasize parameters and assumptions.  
+- **Algorithmic modeling:** flexible fit, judge by **prediction** on held-out data.  
+- Both need **honest splits** and clear **leakage** rules.
 
-- Shine: nonlinear boundaries, mixed types, monotone-ish effects without manual basis expansion.
-- Struggle: very high noise, tiny *n* without regularization via depth / `min_n` / ensembles.
+---
+
+## Tree mechanics
+
+- **Greedy binary splits** on one predictor at a time.  
+- Classification: improve **purity** (Gini); regression: reduce **within-node variance**.  
+- **Depth**, **minimum leaf size**, and **`cp`** (complexity parameter) limit how wiggly the tree is.
+
+Split quality can be summarized as impurity decrease:
+
+\[
+\Delta I = I(\text{parent}) - p_L I(L) - p_R I(R)
+\]
+
+where \(p_L\) and \(p_R\) are child-node proportions.
+
+### `rpart` (Monday genes) ↔ `parsnip` (Tuesday penguins)
+
+| Idea | Gene slides / `rpart` | Tuesday `decision_tree` + `rpart` engine |
+|------|----------------------|----------------------------------------|
+| Depth limit | `maxdepth` in `control` | `tree_depth` |
+| Min leaf size | `minsplit` / `minbucket` | `min_n` |
+| Pre-prune while growing | `maxdepth`, `minsplit` / `minbucket` | `tree_depth`, `min_n` |
+| Post-prune by complexity | `cp` from `$cptable` + `prune()` | usually handled by tuning pre-prune knobs |
+| Plot | `rpart.plot`, partition in Gene1×Gene3 | `rpart.plot` on fitted workflow |
+
+### Practical `rpart` workflow (`cp` in practice)
+
+```{r}
+#| echo: true
+#| eval: false
+library(rpart)
+
+fit <- rpart(y ~ ., data = train, method = "class")
+printcp(fit)   # table with xerror and xstd
+plotcp(fit)    # visual pick of cp region
+
+# choose cp near the 1-SE region (simpler tree with similar error)
+cp_star <- fit$cptable[which.min(fit$cptable[, "xerror"]), "CP"]
+fit_pruned <- prune(fit, cp = cp_star)
+```
+
+- `printcp()` / `plotcp()` help you avoid keeping tiny splits that do not generalize.
+- After pruning, compare validation or CV performance to the unpruned fit.
+
+---
+
+## When trees shine or struggle
+
+**Shine:** nonlinear boundaries, interactions without hand-coded products, mixed numeric/categorical inputs after dummy coding.
+
+**Struggle:** very noisy tiny \(n\) without pruning; **high correlation** among splits (importance is not causal — Thursday VIP).
+
+---
+
+## After Tuesday: same pipeline, new engines
+
+Thursday keeps **`rec_base`** and **`workflow()`** but swaps **`spec`** to forests, boosting, or MLP — [Module 05](module-05-advanced-models.qmd), [Day 4 Part B](../slides/day-04-thursday.html#/part-b-models).
+
+---
 
 ## Course links
 
-- **Slides:** [Tuesday — Trees and pipelines](../slides/day-02-tuesday.qmd)
-- **Primary penguin lab (single tree + logistic sketch):** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (`rpart` + `glm`). More penguin variants: [notebook index](../notebooks/index.qmd#palmer-penguins-continuity).
+- **Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.qmd)
+- **Notebook:** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (`glm` + `rpart`)
+- **Pipeline:** [Module 04](module-04-pipeline.qmd)
 - **Data:** [Palmer Penguins](../dataset-penguins.qmd)
-- **Next — full `tidymodels` pipeline (same task, website + slides):** [Module 04 — pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday); optional [train/test warm-up](module-04-pipeline.qmd#train-test-last-fit); then [07](module-07-penguins-choose-metrics.qmd)–[08](module-08-penguins-compare-models.qmd) for shorter labs.
-- **Module library:** [Back to all modules](index.qmd)
-
-Tuesday slides include a **step-by-step gene × disease `rpart` walk-through** (tree diagram + decision surface in Gene1 × Gene3) before the Palmer Penguins `tidymodels` block.

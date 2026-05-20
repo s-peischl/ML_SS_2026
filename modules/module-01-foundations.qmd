@@ -8,46 +8,87 @@ title: "Module 01: Foundations and Generalization"
 - Connect **bias–variance** and “too wiggly vs too stiff” to plots students already see on Monday.
 - Start the habit of a **data card**: what was measured, who is missing, what you would not claim from a score alone.
 
+[← Module library](index.qmd) · [Next: Module 02 — Regularization →](module-02-regularization.qmd)
+
+---
+
+## On the slides (Day 1)
+
+| Block | Topic | Slide link |
+|-------|--------|------------|
+| Part A | R, ggplot, tools | [Day 1 deck](../slides/day-01-monday.qmd) (opening) |
+| Part B | `lm`, assumptions, Hald cement | [Day 1 deck](../slides/day-01-monday.qmd) |
+| Part C | Gene × trait, overfitting, lasso | [Part C](../slides/day-01-monday.html#/part-c-gene-trait) |
+| Part D | Gene × disease, logistic lasso | [Part D](../slides/day-01-monday.html#/part-d-gene-disease) |
+
+---
+
 ## Key messages
 
 - **Simple baselines** (linear models, clear splits) anchor everything that comes later.
-- The course uses **two data tracks**: **simulated genes** (we know the true coefficients) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
+- Two data tracks: **simulated genes** (known truth) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
 
-## Concept outline
+---
 
-### Supervised setup
+## Supervised setup
 
 - Rows are units (birds, patients, assays); columns are outcomes and predictors.
-- **Generalization** is the goal: performance on **new** rows from the same kind of process, not memorizing the training table.
+- In compact notation, predictors are \(X \in \mathbb{R}^{n \times p}\), outcomes are \(y\), and we learn a rule \(\hat f(X) \rightarrow y\).
+- **Generalization** means performance on **new** rows from a similar process — not memorizing the training table.
 
-### Splits and honest evaluation
+---
 
-- **Training** fits the model; **validation** (or cross-validation) picks complexity or tuning knobs; **test** (or a locked holdout) is used **rarely**, for a final honest score.
-- If a step **learns from the data** (means, categories, principal components), it must be **re-fit inside each cross-validation fold** — not on the whole table first — otherwise future rows leak information backward.
+## Splits and honest evaluation
 
-### Bias and variance (Monday vocabulary)
+- **Training** fits the model; **validation** (or CV) picks complexity; **test** is touched **once** for a final score.
+- Any step that **learns from data** (means, dummy levels, PCA, imputation) must be **re-fit inside each CV fold** — see [Module 04](module-04-pipeline.qmd) and [Day 2 pipeline](../slides/day-02-tuesday.html#/part-c-pipeline).
 
-- **Underfitting:** train and validation both look bad — model too simple or features too weak.
-- **Overfitting:** train looks great, validation bad — model too flexible or too many effective degrees of freedom for *n*.
+### Leakage checklist (30 seconds)
 
-### Data card (lightweight)
+Before you trust any metric, ask:
 
-- Provenance, inclusion criteria, missingness, sensitive or grouping fields (species, island as subgroup lenses on penguins).
-- One paragraph students can reuse in homework.
+1. Did I split before any learned preprocessing?
+2. Are repeated measures grouped correctly in CV?
+3. Did I tune only on training/CV rows (not test)?
+4. Is the final number from untouched test data?
+
+### Word example (train vs validation)
+
+Imagine 100 penguins for tuning bill-length cutoffs. You fit thresholds on **80 birds** (training). You score **20 held-out** birds (validation). If you had tuned the cutoff by trying every value on **all 100** and then reported accuracy on those same 100, you would be **optimistic** — the model saw the answers while you chose the rule.
+
+---
+
+## Bias and variance
+
+| Pattern | Train error | Validation error | Plain language |
+|---------|-------------|------------------|----------------|
+| Underfit | High | High | Too simple (e.g. intercept-only null model on genes) |
+| Overfit | Low | High | Too flexible for sample size \(n\) (deep tree, tiny leaf size) |
+| Good tradeoff | Moderate | Moderate | Validation guides complexity |
+
+- **Gene trait (Monday):** null model underfits; full OLS can overfit when many gene effects are estimated from limited \(n\).  
+- **Penguins (Tuesday+):** a stump (`tree_depth = 1`) underfits; a very deep tree can chase noise — tuning `tree_depth` / `min_n` on **CV accuracy** gives a better bias-variance tradeoff ([Day 2](../slides/day-02-tuesday.html#/part-c-pipeline)).
+
+---
+
+## Data card (lightweight)
+
+Document on one page:
+
+1. **Provenance** — where rows came from.  
+2. **Outcome definition** — what “positive” means clinically or biologically.  
+3. **Missingness** — what is NA and why.  
+4. **Leakage risks** — repeated measures, future information, imputation before split.  
+5. **Subgroup fields** — species, island, sex (penguins) or batch (omics).
+
+The [curriculum outline](../curriculum-outline.qmd) asks students to draft this Monday and finish the **model card** Thursday.
+
+---
 
 ## Course links
 
-- **Slides:** [Monday — Foundations and regularization](../slides/day-01-monday.qmd)
-- **Curriculum:** [Curriculum outline](../curriculum-outline.qmd) (Monday: Foundations and Regularization)
-- **Primary gene lab — regression, penalties, AIC:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) (`glmnet`, `MASS::stepAIC`, …)
-- **Primary gene lab — binary outcome + tree:** [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd) (`glm`, `rpart`, …)
-- **Penguin labs (classical models, long IDE path):** [Notebook index — Palmer Penguins](../notebooks/index.qmd#palmer-penguins-continuity)
-- **Data reference:** [Palmer Penguins](../dataset-penguins.qmd)
-- **Module library:** [Back to all modules](index.qmd)
-
-::: {.callout-note appearance="minimal"}
-## Draft / TODO
-
-- Add one **worked numeric example** of train vs validation loss (optional small table or figure) without duplicating the full Monday slide include.
-- Link or embed a **one-page data card template** when the course settles on a PDF/DOCX version.
-:::
+- **Slides:** [Day 1 (Monday)](../slides/day-01-monday.qmd)
+- **Gene labs:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd), [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
+- **Penguin notebooks:** [Notebook index](../notebooks/index.qmd)
+- **Regularization (next):** [Module 02](module-02-regularization.qmd)
+- **Data:** [Palmer Penguins](../dataset-penguins.qmd)

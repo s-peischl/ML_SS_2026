@@ -21,10 +21,29 @@ wf_mlp <- workflow() |>
 #| echo: true
 #| message: false
 set.seed(9)
-rs_mlp <- fit_resamples(wf_mlp, folds, metrics = metrics_cls)
-collect_metrics(rs_mlp) |>
-  filter(.metric %in% c("roc_auc", "accuracy")) |>
-  select(.metric, mean, std_err)
+rs_mlp <- fit_resamples(wf_mlp, folds, metrics = metrics_acc)
+mlp_cmp <- bind_rows(
+  collect_metrics(rs_rf) |> mutate(model = "Random forest"),
+  collect_metrics(rs_xgb) |> mutate(model = "XGBoost"),
+  collect_metrics(rs_mlp) |> mutate(model = "MLP (nnet)")
+) |>
+  filter(.metric == "accuracy")
+
+mlp_cmp |>
+  select(model, .metric, mean, std_err)
+```
+
+```{r}
+#| label: day04-mlp-bar
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4
+mlp_cmp |>
+  ggplot(aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.12) +
+  theme_minimal() +
+  labs(title = "Same recipe — accuracy across specs", x = NULL, y = "Mean accuracy")
 ```
 
 Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).

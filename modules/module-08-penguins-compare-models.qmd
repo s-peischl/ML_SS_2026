@@ -10,7 +10,9 @@ title: "Module 08: Compare a few strong models (random forest, XGBoost, small ne
 
 ## Before you start
 
-This is the natural follow-up to [Module 04](module-04-pipeline.qmd#canonical-pipeline-tuesday) (tuned tree in the shared include) and [Module 07](module-07-penguins-choose-metrics.qmd) (which metric to optimize). Here we **fix** reasonable hyperparameters for each learner so the page stays fast — in coursework you could wrap each in `tune_grid` the same way as Module 04.
+This is the natural follow-up to [Module 04](module-04-pipeline.qmd#canonical-pipeline-tuesday) (tuned tree) and [Module 07](module-07-penguins-choose-metrics.qmd) (which metric to optimize). The **Thursday lecture** runs the same comparison on slides with **`metric_set(accuracy)`** ([Part B](../slides/day-04-thursday.html#/part-b-models)); this page also reports **ROC AUC** for side-by-side reading.
+
+Here we **fix** reasonable hyperparameters so the page stays fast — in coursework you could wrap each in `tune_grid` like Module 04.
 
 **Packages:** `tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`, `purrr`, plus **`ranger`** and **`xgboost`** for the engines used below (install from CRAN if `fit_resamples()` asks for them).
 
@@ -45,6 +47,12 @@ met <- metric_set(roc_auc, accuracy)
 ```
 
 ## Three model specifications (no tuning — fixed settings)
+
+These settings are intentionally reasonable-but-not-optimized so students can focus on **fair comparison design** (same folds, same recipe) before running larger tuning grids.
+
+- RF: many trees, modest `mtry` for robust baseline behavior.
+- XGBoost: shallow trees + small learning rate for smoother boosting.
+- MLP: small hidden layer and weight decay to limit overfitting on small \(n\).
 
 ```{r}
 #| label: m08c-specs
@@ -86,6 +94,8 @@ wf_mlp <- workflow() |> add_recipe(rec) |> add_model(mlp_spec)
 
 Each call refits the recipe on **analysis** folds and scores on **assessment** folds — fair side-by-side comparison.
 
+What is held constant: data rows, preprocessing steps, folds, and metrics. What changes: only the model family and hyperparameters.
+
 ```{r}
 #| label: m08c-fit-resamples
 set.seed(7)
@@ -95,6 +105,8 @@ rs_mlp <- fit_resamples(wf_mlp, folds, metrics = met)
 ```
 
 ## Compare metrics (mean across folds)
+
+Interpretation tip: compare both `mean` and `std_err`. A tiny difference in mean (e.g. 0.01 AUC) with overlapping uncertainty is often not a meaningful winner on small data.
 
 ```{r}
 #| label: m08c-collect-bind
@@ -117,13 +129,16 @@ collect_metrics(rs_xgb, summarize = FALSE) |>
   tidyr::pivot_wider(names_from = .metric, values_from = .estimate)
 ```
 
+If one fold is consistently harder, inspect whether it has unusual class balance, covariate mix, or missingness patterns before concluding a model is worse.
+
 ## Takeaways
 
 - **Same folds + same recipe** means differences come mainly from **model family** and your chosen **settings**, not from a sneaky preprocessing shortcut.
 - On **small** datasets, simpler models sometimes **win by noise**; report **uncertainty** (`std_err` from `collect_metrics`) and avoid over-interpreting tiny AUC gaps.
+- A small MLP can underperform on tabular data because neural nets are sensitive to feature representation and tuning; with limited \(n\), tree ensembles often provide stronger bias-variance tradeoffs out of the box.
 - To go deeper on **metrics** and **explainability**, continue with [Module 06](module-06-evaluation-and-interpretability.qmd) and [Module 05](module-05-advanced-models.qmd).
 
 ## Course links
 
 - **Advanced models (concepts):** [Module 05](module-05-advanced-models.qmd)
-- **Tuesday / Day 4 slides:** [day-02](../slides/day-02-tuesday.qmd), [day-04](../slides/day-04-thursday.qmd)
+- **Day 2 (Tuesday) / Day 4 (Thursday) slides:** [day-02](../slides/day-02-tuesday.qmd), [day-04](../slides/day-04-thursday.qmd)

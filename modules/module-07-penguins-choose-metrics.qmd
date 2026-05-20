@@ -2,6 +2,12 @@
 title: "Module 07: Pick the score you care about (accuracy, kappa, ROC AUC)"
 ---
 
+::: {.callout-important}
+## Extension lab — not the Tuesday lecture default
+
+**Day 2 slides** tune the classification tree on **cross-validated accuracy** only ([Part C](../slides/day-02-tuesday.html#/part-c-pipeline)). Use **this module** for the **afternoon lab** and **Day 4** when you compare `select_best(metric = "accuracy")` vs `"roc_auc"` vs `"kappa"` on imbalanced or multi-metric problems ([Part E](../slides/day-04-thursday.html#/part-e-metrics), [lab Block E](../exercises/mlss2026-lab-exercises.qmd)).
+:::
+
 ## Learning objectives
 
 - Run **one** tuning exercise while asking R to track **several** metrics at once (`accuracy`, Cohen’s **`kappa`**, **`roc_auc`**).
@@ -10,7 +16,7 @@ title: "Module 07: Pick the score you care about (accuracy, kappa, ROC AUC)"
 
 ## Before you start
 
-Build on [Module 04](module-04-pipeline.qmd#train-test-last-fit) (train/test + `glm`) and [Module 04 — canonical pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday) (recipe + tree + `tune_grid` from the shared include). Here we keep **cross-validated tuning** on the **full** `peng_cls` table (teaching default — in a paper you would nest tuning inside training after a test lockbox).
+Build on [Module 04](module-04-pipeline.qmd#train-test-last-fit) (train/test + `glm`) and [Module 04 — canonical pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday) (recipe + tree + `tune_grid` from the shared include). Here we keep **cross-validated tuning** on the **full** `peng_cls` table — same Adelie vs Gentoo columns as **Day 2 (Tuesday)** slides (bill + island + sex + year; no flipper or body mass). Teaching default: tune on all rows; in a paper you would nest tuning inside training after a test lockbox.
 
 **Packages:** same as Module 04 (`tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`).
 
@@ -31,7 +37,7 @@ peng_cls <- palmerpenguins::penguins |>
     y = factor(species, levels = c("Adelie", "Gentoo")),
     year = as.numeric(year)
   ) |>
-  dplyr::select(-species) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
   tidyr::drop_na()
 
 rec <- recipe(y ~ ., data = peng_cls) |>
@@ -118,4 +124,4 @@ autoplot(tune_res, metric = "roc_auc")
 ## Course links
 
 - **Concepts:** [Module 06 — Metrics & SHAP](module-06-evaluation-and-interpretability.qmd)
-- **Day 4 slides:** [Metrics toolbox](../slides/day-04-thursday.qmd)
+- **Day 4 (Thursday) slides:** [Metrics toolbox](../slides/day-04-thursday.qmd)

@@ -1,0 +1,319 @@
+## Palmer Penguins: one table, one model family (trees)
+
+- **Outcome `y`:** Adelie vs Gentoo (complete cases).
+- **Predictors:** bill length & depth, **island**, **sex**, **year** — no flipper or body mass (so **`tree_depth`** and **`min_n`** show a real tuning tradeoff).
+- **Today’s engine:** **`decision_tree()` + `rpart` only** — forests and boosting come on **Thursday**.
+
+```{r}
+#| label: day02-walk-balance
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+plot_class_balance(peng_bal, "Balanced classes")
+```
+
+```{r}
+#| label: day02-walk-scatter
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Bill space — Adelie vs Gentoo",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
+## Pipeline map
+
+**Data → recipe → spec → workflow → resampling/tuning → fit → figures**
+
+| Package | Job |
+|---------|-----|
+| **`rsample`** | Training vs assessment rows (`initial_split`, `vfold_cv`) |
+| **`recipes`** | Preprocessing checklist (dummy, scale, …) |
+| **`parsnip`** | Model **blueprint** (`decision_tree`, `set_engine("rpart")`) |
+| **`workflows`** | Glue recipe + model |
+| **`tune`** | Search `tree_depth` and `min_n` |
+| **`yardstick`** | Scores — **accuracy only** today; more metrics Thursday |
+
+# Step 1 — Preprocessing (`recipe`)
+
+A **recipe** defines transforms **before** the model sees data. Steps run top to bottom.
+
+## Start the recipe
+
+```{r}
+#| label: day02-walk-rec-start
+#| echo: true
+#| message: false
+rec <- recipe(y ~ ., data = peng_bal)
+rec
+```
+
+- **`recipe(y ~ ., data = peng_bal)`** — `y` is the outcome; **`.`** = all other columns are predictors.
+- Blueprint only — nothing transformed yet.
+
+## `step_zv()` — drop zero-variance columns
+
+```{r}
+#| label: day02-walk-rec-zv
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_zv(all_predictors())
+rec
+```
+
+- Removes columns with one unique value (no predictive power; can break algorithms in small folds).
+
+## `step_dummy()` — encode categories
+
+```{r}
+#| label: day02-walk-rec-dummy
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_dummy(all_nominal_predictors())
+rec
+```
+
+- **`island`** and **`sex`** → numeric 0/1 columns for **`rpart`**.
+
+## `step_normalize()` — scale numeric predictors
+
+```{r}
+#| label: day02-walk-rec-norm
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_normalize(all_numeric_predictors())
+rec
+```
+
+- Z-score each numeric column using **training-fold rows only** inside CV.
+- Good habit before you swap in other model types later in the week.
+
+```{r}
+#| label: day02-walk-rec-base-assign
+#| echo: true
+#| message: false
+rec_base <- rec
+rec_base
+```
+
+::: {.callout-note}
+## Afternoon lab (microbiome)
+
+Same pattern on OTU counts — add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
+:::
+
+**`prep()`** learns rules; **`bake()`** applies them. A **`workflow()`** does both inside each CV fold.
+
+# Step 2 — Model blueprint (`spec`)
+
+**`parsnip`** stores the family and hyperparameters. **Nothing is fitted yet.**
+
+## Classification tree with `rpart`
+
+```{r}
+#| label: day02-walk-tree-spec-fixed
+#| echo: true
+#| message: false
+tree_spec_demo <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+tree_spec_demo
+```
+
+- **`decision_tree()`** — fixed **parsnip** function name.
+- **`tree_depth`**, **`min_n`** — depth limit and minimum leaf size.
+- **`set_engine("rpart")`** — same engine as the gene trees this morning.
+- **`set_mode("classification")`** — factor outcome **`y`**.
+
+## Tuning knobs (`tune()`)
+
+```{r}
+#| label: day02-walk-tree-spec-tune
+#| echo: true
+#| message: false
+tree_spec <- decision_tree(
+  tree_depth = tune(),
+  min_n = tune()
+) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+tree_spec
+```
+
+- **`tune()`** marks arguments **`tune_grid()`** will search — we pick winners by **cross-validated accuracy**.
+
+## Parsnip: type → engine → mode
+
+| Model type | Valid engines (examples) | Modes |
+|------------|--------------------------|-------|
+| `decision_tree()` | `"rpart"`, `"C5.0"` | classification, regression |
+| `rand_forest()` | `"ranger"`, `"randomForest"` | classification, regression |
+| `boost_tree()` | `"xgboost"`, `"lightgbm"` | classification, regression |
+
+Thursday swaps **`spec`** — same **`recipe`** and **`workflow()`** pattern.
+
+```{r}
+#| label: day02-walk-bad-engine
+#| echo: true
+#| eval: false
+#| message: false
+decision_tree() |>
+  set_engine("lm") |>
+  set_mode("classification")
+# Error: 'lm' is not a valid engine for decision_tree()
+```
+
+# Step 3 — Workflow
+
+```{r}
+#| label: day02-walk-wf
+#| echo: true
+#| message: false
+wf <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec)
+wf
+```
+
+- Preprocessing + model in **one** object — no scaling the full table before splitting.
+
+## One-shot fit (intuition)
+
+```{r}
+#| label: day02-walk-fit-demo
+#| echo: true
+#| message: false
+wf_demo <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec_demo)
+fit_demo <- fit(wf_demo, data = peng_bal)
+```
+
+```{r}
+#| label: day02-walk-boundary
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"))
+```
+
+# Step 4 — Metrics (accuracy today)
+
+```{r}
+#| label: day02-walk-metrics
+#| echo: true
+#| message: false
+metrics_day2
+```
+
+- **`accuracy`** — fraction of correct class labels.
+- Thursday adds sensitivity, ROC-AUC, PR-AUC, and more when classes are imbalanced.
+
+# Step 5 — Cross-validation and tuning
+
+```{r}
+#| label: day02-walk-tune
+#| echo: true
+#| message: false
+set.seed(2)
+tune_res <- tune_grid(
+  wf,
+  resamples = folds,
+  grid = grid_regular(
+    tree_depth(range = c(1, 6)),
+    min_n(range = c(2, 50)),
+    levels = 4
+  ),
+  metrics = metrics_day2
+)
+```
+
+- **`vfold_cv(..., strata = y)`** — balanced species per fold.
+- Grid spans underfit (depth 1, large `min_n`) → more flexible trees.
+
+## Read the tuning plot
+
+```{r}
+#| label: day02-walk-autoplot
+#| echo: true
+#| fig-width: 10
+#| fig-height: 5
+tune_res |>
+  autoplot() +
+  theme_minimal() +
+  labs(
+    title = "Tuning: accuracy vs tree_depth and min_n",
+    subtitle = "Bill + island + sex + year — no flipper/mass"
+  )
+```
+
+- Look for **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+
+## Finalize and fit
+
+```{r}
+#| label: day02-walk-finalize
+#| echo: true
+#| message: false
+best <- select_best(tune_res, metric = "accuracy")
+final_wf <- finalize_workflow(wf, best)
+final_fit <- fit(final_wf, data = peng_cls)
+best
+```
+
+```{r}
+#| label: day02-walk-fit-resamples
+#| echo: true
+#| message: false
+set.seed(6)
+wf_tree <- final_wf
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_day2)
+metrics_summary_table(rs_tree, "Tuned tree (5-fold CV)")
+```
+
+Teaching speed: we **`fit` on all rows** after tuning; in projects, hold out a true test set with **`last_fit`**.
+
+## Fitted tree structure
+
+```{r}
+#| label: day02-walk-rpart-plot
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+final_fit |>
+  extract_fit_engine() |>
+  rpart.plot(
+    roundint = FALSE,
+    type = 4,
+    extra = 104,
+    box.palette = "RdBu",
+    main = "Final decision tree (rpart)"
+  )
+```
+
+## Variable importance (this tree)
+
+```{r}
+#| label: day02-walk-vip
+#| echo: true
+#| fig-width: 9
+#| fig-height: 5
+final_fit |>
+  extract_fit_parsnip() |>
+  vip(geom = "point", aesthetics = list(color = "midnightblue", size = 3)) +
+  theme_minimal() +
+  labs(
+    title = "Split-based importance (single tree)",
+    subtitle = "Correlated bills ≠ causation — full VIP chapter on Thursday"
+  )
+```

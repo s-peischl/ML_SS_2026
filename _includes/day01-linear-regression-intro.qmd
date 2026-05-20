@@ -1,4 +1,4 @@
-Pedagogical linear-regression figures (toy data) for Monday slides.
+
 
 ```{r}
 #| label: day01-lr-intro-setup
@@ -65,7 +65,7 @@ ggplot(df, aes(x, y)) +
   )
 ```
 
-## Fit the toy model
+## Fit the model
 
 ```{r}
 #| label: day01-lr-intro-fit
@@ -73,6 +73,10 @@ ggplot(df, aes(x, y)) +
 #| results: hide
 mod_toy <- lm(y.obs ~ x.obs, data = df.obs)
 ```
+
+Fitting is done by minimizing sum of squared residuals (oridnary least squares, OLS).
+
+![](../assets/figures/01_residuals.png){#fig-my-image width=80% fig-align="center"}
 
 ## Q–Q plot of residuals
 

@@ -1,0 +1,56 @@
+---
+title: "Lab exercises"
+format:
+  html:
+    toc: true
+---
+
+# Afternoon practicals
+
+Each teaching day has about **4 hours** of hands-on work (blocks A–F on Day 4). Tasks are in the **[lab exercises handbook](mlss2026-lab-exercises.qmd)**. **Solutions are linked below** — there is no graded submission on this site; try each block yourself first, then compare when you are stuck.
+
+**Also on this site:** [Home](../index.qmd) · [Curriculum](../curriculum-outline.qmd) · [Day 1 slides](../slides/day-01-monday.qmd) · [Day 2](../slides/day-02-tuesday.qmd) · [Day 4](../slides/day-04-thursday.qmd)
+
+---
+
+## Handbook
+
+| | |
+|---|---|
+| **Full task list** | [mlss2026-lab-exercises.qmd](mlss2026-lab-exercises.qmd) (all blocks, data URLs, templates) |
+
+---
+
+## Solutions by day
+
+Open the **HTML** page to read rendered output in the browser, or download the **source** (`.Rmd` / `.qmd`) to run in RStudio.
+
+### Day 1 (Monday)
+
+| Block | Topic | Solution (HTML) | Source |
+|-------|--------|-----------------|--------|
+| A | Data card | [View](solutions/day01-data-card-example.html) | [`.qmd`](solutions/day01-data-card-example.qmd) |
+| B | Regression ladder | [View](solutions/day01-regression-complexity-ladder.html) | [`.Rmd`](solutions/day01-regression-complexity-ladder.Rmd) |
+| C | Classification ladder | [View](solutions/day01-classification-complexity-ladder.html) | [`.Rmd`](solutions/day01-classification-complexity-ladder.Rmd) |
+| D | Manual k-fold CV | [View](solutions/day01-manual-kfold-cv.html) | [`.Rmd`](solutions/day01-manual-kfold-cv.Rmd) |
+
+### Day 2 (Tuesday)
+
+| Block | Topic | Solution (HTML) | Source |
+|-------|--------|-----------------|--------|
+| A | Microbiome EDA | [View](solutions/day02-microbiome-eda.html) | [`.Rmd`](solutions/day02-microbiome-eda.Rmd) |
+| B | Baseline workflow | [View](solutions/day02-microbiome-baseline-workflow.html) | [`.Rmd`](solutions/day02-microbiome-baseline-workflow.Rmd) |
+| C | Group CV + tuning | [View](solutions/day02-microbiome-tune-cv.html) | [`.Rmd`](solutions/day02-microbiome-tune-cv.Rmd) |
+| D | Refactor Day 1 | [View](solutions/day02-refactor-day1-with-tidymodels.html) | [`.Rmd`](solutions/day02-refactor-day1-with-tidymodels.Rmd) |
+
+### Day 4 (Thursday)
+
+| Block | Topic | Solution (HTML) | Source |
+|-------|--------|-----------------|--------|
+| A | Missing data | [View](solutions/day04-microbiome-imputation.html) | [`.Rmd`](solutions/day04-microbiome-imputation.Rmd) |
+| B | Imbalance | [View](solutions/day04-microbiome-imbalance.html) | [`.Rmd`](solutions/day04-microbiome-imbalance.Rmd) |
+| C | PCA in recipe | [View](solutions/day04-microbiome-pca.html) | [`.Rmd`](solutions/day04-microbiome-pca.Rmd) |
+| D | Model shoot-out | [View](solutions/day04-microbiome-model-compare.html) | [`.Rmd`](solutions/day04-microbiome-model-compare.Rmd) |
+| E | Metrics / `select_best` | [View](solutions/day04-microbiome-metrics-select-best.html) | [`.Rmd`](solutions/day04-microbiome-metrics-select-best.Rmd) |
+
+Day 2 and Day 4 microbiome solutions download data from GitHub when you knit them locally ([`solutions/README.md`](solutions/README.md) for package list and `set.seed` notes).

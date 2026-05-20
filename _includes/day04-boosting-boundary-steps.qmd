@@ -3,6 +3,15 @@
 We fix **`tree_depth = 2`** and **`learn_rate = 0.3`**, then increase **`trees`** from 1 to 6. Each round adds small trees that correct leftover mistakes — the **Gentoo probability surface** becomes more **nonlinear**.
 
 ```{r}
+#| label: day04-boost-spec-show
+#| echo: true
+#| message: false
+boost_tree(trees = 6, tree_depth = 2, learn_rate = 0.3) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+```
+
+```{r}
 #| label: day04-boost-boundary-prep
 #| echo: false
 #| results: hide
@@ -114,4 +123,49 @@ print(
 )
 ```
 
-Contrast **bagging**: a random forest **averages** many independent trees — boundaries are often **smoother** than boosting’s staged corrections.
+## Bagging vs boosting (same bill plane)
+
+```{r}
+#| label: day04-rf-boundary-prep
+#| echo: false
+#| results: hide
+rf_boundary_fit <- fit(wf_rf, peng_bal)
+```
+
+```{r}
+#| label: day04-rf-boundary
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    rf_boundary_fit, peng_bal,
+    title = "Random forest — smoother averaged surface"
+  )
+)
+```
+
+Contrast **bagging**: a random forest **averages** many trees — boundaries are often **smoother** than boosting’s **staged** corrections (previous slide).
+
+## Bagging vs boosting (side by side)
+
+```{r}
+#| label: day04-rf-xgb-compare
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.5
+p_rf <- plot_prob_boundary(
+  rf_boundary_fit, peng_bal,
+  title = "Random forest (bagging)"
+)
+p_xgb <- plot_prob_boundary(
+  get("boost_fit_6"), peng_cls,
+  title = "XGBoost after 6 trees"
+)
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_rf + p_xgb + patchwork::plot_layout(ncol = 2))
+} else {
+  print(p_rf)
+  print(p_xgb)
+}
+```

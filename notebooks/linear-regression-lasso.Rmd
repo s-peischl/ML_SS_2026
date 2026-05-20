@@ -48,7 +48,7 @@ In this simulated dataset, GeneA and GeneB are genes that directly influence a s
 ```{r GenerateData, cache=FALSE, comment=NA, warning=FALSE,out.width="100%"}
 # Generate the dataset
 # Set seed for reproducibility
-set.seed(123)
+set.seed(420)
 
 # Number of samples
 n <- 150

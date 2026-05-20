@@ -1,0 +1,64 @@
+---
+title: "Solution 4C — Microbiome PCA inside recipe (grouped CV)"
+format:
+  html:
+    toc: true
+    code-tools: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages(library(tidymodels))
+library(dplyr)
+source("_load_microbiome.R")
+```
+
+```{r data}
+set.seed(7)
+mic <- load_microbiome()
+otu_cols <- mic_otu_cols(mic)
+
+rec_pca <- recipe(Label ~ ., data = mic) |>
+  update_role(sample_id, Individual, Sex, Day, new_role = "id") |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = 20)
+
+rec_no <- recipe(Label ~ ., data = mic) |>
+  update_role(sample_id, Individual, Sex, Day, new_role = "id") |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+xgb_spec <- boost_tree(trees = 100, tree_depth = 3, learn_rate = 0.05) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+folds <- mic_group_folds(mic, v = 5)
+metrics_cls <- metric_set(roc_auc)
+```
+
+```{r compare}
+set.seed(8)
+rs_pca <- fit_resamples(
+  workflow() |> add_recipe(rec_pca) |> add_model(xgb_spec),
+  folds, metrics = metrics_cls
+)
+rs_no <- fit_resamples(
+  workflow() |> add_recipe(rec_no) |> add_model(xgb_spec),
+  folds, metrics = metrics_cls
+)
+
+bind_rows(
+  collect_metrics(rs_pca) |> mutate(model = "With PCA (20 components)"),
+  collect_metrics(rs_no) |> mutate(model = "No PCA (full OTU block)")
+) |>
+  select(model, mean, std_err)
+```
+
+PCA compresses ~200+ OTUs for speed and stability; AUC may be similar or slightly lower — the teaching point is that dimension reduction belongs **inside** CV, not on the full table before splitting.
+
+```{r session, echo=FALSE}
+sessionInfo()
+```

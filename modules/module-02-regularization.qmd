@@ -1,50 +1,226 @@
 ---
-title: "Module 02: Regularization"
+title: "Module 02: Regularization — L1, L2, Lasso, Ridge, and Elastic Net"
 ---
 
 ## Learning objectives
 
-- Motivate **ridge** and **lasso** when predictors are correlated or \(p\) is large relative to \(n\).
-- Contrast **continuous shrinkage** (penalized regression) with **discrete** subset search (AIC / stepwise).
-- Recognize when **elastic net** is a reasonable default between the two extremes.
+- Explain **why** we penalize coefficients when predictors are correlated or \(p\) is large relative to \(n\).
+- Contrast the **\(L_2\)** penalty (ridge) and **\(L_1\)** penalty (lasso) in words and with a simple geometry picture.
+- Describe **elastic net** as a blend controlled by **`alpha`** in `glmnet`.
+- Compare **continuous shrinkage** (penalized regression) with **discrete** subset search (AIC / stepwise).
+- Link each idea to the **Day 1 (Monday) slides** and the **gene / penguin** notebooks.
 
-## Key messages
+[← Module library](index.qmd) · [Module 01 — Foundations](module-01-foundations.qmd) · [Module 04 — Pipeline](module-04-pipeline.qmd)
 
-- Regularization trades a controlled amount of **bias** for lower **variance** and more stable predictions.
-- On **synthetic genes**, we know which coefficients *should* matter — use that to sanity-check LASSO paths. On **penguins**, shrinkage is about real collinearity among bill / flipper / mass.
+---
 
-## Concept outline
+## On the slides (Day 1)
 
-### Ridge (\(L_2\))
+| Topic | Where in the deck |
+|-------|-------------------|
+| Gene × trait: null, full, AIC, lasso | [Part C — Gene trait](../slides/day-01-monday.html#/part-c-gene-trait) |
+| Lasso motivation | [Lasso vs discrete search](../slides/day-01-monday.html#/lasso-regression) |
+| Cross-validated \(\lambda\) | [Lasso CV](../slides/day-01-monday.html#/lasso-cv) |
+| Logistic lasso | [Part D — Gene disease](../slides/day-01-monday.html#/part-d-gene-disease) |
+| Elastic net | [Elastic net slide](../slides/day-01-monday.html#/elastic-net) |
+| Correlated predictors (Hald) | [Day 1 deck](../slides/day-01-monday.qmd) — Hald cement block |
 
-- Shrinks coefficients smoothly; rarely forces exact zeros.
-- Good default when many predictors move together and you do not need sparsity for interpretation.
+*Edit slides in* [`day-01-monday.qmd`](../slides/day-01-monday.qmd)*; links above target the **rendered** Reveal deck.*
 
-### Lasso (\(L_1\))
+---
 
-- Can set coefficients to **exactly zero** — variable selection + prediction.
-- When sparsity matches the generating process (gene notebook), paths are pedagogically clean.
+## Why penalize?
 
-### AIC and stepwise
+Ordinary least squares (OLS) or full logistic regression minimizes **only** prediction error on the training rows. That is fine when:
 
-- **Discrete** search over subsets; different failure modes than lasso (instability, greedy steps).
-- Teaching beat: compare **backward vs lasso** coefficient panels from Monday materials.
+- \(n\) is comfortably larger than the number of effective parameters, and  
+- predictors are not so correlated that coefficient signs flip when you add or drop one column.
 
-### Elastic net (bridge)
+When those conditions fail — as in the **Hald cement** example on Monday or with **many gene columns** — you often see:
 
-- Mixing parameter \(\alpha \in [0,1]\): blend ridge-like stability with lasso-like zeros when you are unsure.
+- **Inflated variance** of individual \(\hat\beta_j\) (wide confidence intervals).  
+- **Unstable subsets** under stepwise search (AIC picks different models on nearby samples).  
+- **Overfitting** on training data (great in-sample fit, weaker on new rows).
+
+**Regularization** adds a penalty on the size (or sparsity) of coefficients. You accept a controlled amount of **bias** to gain **lower variance** and more stable predictions on new data. See [Module 01](module-01-foundations.qmd) for train / validation / test discipline when choosing penalty strength.
+
+---
+
+## The \(L_2\) norm and ridge regression
+
+### Penalty
+
+Ridge minimizes (for linear regression):
+
+\[
+\sum_{i=1}^{n}(y_i - \hat y_i)^2 + \lambda \sum_{j=1}^{p} \beta_j^2
+\]
+
+The second term is the **squared Euclidean norm** of the coefficient vector — an **\(L_2\)** penalty. \(\lambda \ge 0\) controls strength: \(\lambda = 0\) is OLS; larger \(\lambda\) shrinks all \(\beta_j\) toward zero.
+
+### Geometry (intuition)
+
+Think of OLS as finding the best fit inside the usual least-squares “bowl.” Ridge restricts coefficients to lie inside a **sphere** (round constraint in \(\beta\)-space). The fit is where the bowl touches that sphere — typically **all** coefficients are non-zero but **smaller** than OLS.
+
+```mermaid
+flowchart LR
+  OLS[OLS: any beta]
+  Ridge[Ridge: L2 ball around 0]
+  OLS --> Ridge
+```
+
+### When ridge helps
+
+- Many predictors move together (multicollinearity) — ridge **stabilizes** their joint effect instead of exploding one coefficient.  
+- You want **shrinkage** but do **not** need exact zeros for interpretation.
+
+### In R (`glmnet`)
+
+Ridge is **`alpha = 0`** in `glmnet` (see minimal example below).
+
+---
+
+## The \(L_1\) norm and lasso
+
+### Penalty
+
+Lasso uses:
+
+\[
+\sum_{i=1}^{n}(y_i - \hat y_i)^2 + \lambda \sum_{j=1}^{p} |\beta_j|
+\]
+
+The penalty is the **\(L_1\)** norm (sum of absolute values). That changes the geometry.
+
+### Geometry (intuition)
+
+The constraint region is a **diamond** (octahedron in higher dimensions) with **corners on the axes**. The least-squares surface often first touches a **corner**, where some \(\beta_j = 0\) **exactly** — automatic **variable selection** plus prediction.
+
+### When lasso helps
+
+- You believe **only a subset** of predictors matter (gene simulation on Monday).  
+- You want a **sparse** model for communication or follow-up experiments.
+
+### Tradeoffs
+
+- If a group of correlated predictors all matter, lasso may pick **one** and zero the rest (arbitrary within the group).  
+- **Elastic net** (below) partly fixes that.
+
+### In R (`glmnet`)
+
+Lasso is **`alpha = 1`**.
+
+---
+
+## Ridge vs lasso vs OLS (summary)
+
+| Method | Penalty | Coefficients | Variable selection | Correlated \(x\) |
+|--------|---------|--------------|--------------------|------------------|
+| OLS | none | unbiased-ish | no | unstable |
+| Ridge | \(L_2\) | shrunk, rarely 0 | no | stabilized |
+| Lasso | \(L_1\) | sparse | yes | can be arbitrary |
+| Elastic net | mix | sparse + grouped shrink | partial | compromise |
+
+---
+
+## AIC and stepwise (discrete alternative)
+
+**AIC stepwise** searches over **subsets** of predictors (which columns are in / out). Each step is **discrete** — a different model class, not a smooth path in \(\beta\).
+
+| Aspect | Stepwise / AIC | Lasso |
+|--------|----------------|-------|
+| Search | combinatorial subsets | continuous shrinkage path in \(\lambda\) |
+| Stability | can jump between models | path is smoother in \(\lambda\) |
+| Correlated \(x\) | may pick one arbitrarily | similar issue at \(\lambda\) values that force sparsity |
+
+Monday compares **backward AIC** and **lasso** coefficient panels on the **same gene data** — good classroom contrast ([lasso slide](../slides/day-01-monday.html#/lasso-regression)).
+
+---
+
+## Elastic net
+
+**Elastic net** blends \(L_1\) and \(L_2\):
+
+\[
+\text{loss} + \lambda \left[ (1-\alpha)\frac{1}{2}\sum_j \beta_j^2 + \alpha \sum_j |\beta_j| \right]
+\]
+
+In **`glmnet`**, **`alpha`** \(\in [0,1]\) is the mixing parameter:
+
+| `alpha` | Effect |
+|---------|--------|
+| `0` | Ridge only |
+| `1` | Lasso only |
+| between | some grouping/shrinkage (ridge-like) **and** some exact zeros (lasso-like) |
+
+Use elastic net when predictors are **correlated** but you still want **some sparsity** — a common “unsure” default in high-dimensional tabular work.
+
+**Slides:** [Elastic net (Monday)](../slides/day-01-monday.html#/elastic-net)
+
+---
+
+## Choosing \(\lambda\) (penalty strength)
+
+- **`lambda`** controls how hard you shrink. Too small → like OLS; too large → all coefficients near zero.  
+- **`cv.glmnet`** (or `tidymodels` tuning) estimates error on **held-out folds** while varying \(\lambda\).  
+- **`lambda.1se`** rule: pick the **largest** \(\lambda\) whose CV error is within one standard error of the minimum — **simpler** model, still near-optimal CV loss (Monday gene trait and disease blocks).
+
+**Honesty:** paths and CV curves in class often use **all** rows for the plot; for a **final** performance claim, lock a test set or nest tuning inside training only ([Module 01](module-01-foundations.qmd)).
+
+---
+
+## Minimal R: ridge and lasso on penguins
+
+Same predictors as the pipeline modules: Adelie vs Gentoo, bill + island + sex + year. **`scale()`** predictors before `glmnet` (penalties are not invariant to units).
+
+```{r}
+#| label: m02-glmnet-demo
+#| echo: true
+#| message: false
+#| warning: false
+library(glmnet)
+library(palmerpenguins)
+library(dplyr)
+
+peng <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(y = as.integer(species == "Gentoo")) |>
+  select(bill_length_mm, bill_depth_mm, island, sex, year, y) |>
+  tidyr::drop_na()
+
+x <- model.matrix(y ~ bill_length_mm + bill_depth_mm + island + sex + year, peng)[, -1]
+y <- peng$y
+x_s <- scale(x)
+
+cv_ridge <- cv.glmnet(x_s, y, family = "binomial", alpha = 0, nfolds = 5)
+cv_lasso <- cv.glmnet(x_s, y, family = "binomial", alpha = 1, nfolds = 5)
+
+data.frame(
+  model = c("Ridge (alpha=0)", "Lasso (alpha=1)"),
+  lambda_1se = c(cv_ridge$lambda.1se, cv_lasso$lambda.1se),
+  n_nonzero = c(
+    sum(coef(cv_ridge, s = "lambda.1se") != 0) - 1L,
+    sum(coef(cv_lasso, s = "lambda.1se") != 0) - 1L
+  )
+)
+```
+
+Try **`alpha = 0.5`** for elastic net on the same `x_s`, `y`. For **continuous** body mass, see [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd).
+
+---
 
 ## Course links
 
-- **Slides:** [Monday deck](../slides/day-01-monday.qmd) (ridge, lasso, AIC, elastic net slides)
-- **Primary gene lab (penalties + AIC on known-truth simulation):** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd) — **`glmnet`**, **`MASS::stepAIC`**.  
-- **Penguin lab (same shrinkage ideas on real measurements):** [penguins-body-mass.Rmd](../notebooks/penguins-body-mass.Rmd) — ridge/LASSO on **body mass** with `glmnet`.
-- **Curriculum:** regularization and model-selection beats under Monday in [curriculum outline](../curriculum-outline.qmd)
-- **Module library:** [Back to all modules](index.qmd)
+| Resource | Role |
+|----------|------|
+| [Day 1 slides](../slides/day-01-monday.qmd) | Hald, gene trait/disease, lasso paths, elastic net |
+| [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd) | Full trait story with `MASS::stepAIC`, `glmnet` |
+| [Logistic + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd) | Logistic lasso + `rpart` |
+| [Penguins body mass](../notebooks/penguins-body-mass.Rmd) | Ridge/lasso on real measurements |
+| [Curriculum outline](../curriculum-outline.qmd) | Day 1 regularization sequence |
+| [Module 01 — Foundations](module-01-foundations.qmd) | Splits and generalization |
+| [Module 04 — Pipeline](module-04-pipeline.qmd) | Same penguin table with `tidymodels` trees |
 
-::: {.callout-note appearance="minimal"}
-## Draft / TODO
+### Optional reading (instructors)
 
-- Short **side-by-side schematic** of coefficient paths (ridge vs lasso) as a static figure or link to slide export.
-- Optional reading list on **post-selection inference** (one sentence + link for instructors).
-:::
+Post-selection inference after lasso is subtle; one sentence for curious students: *inference on “selected” coefficients generally needs specialized tools — do not treat lasso zeros as a free hypothesis test.*

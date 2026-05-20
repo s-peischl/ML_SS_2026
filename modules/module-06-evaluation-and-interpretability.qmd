@@ -4,46 +4,113 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 ## Learning objectives
 
-- Choose **scores** that match real costs (false alarm vs missed case), disease **prevalence**, and whether you care about **ranking** people or about **well-calibrated probabilities**.
-- Diagnose **class imbalance** without fetishizing accuracy; use sensitivity, specificity, ROC vs PR as appropriate.
-- Introduce **SHAP** (SHapley Additive exPlanations) as a way to **attribute** a single prediction to predictors — with **causal** and **correlation** caveats: a big bar does not mean “knocking out this gene cures the disease.”
+- Pick **metrics** that match prevalence and error costs (not accuracy by default).
+- Read **confusion matrices**, **ROC**, and **PR** curves on imbalanced data.
+- Use **VIP** and **SHAP** as **communication** tools — not causal proof.
 
-## Key messages
+[← Module library](index.qmd) · [Module 07 — Metric tuning lab](module-07-penguins-choose-metrics.qmd) · [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics)
 
-- **Interpretability complements validation**; neither replaces honest held-out or nested evaluation.
-- **Palmer Penguins** supports “what if we look within **species** or **island**?” as a **toy** fairness-style check — with only a few hundred birds, treat it as **classroom pedagogy**, not a regulatory audit.
+---
 
-## Concept outline
+## On the slides (Day 4)
 
-### Metrics toolbox
+| Part | Topic | Slide link |
+|------|--------|------------|
+| E (first) | Rare Gentoo, upsampling honesty | [Imbalance block](../slides/day-04-thursday.html#/part-e-metrics) |
+| E (metrics) | Toolbox, confusion matrix, ROC/PR | [Part E](../slides/day-04-thursday.html#/part-e-metrics) |
+| F | Random forest VIP | [Part F — VIP](../slides/day-04-thursday.html#/part-f-vip) |
 
-- Accuracy only when costs symmetric and prevalence balanced.
-- Precision / recall / F1 when costs asymmetric or positives rare.
-- ROC-AUC vs PR-AUC: **ROC** emphasizes ranking across thresholds; **PR** often helps when the **positive class is rare**.
-- **Calibration**: do predicted probabilities match observed frequencies?
+Tuesday lecture tunes on **accuracy only**; Thursday Part E introduces the full toolbox.
 
-### Imbalance and thresholds
+---
 
-- Class weights, resampling, threshold tuning; tie to **decision problem** not leaderboard.
+## Metrics toolbox
 
-### Variable importance and SHAP
+| Metric | Question it answers | When to use |
+|--------|---------------------|-------------|
+| **accuracy** | Overall correct? | Balanced classes, symmetric costs |
+| **sensitivity** (recall) | Of true positives, how many caught? | Screening — missing a case is costly |
+| **specificity** | Of true negatives, how many caught? | Avoid false alarms |
+| **precision** | Of predicted positives, how many correct? | Confirmation after a screen |
+| **F1** | Balance precision & recall | Single summary when both matter |
+| **ROC-AUC** | Ranking across thresholds | Separability; can look fine when positives are rare |
+| **PR-AUC** | Precision–recall area | **Rare positive** class |
 
-- Model-specific importance vs **permutation** importance (shuffle one column, see how much error jumps).
-- SHAP values as a Shapley-style **share of the prediction**; **TreeSHAP** vs **KernelSHAP** are two algorithm choices for computing SHAP (speed vs flexibility) — details stay on Thursday slides.
-- **Guardrail:** association \(\neq\) intervention; SHAP is not a license to change biology or policy without design.
+In code, use **`yardstick::spec`** for specificity so R does not confuse it with a **`spec`** model object.
+
+---
+
+## Why accuracy misleads
+
+On **imbalanced** data (many Adelie, few Gentoo in the teaching slice), a model that **always predicts the majority class** can show **high accuracy** while missing **every** minority case — useless for screening.
+
+Numeric example: if prevalence is 90% negative and 10% positive, an always-negative model gets 90% accuracy but 0% sensitivity for the positive class.
+
+The slides compute a **majority-class baseline** before comparing upsampling ([Part E](../slides/day-04-thursday.html#/part-e-metrics)).
+
+---
+
+## Class imbalance and resampling
+
+- **`step_upsample()`** duplicates minority rows **in training folds** — helps when the learner **ignores** the rare class.  
+- On **separable** data (bill space already splits species), upsampling may **not** improve CV metrics — duplicating easy points adds noise.  
+- Always report **sensitivity** and **PR-AUC** for rare events, not accuracy alone.
+- Fold-level intuition: a training fold with 72 Adelie / 8 Gentoo becomes roughly balanced after upsampling, while the assessment fold remains untouched for honest scoring.
+
+Lab: [Day 4 Block D — Imbalance](../exercises/mlss2026-lab-exercises.qmd) (microbiome `Late`).
+
+---
+
+## Confusion matrix
+
+Rows = **true** class; columns = **predicted** class.
+
+- **False negatives** (true Gentoo, predicted Adelie) — costly in screening.  
+- **False positives** — costly if treatment is invasive.
+
+Practice reading the **minority row** on the [Day 4 slides](../slides/day-04-thursday.html#/part-e-metrics).
+
+```{r}
+#| label: m06-conf-demo
+#| echo: true
+#| eval: false
+#| message: false
+library(yardstick)
+# After augment(fit, test_data):
+# conf_mat(truth = y, estimate = .pred_class)
+```
+
+---
+
+## ROC vs PR
+
+- **ROC:** sensitivity vs \(1 - \text{specificity}\) across thresholds — good when both classes matter.  
+- **PR:** precision vs recall — often more informative when **positives are rare**.
+
+Threshold example: at threshold 0.2 you might get recall 0.90 but precision 0.18; ROC can still look decent while PR reveals large false-alert burden.
+
+---
+
+## Variable importance (VIP)
+
+- **`vip`** on tree ensembles: how often splits use each predictor (impurity).  
+- **Correlated** predictors **share** importance — not proof that changing one mm of bill **causes** species shift.  
+- Full chapter: [Day 4 Part F](../slides/day-04-thursday.html#/part-f-vip).
+
+---
+
+## SHAP (pointer)
+
+- **SHAP** attributes a **single prediction** to features relative to a baseline.  
+- **TreeSHAP** for forests/boosting; **KernelSHAP** for other engines.  
+- **Guardrail:** association \(\neq\) intervention. See [Module 06 limits](../curriculum-outline.qmd) and course humility prompts.
+- Local-example framing: for one prediction, SHAP might attribute +0.30 log-odds to bill length, +0.15 to flipper size, and -0.10 to island relative to baseline.
+
+---
 
 ## Course links
 
-- **Slides:** [Day 4 deck](../slides/day-04-thursday.qmd) (VIP, imputation, imbalance, metrics pointers)
-- **Primary penguin lab (multiclass + confusion patterns):** [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd). Other penguin labs: [notebook index](../notebooks/index.qmd#palmer-penguins-continuity).
-- **Metric choice in `tidymodels` (accuracy vs kappa vs ROC AUC):** [Module 07](module-07-penguins-choose-metrics.qmd)
-- **Data:** [Palmer Penguins](../dataset-penguins.qmd)
-- **Curriculum:** Thursday consolidation and humility prompts in [curriculum outline](../curriculum-outline.qmd)
-- **Module library:** [Back to all modules](index.qmd)
-
-::: {.callout-note appearance="minimal"}
-## Draft / TODO
-
-- Add **one** example confusion matrix graphic (static) comparing “overall accuracy” vs **per-class recall** on penguins — or link to Thursday slide anchor.
-- Instructor-only link list for **fairlearn**, **iml**, or **shap** Python bridge if the course adds bilingual materials.
-:::
+- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
+- **Metric choice in tuning:** [Module 07](module-07-penguins-choose-metrics.qmd)
+- **Notebook:** [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd)
+- **Curriculum:** [outline](../curriculum-outline.qmd)

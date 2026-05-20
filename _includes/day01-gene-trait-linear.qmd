@@ -1,4 +1,3 @@
-**Gene × trait** — describe data → null vs full model → AIC forward/backward (all on the same $n$ samples).
 
 - [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
 
@@ -29,13 +28,13 @@ knitr::opts_chunk$set(
 
 ## Gene × trait: the dataset
 
-**GeneA** and **GeneB** drive the trait; correlated noise genes; **GeneJ** correlated with GeneA but not causal.
+**GeneA** and **GeneB** drive the trait; correlated noise genes; **GeneD** significant but not causal.
 
 ```{r}
 #| label: day01-linear-sim-data
 #| echo: false
 #| results: hide
-set.seed(123)
+set.seed(420)
 n <- 150
 p <- 10
 gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
@@ -105,6 +104,7 @@ Too simple: ignores genes → **underfitting**.
 #| echo: false
 #| results: hide
 null_lm <- lm(trait ~ 1, data = data_scaled)
+summary(null_lm)
 ```
 
 ## Full model (all genes)
@@ -116,17 +116,9 @@ Every gene in the model — flexible, but many correlated predictors → unstabl
 #| echo: false
 #| results: hide
 full_lm <- lm(trait ~ ., data = data_scaled)
+summary(full_lm)
 ```
 
-## Regression table (full model)
-
-```{r}
-#| label: day01-lm-regression-table
-#| echo: false
-#| results: asis
-reg_tbl <- broom::tidy(full_lm)
-knitr::kable(head(reg_tbl, 6), digits = 3, caption = "OLS summary (first terms; all genes in notebook)")
-```
 
 ```{r}
 #| label: day01-lm-coef-plot

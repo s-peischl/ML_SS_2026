@@ -24,3 +24,15 @@
 .reveal .slide-number {
   color: #163d73;
 }
+
+/* Level-1 section divider slides (Part A, Part B, …) */
+.reveal section:has(> h1:only-child),
+.reveal section:has(> h1:first-child:last-child) {
+  text-align: center;
+}
+
+.reveal section h1 {
+  font-size: 1.55em;
+  margin-top: 2.2em;
+  color: #163d73;
+}

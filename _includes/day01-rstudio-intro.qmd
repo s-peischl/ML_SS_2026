@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## R vs the IDE
+## R and RStudio 
 
 - **R** — the language: objects, functions, statistics, graphics  
 - **RStudio Desktop** — a **workbench** around R (editor, console, plots, files)  
@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 | **Source / Editor** — write `.R` scripts; run lines with shortcuts | **Environment** — data frames and objects you have created |
 | **Console** — type commands; see output and errors | **Files / Plots / Packages / Help** — browse files; view figures; install packages |
 
-Instructors: a live screenshot of your own layout works well here.
+![](../assets/figures/01_Rstudio.png){#fig-my-image width=80% fig-align="center"}
 
 ## Install R, then RStudio
 
@@ -45,7 +45,7 @@ Instructors: a live screenshot of your own layout works well here.
 R.version.string
 ```
 
-Optional: **Positron** from [posit.co/products/positron](https://posit.co/products/positron/) if your course standardizes on it.
+
 
 ## Scripts: save your work
 
@@ -84,9 +84,17 @@ Paths are **relative to the project root** when you use an RStudio Project.
 glimpse(faithful_df)
 ```
 
-## ggplot2: one sentence
+## ggplot2 Grammar
 
-**Data** + **aesthetic mappings** (`aes`: x, y, colour, …) + **geometric layers** (`geom_point`, `geom_smooth`, …) + **`labs()`** + **`theme_*()`**, built with **`+`**.
+**Data** and **aesthetic mappings** (`aes`: x, y, colour, …) +
+
+**geometric layers** (`geom_point`, `geom_smooth`, …) + 
+
+**`labs()`** + 
+
+**`theme_*()`**, 
+
+Combine different steps with **`+`** at *end of line*, new command can start in next line.
 
 ## Example plot — scatter
 
@@ -125,6 +133,8 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
   theme_minimal()
 ```
 
-## Notebooks on this site
+## Notebook exercise 
 
-Course **`.Rmd`** notebooks use the same R + **ggplot2** ideas; the hub renders them with **Quarto**. After today’s slides, open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
+Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
+
+

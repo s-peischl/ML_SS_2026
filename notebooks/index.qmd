@@ -8,7 +8,7 @@ Run these documents in **RStudio** or **Positron** (or render with Quarto). The 
 ## Notebooks vs modules
 
 - **These `.Rmd` files** are **long labs** (**Lab_exploration**; homework when your instructor assigns them): lots of chunks, plots, and “change this and re-run.”
-- **Modules** ([`modules/`](../modules/index.qmd)) are shorter **website** pages: **concepts** (01–03, 05–06) plus **canonical `tidymodels` code** on penguins (**04** — train/test + Tuesday include — and **07–08**). Tuesday’s slides share the **same include** as [Module 04](../modules/module-04-pipeline.qmd).
+- **Modules** ([`modules/`](../modules/index.qmd)) are shorter **website** pages: **concepts** (01–03, 05–06) plus **canonical `tidymodels` code** on penguins (**04** — train/test + Day 2 include — and **07–08**). Day 2 (Tuesday) slides share the **same include** as [Module 04](../modules/module-04-pipeline.qmd).
 
 **Notebook inventory**
 
@@ -37,7 +37,7 @@ Ideal for **LASSO, ridge, AIC**, and logistic regression when we **know** which 
 
 Same real table as on the **Data** page. **Models:** **`lm` / `glm` / `rpart` / `glmnet`**. **Splits, scaling, and metrics:** **`tidymodels`** (`rsample`, `recipes`, `yardstick`).
 
-For the **Tuesday `tidymodels` pipeline** (recipe + workflow + cross-validation / tuning on the same Adelie vs Gentoo task), use **[Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit)** (starts with **train/test + `glm`**) and **[Module 04 — canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared tuned-tree walk-through with Tuesday slides), then **[Module 07](../modules/module-07-penguins-choose-metrics.qmd)** (accuracy vs kappa vs AUC while tuning) and **[Module 08](../modules/module-08-penguins-compare-models.qmd)** (RF vs XGBoost vs small neural net).
+For the **Day 2 (Tuesday) `tidymodels` pipeline** (recipe + workflow + cross-validation / tuning on the same Adelie vs Gentoo task), use **[Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit)** (starts with **train/test + `glm`**) and **[Module 04 — canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared tuned-tree walk-through with Day 2 slides), then **[Module 07](../modules/module-07-penguins-choose-metrics.qmd)** (accuracy vs kappa vs AUC while tuning) and **[Module 08](../modules/module-08-penguins-compare-models.qmd)** (RF vs XGBoost vs small neural net).
 
 - [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — plots and correlations, then ridge/LASSO to predict **body mass** (code uses `glmnet` like the gene notebook).  
 - [penguins-classification.Rmd](penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression and a tree (`rpart`), who-was-misclassified table, simple 2D decision picture.  
@@ -46,4 +46,4 @@ For the **Tuesday `tidymodels` pipeline** (recipe + workflow + cross-validation 
 
 ## Requirements
 
-Install as needed (copy–paste into R): `palmerpenguins`, `tidyr`, `nnet`, `glmnet`, `tidymodels`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `ranger`, `xgboost`, `themis` (Day 4 slides), `rcartocolor` (optional colours in the gene linear notebook).
+Install as needed (copy–paste into R): `palmerpenguins`, `tidyr`, `nnet`, `glmnet`, `tidymodels`, `dplyr`, `GGally`, `ggplot2`, `knitr`, `MASS`, `rpart`, `rpart.plot`, `ranger`, `xgboost`, `themis` (Day 4 Thursday slides), `rcartocolor` (optional colours in the gene linear notebook).

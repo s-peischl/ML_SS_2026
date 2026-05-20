@@ -1,13 +1,6 @@
 ---
-title: "Day 2 (Tuesday): Trees and Modern Pipelines"
-format:
-  revealjs:
-    theme: [default, ../assets/css/slides-theme.scss]
-    slide-number: true
-    incremental: true
-    scrollable: true
-    slide-level: 2
-    html-math-method: katex
+title: "Day 2 (Tuesday): Trees, rpart, and the tidymodels Pipeline"
+metadata-files: [_reveal-config.yml]
 ---
 
 ## Learning objectives
@@ -16,7 +9,7 @@ format:
 - Build intuition for **decision trees** (`rpart`): recursive splits, partitions, and interpretable rules
 - Walk through **gene × disease** (classification) and **gene × trait** (regression) trees step by step
 - Read **`|>`** chains for tidy tables and `tidymodels` preprocessing
-- Use **`tidymodels`** on **Palmer Penguins**: recipes, workflows, resampling, and tuning with honest holdout thinking
+- Build **`recipe → spec → workflow → tune → fit`** on Palmer Penguins with **`decision_tree` + `rpart`** and **accuracy** on cross-validation
 
 ## Navigation
 
@@ -24,8 +17,10 @@ format:
 - [Curriculum Outline](../curriculum-outline.qmd)
 - [Module 03 — Trees & cultures](../modules/module-03-trees-and-cultures.qmd)
 - [Module 04 — Pipeline](../modules/module-04-pipeline.qmd)
-- [Back: Monday deck](day-01-monday.qmd)
-- [Next: Day 4 deck](day-04-thursday.qmd)
+- [Back: Day 1 (Monday) deck](day-01-monday.qmd)
+- [Next: Day 4 (Thursday) deck](day-04-thursday.qmd)
+
+# Part A — Two cultures and trees {#part-a-cultures}
 
 ## Two cultures (Breiman, 2001)
 
@@ -36,37 +31,567 @@ Leo Breiman’s [*Statistical Modeling: The Two Cultures*](https://projecteuclid
 
 ## Data modeling culture
 
-- Start with a **stochastic model** you can write down (Monday: `lm`, `glm`, lasso on known structure)
-- Emphasize **parameters**, uncertainty, and whether the **model class** is adequate
-- Strength: transparent assumptions; risk: the model may be wrong in shape even when it fits “well”
+- Starts with a **stochastic model** one can write down (Monday: `lm`, `glm`, lasso on known structure)
+- Emphasizes **parameters**, uncertainty, and whether the **model class** is adequate
+- Strength: transparent assumptions
+- Risk: the model may be wrong in shape even when it fits “well”
 
 ## Algorithmic modeling culture
 
 - Treat the data-generating mechanism as **largely unknown**
 - Let a **flexible algorithm** find structure; judge it by **predictive performance** on data not used to fit (today: trees; soon: cross-validation on penguins)
-- Strength: captures interactions and nonlinear boundaries; risk: needs **careful evaluation** so flexibility does not fool you on the training rows
+- Strength: captures interactions and nonlinear boundaries
+- Risk: needs **careful evaluation** so flexibility does not fool you on the training data (*overfitting*)
 
-## Why trees today?
+## Decision Trees
 
-- **Nonlinear** boundaries and **interactions** without hand-written product terms (contrast Monday’s additive `glm`)
-- **Readable rules:** each path is an if–then story on measurements
-- Bridge from parametric models to **ensembles** (Thursday: forests, boosting)
+Linear models force us to look at the world through straight lines and additive math (`glm`). If two variables interact, we have to manually tell the model to multiply them. Decision trees change that. They naturally capture complex, non-linear relationships by asking a sequence of simple, nested questions.
+
+- Automatic Interactions: Captures non-linear boundaries and complex combinations of variables without you having to manually write out interaction terms.
+- Human-Readable Decision Logic: Every prediction can be traced back to a clear, if–then story based on actual measurements.
+
+Today we will implement this splitting logic using the `tidymodels` framework, keeping `rpart` as our underlying engine.
 
 ## `rpart` in one slide
 
 - **Classification:** `rpart(factor_y ~ ., data = ..., method = "class")` — splits improve class purity (Gini)
-- **Regression:** `rpart(trait ~ GeneA + GeneB, data = ...)` — numeric $y$ uses **`method = "anova"`** (within-node variance); each leaf predicts a **mean** trait
+- **Regression:** `rpart(trait ~ GeneA + GeneB, data = ...)` — numeric $y$ uses **`method = "anova"`**; each leaf predicts a **mean** trait
 - **`cp`:** complexity penalty — larger `cp` → simpler tree (see trait block after disease)
-- **`control`:** `maxdepth`, `cp`, `minsplit` — same levers you will tune inside `tidymodels` later
+- **`control`:** `maxdepth`, `cp`, `minsplit` — same levers you will tune as **`tree_depth`** and **`min_n`** in `parsnip`
+
+# Part B — Gene simulations
 
 ## Gene × disease (same simulation as Monday)
 
 - Binary **disease** from simulated **gene expression** — instructors know causal genes (**Gene1**, **Gene3**, **Gene4**, interaction)
-- **Today:** classification tree on **all genes**, visualized in the **Gene1 × Gene3** plane (other genes at means)
-- **Next:** classification tree grows **one split level at a time** (tree + partition side by side)
+- **Today:** classification tree on **all genes**
+- Visualized as a tree and in the **Gene1 × Gene3** plane (other genes kept constant at their means)
+
+
 - Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 
-{{< include ../_includes/day02-gene-rpart-steps.qmd >}}
+```{r}
+#| label: day02-gene-rpart-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(rpart)
+  library(rpart.plot)
+  library(ggplot2)
+  library(rlang)
+})
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+
+plot_rpart_boundary <- function(
+    model,
+    data,
+    feature1,
+    feature2,
+    title = NULL,
+    split_info = NULL
+) {
+  r1 <- range(data[[feature1]])
+  r2 <- range(data[[feature2]])
+  grid <- expand.grid(
+    seq(r1[1] - 1, r1[2] + 1, length.out = 180),
+    seq(r2[1] - 1, r2[2] + 1, length.out = 180)
+  )
+  names(grid) <- c(feature1, feature2)
+  for (feat in setdiff(names(data), c(feature1, feature2, "disease_presence"))) {
+    grid[[feat]] <- mean(data[[feat]])
+  }
+  grid$response <- predict(model, newdata = grid, type = "class")
+  grid$response <- factor(grid$response, levels = c("Absent", "Present"))
+  p <- ggplot(data, aes(!!sym(feature1), !!sym(feature2))) +
+    geom_tile(
+      data = grid,
+      aes(!!sym(feature1), !!sym(feature2), fill = response),
+      alpha = 0.32,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(fill = disease_presence), shape = 21, color = "black", size = 2.2) +
+    scale_fill_manual(values = c(Absent = "turquoise", Present = "magenta")) +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = feature1,
+      y = feature2,
+      fill = "Predicted"
+    )
+
+  if (!is.null(split_info)) {
+    split_lab <- paste0(
+      "New split: ", split_info$var, " ", split_info$op, " ",
+      signif(split_info$thresh, 3)
+    )
+    if (split_info$var == feature1) {
+      p <- p +
+        geom_vline(
+          xintercept = split_info$thresh,
+          color = "#B71C1C",
+          linetype = "dashed",
+          linewidth = 1.1
+        ) +
+        annotate(
+          "label",
+          x = split_info$thresh,
+          y = Inf,
+          label = split_lab,
+          vjust = 1.15,
+          color = "#B71C1C",
+          fill = "white",
+          size = 3.2,
+          label.size = 0.15
+        )
+    } else if (split_info$var == feature2) {
+      p <- p +
+        geom_hline(
+          yintercept = split_info$thresh,
+          color = "#B71C1C",
+          linetype = "dashed",
+          linewidth = 1.1
+        ) +
+        annotate(
+          "label",
+          x = Inf,
+          y = split_info$thresh,
+          label = split_lab,
+          hjust = 1.05,
+          color = "#B71C1C",
+          fill = "white",
+          size = 3.2,
+          label.size = 0.15
+        )
+    } else {
+      p <- p +
+        annotate(
+          "label",
+          x = Inf,
+          y = -Inf,
+          hjust = 1.05,
+          vjust = -0.2,
+          label = paste0(split_lab, " (not in this 2D slice)"),
+          color = "#B71C1C",
+          fill = "white",
+          size = 3.1,
+          label.size = 0.15
+        )
+    }
+  }
+
+  p
+}
+
+identify_new_split_node <- function(curr_model, prev_model = NULL) {
+  curr_nodes <- rownames(curr_model$frame)
+  curr_internal <- curr_nodes[curr_model$frame$var != "<leaf>"]
+
+  if (length(curr_internal) == 0) {
+    return(NA_character_)
+  }
+  if (is.null(prev_model)) {
+    return(curr_internal[1])
+  }
+
+  prev_nodes <- rownames(prev_model$frame)
+  prev_internal <- prev_nodes[prev_model$frame$var != "<leaf>"]
+  added_nodes <- setdiff(curr_internal, prev_internal)
+
+  if (length(added_nodes) == 0) {
+    revived <- curr_internal[
+      curr_model$frame$var[curr_internal] != "<leaf>" &
+        prev_model$frame$var[curr_internal] == "<leaf>"
+    ]
+    if (length(revived) > 0) {
+      return(revived[1])
+    }
+    return(NA_character_)
+  }
+
+  added_nodes[1]
+}
+
+parse_split_at_node <- function(model, node_id) {
+  left_child <- as.numeric(node_id) * 2
+  txt <- capture.output(print(model))
+  pat <- paste0("^\\s*", left_child, "\\)\\s+(Gene\\d+)([<>]=?)([0-9.eE+-]+)")
+  for (ln in txt) {
+    m <- regexec(pat, ln)
+    hit <- regmatches(ln, m)[[1]]
+    if (length(hit) >= 4) {
+      return(list(
+        node = node_id,
+        var = hit[2],
+        op = hit[3],
+        thresh = as.numeric(hit[4])
+      ))
+    }
+  }
+  NULL
+}
+
+highlight_tree_cols <- function(model, highlight_node = NA_character_) {
+  n <- nrow(model$frame)
+  box.col <- rep("#E8F5E9", n)
+  border.col <- rep("gray45", n)
+  names(box.col) <- rownames(model$frame)
+  names(border.col) <- rownames(model$frame)
+
+  if (!is.na(highlight_node) && highlight_node %in% names(box.col)) {
+    box.col[highlight_node] <- "#FFD54F"
+    border.col[highlight_node] <- "#B71C1C"
+  }
+
+  list(box.col = box.col, border.col = border.col)
+}
+
+growth_split_info <- function(model, prev_model = NULL) {
+  highlight_node <- identify_new_split_node(model, prev_model)
+  if (is.na(highlight_node)) {
+    return(NULL)
+  }
+  parse_split_at_node(model, highlight_node)
+}
+
+plot_growth_tree <- function(model, nsplit, prev_model = NULL) {
+  highlight_node <- identify_new_split_node(model, prev_model)
+  cols <- highlight_tree_cols(model, highlight_node)
+  par(mar = c(1, 1, 3, 1))
+  rpart.plot(
+    model,
+    type = 4,
+    extra = 102,
+    box.palette = "BuGn",
+    fallen.leaves = TRUE,
+    nn = TRUE,
+    box.col = cols$box.col,
+    border.col = cols$border.col,
+    main = paste0("Tree after ", nsplit, " split", ifelse(nsplit == 1, "", "s")),
+    sub = if (!is.na(highlight_node)) {
+      paste0("Gold box = new split (node ", highlight_node, ")")
+    } else {
+      ""
+    },
+    cex = 0.85
+  )
+  invisible(NULL)
+}
+
+describe_new_split <- function(curr_model, prev_model = NULL) {
+  highlight_node <- identify_new_split_node(curr_model, prev_model)
+  if (is.na(highlight_node)) {
+    return("No new split in this step.")
+  }
+
+  split_info <- parse_split_at_node(curr_model, highlight_node)
+  split_var <- curr_model$frame[highlight_node, "var"]
+
+  if (is.null(split_info)) {
+    return(paste0(
+      "New split on **", split_var, "** (node ", highlight_node,
+      ") — highlighted in gold on the tree."
+    ))
+  }
+
+  paste0(
+    "New split on **", split_info$var, "** (node ", highlight_node, "): ",
+    split_info$op, " ", signif(split_info$thresh, 3),
+    ". Gold box in the tree; dashed line in the partition when the split uses Gene1 or Gene3."
+  )
+}
+```
+
+```{r}
+#| label: day02-gene-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 200
+p <- 10
+gene_names <- paste0("Gene", 1:p)
+genes_data <- data.frame(matrix(rnorm(n * p), nrow = n))
+colnames(genes_data) <- gene_names
+disease_presence <- ifelse(
+  0.5 * genes_data$Gene1 + 0.8 * genes_data$Gene3 - 0.3 * genes_data$Gene4 -
+    genes_data$Gene1 * genes_data$Gene3 * 2 + rnorm(n, sd = 0.5) > 0,
+  1, 0
+)
+disease_presence <- factor(disease_presence, levels = c(0, 1), labels = c("Absent", "Present"))
+bio_data <- data.frame(genes_data, disease_presence)
+```
+
+```{r}
+#| label: day02-rpart-final
+#| echo: false
+#| results: hide
+rpart_model <- rpart(
+  disease_presence ~ .,
+  data = bio_data,
+  method = "class",
+  control = rpart.control(cp = 0.01, minsplit = 10)
+)
+```
+
+
+## Final tree (`rpart.plot`)
+
+```{r}
+#| label: day02-rpart-final-tree
+#| echo: false
+#| fig-height: 6
+#| fig-width: 8
+par(mar = c(1, 1, 3, 1))
+rpart.plot(
+  rpart_model,
+  type = 4,
+  extra = 102,
+  box.palette = "BuGn",
+  fallen.leaves = TRUE,
+  main = "Final classification tree (all genes)"
+)
+```
+
+```{r}
+#| label: day02-rpart-step-prep
+#| echo: false
+#| results: hide
+tree_growth_full <- rpart(
+  disease_presence ~ .,
+  data = bio_data,
+  method = "class",
+  control = rpart.control(cp = 0, minsplit = 15, maxdepth = 8)
+)
+
+cpt <- as.data.frame(tree_growth_full$cptable)
+grow_rows <- cpt |>
+  dplyr::filter(nsplit > 0) |>
+  dplyr::arrange(nsplit)
+
+max_step_splits <- min(4L, nrow(grow_rows))
+for (i in seq_len(max_step_splits)) {
+  cp_i <- grow_rows$CP[i]
+  nsplit_i <- grow_rows$nsplit[i]
+  tree_i <- prune(tree_growth_full, cp = cp_i)
+  assign(paste0("tree_split_", i), tree_i)
+  assign(paste0("tree_nsplit_", i), nsplit_i)
+}
+```
+
+## Final decision surface (Gene1 vs Gene3)
+
+Other genes fixed at their sample means — same 2D slice as Monday’s logistic boundary.
+
+```{r}
+#| label: day02-rpart-final-boundary
+#| echo: false
+#| fig-height: 5
+#| fig-width: 8
+print(
+  plot_rpart_boundary(
+    rpart_model, bio_data, "Gene1", "Gene3",
+    title = "rpart: predicted class in the Gene1–Gene3 plane"
+  )
+)
+```
+
+
+## Growing the tree (split by split)
+
+Four steps (one new split each): **tree** (left, gold box + node number) and **partition** in Gene1 × Gene3 (right, dashed line when the new split uses those genes).
+
+## Growing the tree: split 1
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-1-tree
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+plot_growth_tree(get("tree_split_1"), get("tree_nsplit_1"))
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-1-boundary
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+print(
+  plot_rpart_boundary(
+    get("tree_split_1"), bio_data, "Gene1", "Gene3",
+    title = "Partition after 1 split",
+    split_info = growth_split_info(get("tree_split_1"))
+  )
+)
+```
+:::
+::::
+
+```{r}
+#| label: day02-rpart-step-1-text
+#| echo: false
+#| results: asis
+cat(describe_new_split(get("tree_split_1")), "\n")
+```
+
+## Growing the tree: split 2
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-2-tree
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+plot_growth_tree(
+  get("tree_split_2"), get("tree_nsplit_2"),
+  prev_model = get("tree_split_1")
+)
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-2-boundary
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+print(
+  plot_rpart_boundary(
+    get("tree_split_2"), bio_data, "Gene1", "Gene3",
+    title = "Partition after 2 splits",
+    split_info = growth_split_info(get("tree_split_2"), get("tree_split_1"))
+  )
+)
+```
+:::
+::::
+
+```{r}
+#| label: day02-rpart-step-2-text
+#| echo: false
+#| results: asis
+cat(describe_new_split(get("tree_split_2"), get("tree_split_1")), "\n")
+```
+
+## Growing the tree: split 3
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-3-tree
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+plot_growth_tree(
+  get("tree_split_3"), get("tree_nsplit_3"),
+  prev_model = get("tree_split_2")
+)
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-3-boundary
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+print(
+  plot_rpart_boundary(
+    get("tree_split_3"), bio_data, "Gene1", "Gene3",
+    title = "Partition after 3 splits",
+    split_info = growth_split_info(get("tree_split_3"), get("tree_split_2"))
+  )
+)
+```
+:::
+::::
+
+```{r}
+#| label: day02-rpart-step-3-text
+#| echo: false
+#| results: asis
+cat(describe_new_split(get("tree_split_3"), get("tree_split_2")), "\n")
+```
+
+## Growing the tree: split 4
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-4-tree
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+plot_growth_tree(
+  get("tree_split_4"), get("tree_nsplit_4"),
+  prev_model = get("tree_split_3")
+)
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: day02-rpart-step-4-boundary
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5.5
+#| out-width: 100%
+print(
+  plot_rpart_boundary(
+    get("tree_split_4"), bio_data, "Gene1", "Gene3",
+    title = "Partition after 4 splits",
+    split_info = growth_split_info(get("tree_split_4"), get("tree_split_3"))
+  )
+)
+```
+:::
+::::
+
+```{r}
+#| label: day02-rpart-step-4-text
+#| echo: false
+#| results: asis
+cat(describe_new_split(get("tree_split_4"), get("tree_split_3")), "\n")
+```
+
+
+## Tree vs logistic (same data, in-sample accuracy)
+
+```{r}
+#| label: day02-rpart-accuracy
+#| echo: false
+#| results: asis
+logistic_model <- glm(disease_presence ~ ., data = bio_data, family = binomial())
+log_prob <- predict(logistic_model, type = "response")
+log_pred <- factor(
+  ifelse(log_prob > 0.5, "Present", "Absent"),
+  levels = c("Absent", "Present")
+)
+rpart_pred <- predict(rpart_model, type = "class")
+knitr::kable(
+  data.frame(
+    Model = c("Logistic (glm)", "Decision tree (rpart)"),
+    Accuracy_in = c(
+      mean(log_pred == bio_data$disease_presence),
+      mean(rpart_pred == bio_data$disease_presence)
+    )
+  ),
+  digits = 3,
+  caption = "In-sample accuracy on all n rows (Monday vs Tuesday model class)"
+)
+```
+
 
 ## Gene × trait (Monday simulation, regression tree)
 
@@ -74,89 +599,697 @@ Leo Breiman’s [*Statistical Modeling: The Two Cultures*](https://projecteuclid
 - **`rpart(trait ~ GeneA + GeneB, cp = ...)`** — sweep **`cp`** from `$cptable` to show how the predicted **surface** and tree change
 - Notebook: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
 
-{{< include ../_includes/day02-gene-rpart-trait.qmd >}}
+**Gene × trait — regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
 
-## From trees to pipelines (Palmer Penguins)
+```{r}
+#| label: day02-trait-rpart-setup
+#| include: false
+plot_trait_surface <- function(model, data, title = NULL) {
+  geneA_values <- seq(-3.5, 3.5, length.out = 100)
+  geneB_values <- seq(-3.5, 3.5, length.out = 100)
+  grid_data <- expand.grid(GeneA = geneA_values, GeneB = geneB_values)
+  grid_data$Predicted <- as.numeric(predict(model, newdata = grid_data))
+  ggplot() +
+    geom_raster(
+      data = grid_data,
+      aes(x = GeneA, y = GeneB, fill = Predicted),
+      interpolate = TRUE
+    ) +
+    geom_point(
+      data = data,
+      aes(x = GeneA, y = GeneB, color = trait),
+      size = 2.4,
+      inherit.aes = FALSE
+    ) +
+    scale_fill_gradient(
+      low = "turquoise",
+      high = "magenta",
+      name = "Predicted trait"
+    ) +
+    scale_color_gradient(
+      low = "turquoise",
+      high = "magenta",
+      name = "Observed trait"
+    ) +
+    theme_minimal() +
+    labs(title = title, x = "Gene A", y = "Gene B")
+}
 
-- Monday compared models **on all rows** (in-sample); choosing lasso’s $\lambda$ used **leave-one-out CV** on the same $n$
-- **Today (second half):** **hold out** some penguins for an honest test score; bundle preprocessing + model so resampling cannot leak
-- Real data: [Palmer Penguins](../dataset-penguins.qmd) — Adelie vs Gentoo; we use **bill + island + sex + year** (not flipper/mass) so **hyperparameter tuning** shows a real tradeoff on the slides
+save_trait_composite <- function(model, cp, chunk_id) {
+  path <- paste0(knitr::fig_chunk(chunk_id), ".png")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(path, width = 12, height = 6, units = "in", res = 120)
+  } else {
+    png(path, width = 12, height = 6, units = "in", res = 120)
+  }
+  on.exit(dev.off(), add = TRUE)
+  layout(matrix(1:2, nrow = 1, ncol = 2))
+  par(mar = c(1, 1, 3, 1))
+  rpart.plot(
+    model,
+    type = 4,
+    extra = 101,
+    box.palette = "BuGn",
+    fallen.leaves = TRUE,
+    main = paste0("Regression tree (cp = ", signif(cp, 3), ")"),
+    cex = 0.85
+  )
+  print(
+    plot_trait_surface(
+      model,
+      X_train,
+      title = "Predicted trait in the GeneA × GeneB plane"
+    )
+  )
+  path
+}
 
-{{< include ../_includes/day02-tidyverse-intro.qmd >}}
+describe_trait_cp <- function(model, cp) {
+  n_split <- max(0L, nrow(model$frame) - 1L)
+  paste0(
+    "**cp = ", signif(cp, 3), "** — ", n_split, " split",
+    if (n_split == 1L) "" else "s",
+    ". Each region predicts a **constant** trait (piecewise average); ",
+    "background colour is the model’s prediction on a grid."
+  )
+}
+```
 
-## Pipeline mindset (three ideas)
+```{r}
+#| label: day02-trait-sim
+#| echo: false
+#| results: hide
+set.seed(123)
+n <- 150
+gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE", "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
+gene_data <- matrix(rnorm(n * length(gene_names)), nrow = n)
+colnames(gene_data) <- gene_names
+trait <- -0.5 * gene_data[, "GeneA"] + 0.8 * gene_data[, "GeneB"] + rnorm(n, sd = 0.3)
+gene_data[, "GeneC"] <- gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneD"] <- -0.3 * gene_data[, "GeneB"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneJ"] <- 0.7 * gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+data_trait <- as.data.frame(cbind(gene_data, trait))
+X_train <- data_trait[, c("GeneA", "GeneB", "trait")]
+```
 
-- **Split first** when any step learns from data (means, dummy levels, scaling)
-- **One workflow object** runs preprocessing and the model together on each resample fold
-- **Pick metrics before** you chase the best tuning knobs
+```{r}
+#| label: day02-trait-cp-prep
+#| echo: false
+#| results: hide
+trait_fit0 <- rpart(trait ~ GeneA + GeneB, data = X_train)
+cps_all <- trait_fit0$cptable[, "CP"]
+cps_all <- cps_all[-1]
+if (length(cps_all) == 0L) {
+  cps_all <- 0.01
+}
+n_trait_show <- min(4L, length(cps_all))
+idx <- unique(round(seq(1, length(cps_all), length.out = n_trait_show)))
+trait_cps <- cps_all[idx]
+while (length(trait_cps) < 4L) {
+  trait_cps <- c(trait_cps, tail(trait_cps, 1))
+}
+trait_cps <- trait_cps[1:4]
+for (i in seq_along(trait_cps)) {
+  cp_i <- trait_cps[i]
+  tree_i <- rpart(trait ~ GeneA + GeneB, data = X_train, cp = cp_i)
+  assign(paste0("trait_tree_", i), tree_i)
+  assign(paste0("trait_cp_", i), cp_i)
+}
+```
 
-## How the pieces fit together
+## Gene × trait (continuous outcome)
 
-| Package | Job in plain language |
-|---------|------------------------|
-| **`rsample`** | Decide which rows are for **fitting** vs **scoring** (holdout split, CV folds) |
-| **`recipes`** | Describe **preprocessing** as a reusable checklist (dummy code factors, scale numbers, …) |
-| **`parsnip`** | Name the **model family** and which knobs are still unknown — **no fit yet** |
-| **`workflows`** | Glue recipe + model into **one** object so resampling never “forgets” preprocessing |
-| **`tune`** | Try many knob settings; each try is scored only on **held-out** fold rows |
-| **`yardstick`** | Turn predictions into numbers (ROC AUC, accuracy, sensitivity, …) with one grammar |
+- Same story as **Monday**: trait = $-0.5 \times$ **GeneA** $+ 0.8 \times$ **GeneB** + noise (linear truth)
+- **`rpart(trait ~ GeneA + GeneB, ...)`** — default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
+- Contrast with disease block: **`method = "class"`** for a factor outcome
+- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
 
-The walk-through below uses the same order: **data → recipe → spec → workflow → tune → fit → figures**.
+## Complexity penalty `cp` (pruning)
 
-## `rsample` — who gets to teach the model?
+- Fit a **large** tree first; **`cp`** in `rpart(..., cp = ...)` keeps splits only if they improve the fit enough relative to tree size
+- **`$cptable`** lists candidate **`cp`** values (we skip the first row, as in the notebook)
+- **Larger `cp`** → **simpler** tree (fewer splits); **smaller `cp`** → more regions, smoother mosaic of predicted trait
 
-- **`initial_split(data, prop = 0.8, strata = outcome)`** — randomly hold out ~20% of rows as a **test** set you touch **once** at the end; `strata = outcome` keeps Adelie/Gentoo balance in both parts
-- **`training(split)`** / **`testing(split)`** — extract the two tables from that split object
-- **`vfold_cv(training(split), v = 5, strata = outcome)`** — chop the **training** rows into 5 folds for **cross-validation** while tuning; each fold is “train on 4 chunks, score on the 5th” so you never tune on the final test rows
+## Trait tree: step 1 of 4
 
-**Why it matters:** scaling bill length to mean 0 uses **only** the rows in the current training fold — not future test penguins.
+```{r}
+#| label: day02-rpart-trait-1-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_1"), get("trait_cp_1"), "day02-rpart-trait-1-fig"))
+```
 
-## `recipes` — preprocessing as a checklist
+```{r}
+#| label: day02-rpart-trait-1-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_1"), get("trait_cp_1")), "\n")
+```
 
-- **`recipe(y ~ ., data = train)`** — declare the prediction task: outcome `y`, every other column is a predictor (like a formula in `lm`, but for **steps** not coefficients)
-- **`step_dummy(all_nominal_predictors())`** — turn **island** and **sex** into numeric 0/1 columns so `rpart` can split on them
-- **`step_normalize(all_numeric_predictors())`** — subtract mean and divide by SD **per numeric column** so mm, g, and year live on a comparable scale
-- **`step_zv(all_predictors())`** — drop columns with **zero variance** (e.g. a dummy level that never appears in a small fold)
-- Read the chain **top to bottom** with `|>`: data → step → step
+## Trait tree: step 2 of 4
 
-**Two verbs students will see in docs:** `prep(recipe, training_data)` **learns** the rules (means, levels, scaling) from training rows only; `bake(recipe, new_data)` **applies** those same rules to validation or test rows. In a **workflow**, tidymodels calls these inside each CV fold for you.
+```{r}
+#| label: day02-rpart-trait-2-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_2"), get("trait_cp_2"), "day02-rpart-trait-2-fig"))
+```
 
-## `parsnip` — model blueprint (not the fitted tree)
+```{r}
+#| label: day02-rpart-trait-2-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_2"), get("trait_cp_2")), "\n")
+```
 
-- **`decision_tree(tree_depth = tune(), min_n = tune())`** — “we want a classification tree; **depth** and **minimum leaf size** are still unknown” (`tune()` marks a knob for later)
-- **`set_engine("rpart")`** — which **implementation** fits the tree (same idea as choosing `glm` vs another optimizer)
-- **`set_mode("classification")`** — match a **factor** outcome (Adelie vs Gentoo), not a numeric one
+## Trait tree: step 3 of 4
 
-**Nothing is fitted yet** — `parsnip` only stores the **family** and hyperparameters. Fitting happens after you plug in tuned values and call `fit()`.
+```{r}
+#| label: day02-rpart-trait-3-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_3"), get("trait_cp_3"), "day02-rpart-trait-3-fig"))
+```
 
-## `workflows` — one object for the whole pipeline
+```{r}
+#| label: day02-rpart-trait-3-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_3"), get("trait_cp_3")), "\n")
+```
 
-- **`workflow() |> add_recipe(rec) |> add_model(mod_spec)`** — bundle preprocessing + model so every resample refit runs **both** in the right order
-- **Why one object?** If you scaled bill length using **all** penguins before CV, test-fold information leaked into training — the workflow forces “prep on analysis rows, predict on assessment rows” automatically
+## Trait tree: step 4 of 4
 
-## `tune` + `yardstick` — search knobs, score honestly
+```{r}
+#| label: day02-rpart-trait-4-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 5
+#| out-width: 100%
+knitr::include_graphics(save_trait_composite(get("trait_tree_4"), get("trait_cp_4"), "day02-rpart-trait-4-fig"))
+```
 
-- **`tune()`** in the spec — marks which arguments `tune_grid()` should vary (here: `tree_depth`, `min_n`)
-- **`tune_grid(workflow, resamples = folds, grid = ..., metrics = metrics)`** — for each knob combination, fit the **whole workflow** on each CV analysis set and score on the held-out assessment fold
-- **`metric_set(roc_auc, accuracy, sens, spec)`** — commit to **these** scores before peeking at test data; `yardstick` computes them from predicted probabilities and class labels the same way every time
-- **`select_best(tune_res, metric = "roc_auc")`** — pick the winning knob values from CV only
-- **`finalize_workflow(wf, best)`** — insert those values into the unfitted workflow; **`fit(..., data = train)`** (or `last_fit` with a split) actually trains the final model
+```{r}
+#| label: day02-rpart-trait-4-text
+#| echo: false
+#| results: asis
+cat(describe_trait_cp(get("trait_tree_4"), get("trait_cp_4")), "\n")
+```
 
-## Shared pipeline walk-through (penguins)
+## Trait: tree vs linear (in-sample RMSE)
 
-The next slides run the **canonical Adelie vs Gentoo** pipeline (same code as [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)): recipe → tuned `rpart` tree → diagnostic figures.
+```{r}
+#| label: day02-rpart-trait-rmse
+#| echo: false
+#| results: asis
+lm_ab <- lm(trait ~ GeneA + GeneB, data = X_train)
+pred_lm <- predict(lm_ab, newdata = X_train)
+pred_tree <- predict(get(paste0("trait_tree_", length(trait_cps))), newdata = X_train)
+rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
+knitr::kable(
+  data.frame(
+    Model = c("Linear (GeneA + GeneB)", paste0("rpart (cp = ", signif(tail(trait_cps, 1), 3), ")")),
+    RMSE_in = c(rmse(X_train$trait, pred_lm), rmse(X_train$trait, pred_tree))
+  ),
+  digits = 3,
+  caption = "In-sample RMSE on all n rows — same genes as Monday’s simple linear model"
+)
+```
 
-{{< include ../_includes/tidymodels-pipeline.qmd >}}
 
-## Comparing many models (`workflowsets`, `stacks`)
+# Part C — Palmer Penguins: tidymodels pipeline (trees only) {#part-c-pipeline}
 
-- **`workflowsets`** — several model recipes on the **same** CV folds
-- **`stacks`** — combine tuned models with a simple meta-learner (capstone after forests)
+## From manual `rpart` to a reusable pipeline
 
-## Transition to Day 4
+- Monday compared models **on all rows**; today we **hold out** information via **cross-validation** while tuning
+- **One workflow** runs preprocessing + tree on each fold — same discipline as the microbiome lab this afternoon
+- Real data: [Palmer Penguins](../dataset-penguins.qmd) — Adelie vs Gentoo; **bill + island + sex + year**
 
-- Tuesday: pipeline **backbone** on penguins
-- Day 4: **forests, boosting, neural nets**, PCA/impute/upsample in recipes, VIP and metrics
+Short **tidyverse** refresher before the `tidymodels` pipeline (same pipe grammar as recipes and workflows).
+
+```{r}
+#| label: day02-tidy-intro-setup
+#| include: false
+suppressPackageStartupMessages(library(tidyverse))
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+## Tidy data and the pipe `|>`
+
+- Each **column** is one variable; each **row** is one penguin (or one sample)
+- **`x |> f()`** means: take the result of `x` and pass it as the **first argument** to `f()`
+- Read chains **top to bottom** — same habit you will use for `recipe() |> step_*()`
+
+## Example: `filter` and `select`
+
+```{r}
+#| label: day02-tidy-filter-select
+#| echo: true
+pg <- palmerpenguins::penguins |>
+  filter(!is.na(sex), !is.na(bill_length_mm), !is.na(bill_depth_mm)) |>
+  select(species, island, sex, bill_length_mm, bill_depth_mm, body_mass_g)
+
+head(pg, 4)
+```
+
+## Example: `mutate` (new columns)
+
+```{r}
+#| label: day02-tidy-mutate
+#| echo: true
+pg |>
+  mutate(bill_ratio = bill_length_mm / bill_depth_mm) |>
+  select(species, bill_length_mm, bill_depth_mm, bill_ratio) |>
+  head(4)
+```
+
+## Same grammar in `tidymodels`
+
+- **Table pipelines:** `penguins |> filter(...) |> mutate(...)`
+- **Preprocessing:** `recipe(y ~ ., data = train) |> step_dummy() |> step_normalize()`
+- **Modeling objects:** `workflow() |> add_recipe(rec) |> add_model(spec)` — here you chain **objects**, not tables, but the **read left-to-right** habit is the same
+
+```{r}
+#| label: day02-penguins-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(palmerpenguins)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(rlang)
+  library(vip)
+  library(rpart.plot)
+})
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+
+peng_cls <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
+  tidyr::drop_na()
+
+peng_bal <- peng_cls
+folds <- vfold_cv(peng_cls, v = 5, strata = y)
+metrics_day2 <- metric_set(accuracy)
+
+plot_class_balance <- function(df, title = "Class counts") {
+  ggplot(df, aes(y, fill = y)) +
+    geom_bar(show.legend = FALSE) +
+    geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.3, size = 4) +
+    scale_fill_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+    theme_minimal() +
+    labs(title = title, x = "Species (y)", y = "n")
+}
+
+plot_prob_boundary <- function(
+    model,
+    data,
+    f1 = "bill_length_mm",
+    f2 = "bill_depth_mm",
+    title = NULL
+) {
+  r1 <- range(data[[f1]], na.rm = TRUE)
+  r2 <- range(data[[f2]], na.rm = TRUE)
+  grid <- expand.grid(
+    seq(r1[1] - 0.5, r1[2] + 0.5, length.out = 120),
+    seq(r2[1] - 0.5, r2[2] + 0.5, length.out = 120)
+  )
+  names(grid) <- c(f1, f2)
+  for (nm in setdiff(names(data), c(f1, f2, "y"))) {
+    v <- data[[nm]]
+    grid[[nm]] <- if (is.numeric(v)) stats::median(v, na.rm = TRUE) else {
+      tab <- table(v)
+      names(tab)[which.max(tab)]
+    }
+  }
+  grid$prob <- predict(model, new_data = grid, type = "prob")$.pred_Gentoo
+  ggplot(data, aes(!!sym(f1), !!sym(f2))) +
+    geom_raster(
+      data = grid,
+      aes(!!sym(f1), !!sym(f2), fill = prob),
+      interpolate = TRUE,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(color = y), size = 2.2) +
+    scale_fill_gradient(low = "turquoise", high = "magenta", name = "P(Gentoo)") +
+    scale_color_manual(values = c(Adelie = "black", Gentoo = "white"), name = "Species") +
+    theme_minimal() +
+    labs(title = title, x = f1, y = f2)
+}
+
+metrics_summary_table <- function(fit_res, label) {
+  collect_metrics(fit_res) |>
+    dplyr::filter(.metric == "accuracy") |>
+    dplyr::select(.metric, mean, std_err) |>
+    dplyr::mutate(model = label) |>
+    dplyr::relocate(model)
+}
+```
+
+## Palmer Penguins: one table, one model family (trees)
+
+- **Outcome `y`:** Adelie vs Gentoo (complete cases).
+- **Predictors:** bill length & depth, **island**, **sex**, **year** — no flipper or body mass (so **`tree_depth`** and **`min_n`** show a real tuning tradeoff).
+- **Today’s engine:** **`decision_tree()` + `rpart` only** — forests and boosting come on **Thursday**.
+
+```{r}
+#| label: day02-walk-balance
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+plot_class_balance(peng_bal, "Balanced classes")
+```
+
+```{r}
+#| label: day02-walk-scatter
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Bill space — Adelie vs Gentoo",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
+## Pipeline map
+
+**Data → recipe → spec → workflow → resampling/tuning → fit → figures**
+
+| Package | Job |
+|---------|-----|
+| **`rsample`** | Training vs assessment rows (`initial_split`, `vfold_cv`) |
+| **`recipes`** | Preprocessing checklist (dummy, scale, …) |
+| **`parsnip`** | Model **blueprint** (`decision_tree`, `set_engine("rpart")`) |
+| **`workflows`** | Glue recipe + model |
+| **`tune`** | Search `tree_depth` and `min_n` |
+| **`yardstick`** | Scores — **accuracy only** today; more metrics Thursday |
+
+# Step 1 — Preprocessing (`recipe`)
+
+A **recipe** defines transforms **before** the model sees data. Steps run top to bottom.
+
+## Start the recipe
+
+```{r}
+#| label: day02-walk-rec-start
+#| echo: true
+#| message: false
+rec <- recipe(y ~ ., data = peng_bal)
+rec
+```
+
+- **`recipe(y ~ ., data = peng_bal)`** — `y` is the outcome; **`.`** = all other columns are predictors.
+- Blueprint only — nothing transformed yet.
+
+## `step_zv()` — drop zero-variance columns
+
+```{r}
+#| label: day02-walk-rec-zv
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_zv(all_predictors())
+rec
+```
+
+- Removes columns with one unique value (no predictive power; can break algorithms in small folds).
+
+## `step_dummy()` — encode categories
+
+```{r}
+#| label: day02-walk-rec-dummy
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_dummy(all_nominal_predictors())
+rec
+```
+
+- **`island`** and **`sex`** → numeric 0/1 columns for **`rpart`**.
+
+## `step_normalize()` — scale numeric predictors
+
+```{r}
+#| label: day02-walk-rec-norm
+#| echo: true
+#| message: false
+rec <- rec |>
+  step_normalize(all_numeric_predictors())
+rec
+```
+
+- Z-score each numeric column using **training-fold rows only** inside CV.
+- Good habit before you swap in other model types later in the week.
+
+```{r}
+#| label: day02-walk-rec-base-assign
+#| echo: true
+#| message: false
+rec_base <- rec
+rec_base
+```
+
+::: {.callout-note}
+## Afternoon lab (microbiome)
+
+Same pattern on OTU counts — add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
+:::
+
+**`prep()`** learns rules; **`bake()`** applies them. A **`workflow()`** does both inside each CV fold.
+
+# Step 2 — Model blueprint (`spec`)
+
+**`parsnip`** stores the family and hyperparameters. **Nothing is fitted yet.**
+
+## Classification tree with `rpart`
+
+```{r}
+#| label: day02-walk-tree-spec-fixed
+#| echo: true
+#| message: false
+tree_spec_demo <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+tree_spec_demo
+```
+
+- **`decision_tree()`** — fixed **parsnip** function name.
+- **`tree_depth`**, **`min_n`** — depth limit and minimum leaf size.
+- **`set_engine("rpart")`** — same engine as the gene trees this morning.
+- **`set_mode("classification")`** — factor outcome **`y`**.
+
+## Tuning knobs (`tune()`)
+
+```{r}
+#| label: day02-walk-tree-spec-tune
+#| echo: true
+#| message: false
+tree_spec <- decision_tree(
+  tree_depth = tune(),
+  min_n = tune()
+) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+tree_spec
+```
+
+- **`tune()`** marks arguments **`tune_grid()`** will search — we pick winners by **cross-validated accuracy**.
+
+## Parsnip: type → engine → mode
+
+| Model type | Valid engines (examples) | Modes |
+|------------|--------------------------|-------|
+| `decision_tree()` | `"rpart"`, `"C5.0"` | classification, regression |
+| `rand_forest()` | `"ranger"`, `"randomForest"` | classification, regression |
+| `boost_tree()` | `"xgboost"`, `"lightgbm"` | classification, regression |
+
+Thursday swaps **`spec`** — same **`recipe`** and **`workflow()`** pattern.
+
+```{r}
+#| label: day02-walk-bad-engine
+#| echo: true
+#| eval: false
+#| message: false
+decision_tree() |>
+  set_engine("lm") |>
+  set_mode("classification")
+# Error: 'lm' is not a valid engine for decision_tree()
+```
+
+# Step 3 — Workflow
+
+```{r}
+#| label: day02-walk-wf
+#| echo: true
+#| message: false
+wf <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec)
+wf
+```
+
+- Preprocessing + model in **one** object — no scaling the full table before splitting.
+
+## One-shot fit (intuition)
+
+```{r}
+#| label: day02-walk-fit-demo
+#| echo: true
+#| message: false
+wf_demo <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec_demo)
+fit_demo <- fit(wf_demo, data = peng_bal)
+```
+
+```{r}
+#| label: day02-walk-boundary
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"))
+```
+
+# Step 4 — Metrics (accuracy today)
+
+```{r}
+#| label: day02-walk-metrics
+#| echo: true
+#| message: false
+metrics_day2
+```
+
+- **`accuracy`** — fraction of correct class labels.
+- Thursday adds sensitivity, ROC-AUC, PR-AUC, and more when classes are imbalanced.
+
+# Step 5 — Cross-validation and tuning
+
+```{r}
+#| label: day02-walk-tune
+#| echo: true
+#| message: false
+set.seed(2)
+tune_res <- tune_grid(
+  wf,
+  resamples = folds,
+  grid = grid_regular(
+    tree_depth(range = c(1, 6)),
+    min_n(range = c(2, 50)),
+    levels = 4
+  ),
+  metrics = metrics_day2
+)
+```
+
+- **`vfold_cv(..., strata = y)`** — balanced species per fold.
+- Grid spans underfit (depth 1, large `min_n`) → more flexible trees.
+
+## Read the tuning plot
+
+```{r}
+#| label: day02-walk-autoplot
+#| echo: true
+#| fig-width: 10
+#| fig-height: 5
+tune_res |>
+  autoplot() +
+  theme_minimal() +
+  labs(
+    title = "Tuning: accuracy vs tree_depth and min_n",
+    subtitle = "Bill + island + sex + year — no flipper/mass"
+  )
+```
+
+- Look for **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+
+## Finalize and fit
+
+```{r}
+#| label: day02-walk-finalize
+#| echo: true
+#| message: false
+best <- select_best(tune_res, metric = "accuracy")
+final_wf <- finalize_workflow(wf, best)
+final_fit <- fit(final_wf, data = peng_cls)
+best
+```
+
+```{r}
+#| label: day02-walk-fit-resamples
+#| echo: true
+#| message: false
+set.seed(6)
+wf_tree <- final_wf
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_day2)
+metrics_summary_table(rs_tree, "Tuned tree (5-fold CV)")
+```
+
+Teaching speed: we **`fit` on all rows** after tuning; in projects, hold out a true test set with **`last_fit`**.
+
+## Fitted tree structure
+
+```{r}
+#| label: day02-walk-rpart-plot
+#| echo: true
+#| fig-width: 10
+#| fig-height: 6
+final_fit |>
+  extract_fit_engine() |>
+  rpart.plot(
+    roundint = FALSE,
+    type = 4,
+    extra = 104,
+    box.palette = "RdBu",
+    main = "Final decision tree (rpart)"
+  )
+```
+
+## Variable importance (this tree)
+
+```{r}
+#| label: day02-walk-vip
+#| echo: true
+#| fig-width: 9
+#| fig-height: 5
+final_fit |>
+  extract_fit_parsnip() |>
+  vip(geom = "point", aesthetics = list(color = "midnightblue", size = 3)) +
+  theme_minimal() +
+  labs(
+    title = "Split-based importance (single tree)",
+    subtitle = "Correlated bills ≠ causation — full VIP chapter on Thursday"
+  )
+```
+
+# Part D — Wrap-up {#part-d-wrapup}
+
+## Transition to Day 4 (Thursday)
+
+- You have **`rec_base`**, **`workflow()`**, **`vfold_cv`**, and **`tune_grid`** with a **tree**
+- Thursday: **same recipe** — swap in forests, boosting, neural nets; add PCA, imputation, imbalance; **richer metrics** and VIP
 
 ## End-of-day checklist
 
@@ -164,3 +1297,4 @@ The next slides run the **canonical Adelie vs Gentoo** pipeline (same code as [M
 - For the gene **classification** tree: what does **one split** do to the Gene1–Gene3 partition?
 - For the gene **trait** tree: what does a larger **`cp`** do to the number of regions?
 - What is the difference between **training**, **CV**, and **test** rows in the penguin workflow?
+- Which three objects does **`workflow()`** bundle?

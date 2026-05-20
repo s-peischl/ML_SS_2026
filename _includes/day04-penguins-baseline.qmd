@@ -1,0 +1,18 @@
+## Teaching scenarios (Part C extensions)
+
+We deliberately stress the penguins in three ways — document real prevalence and missingness on a **data card** in production; do not manufacture problems silently.
+
+```{r}
+#| label: day04-scenarios-show
+#| echo: true
+#| message: false
+dplyr::count(peng_imb, y, name = "n")
+sum(is.na(peng_na$bill_length_mm))
+ncol(peng_pca)
+```
+
+| Object | Stress | Recipe extension (Part C) |
+|--------|--------|---------------------------|
+| **`peng_imb`** | Rare Gentoo (~10 vs ~150 Adelie) | `step_upsample(y)` — when it helps |
+| **`peng_na`** | Missing bill length and some `sex` | `step_impute_*()` |
+| **`peng_pca`** | Extra size measures (correlated) | `step_pca()` |

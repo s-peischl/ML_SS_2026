@@ -1,0 +1,96 @@
+## Extension: class imbalance (`peng_imb`)
+
+**Recipe extension:** add **`step_upsample(y)`** (or **`step_downsample()`** on the majority) near the top of the chain — still inside CV folds.
+
+## Artificial imbalance: rare Gentoo
+
+We **downsampled** Gentoo (~10 vs ~150 Adelie). Real cohorts can look like this when the event is rare.
+
+```{r}
+#| label: day04-imb-balance-plot
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+print(plot_class_balance(peng_imb, "Manufactured class imbalance"))
+```
+
+A model that always predicts **Adelie** can still show **high accuracy** — but **miss every Gentoo** (low **sensitivity**).
+
+## Bill space is still separable
+
+```{r}
+#| label: day04-imb-scatter
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_imb, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Rare Gentoo — bills still separate species",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
+**Upsampling duplicates minority rows in training** — useful when the learner **ignores** the rare class, not when the boundary is already easy.
+
+## Recipes on `peng_imb` (code)
+
+```{r}
+#| label: day04-imb-recipes
+#| echo: true
+#| message: false
+xgb_imb_spec <- boost_tree(trees = 80, tree_depth = 3, learn_rate = 0.08) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+rec_imb <- recipe(y ~ ., data = peng_imb) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_imb_up <- recipe(y ~ ., data = peng_imb) |>
+  step_upsample(y) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_imb
+rec_imb_up
+```
+
+```{r}
+#| label: day04-imb-prep
+#| echo: true
+#| message: false
+wf_imb <- workflow() |> add_recipe(rec_imb) |> add_model(xgb_imb_spec)
+wf_imb_up <- workflow() |> add_recipe(rec_imb_up) |> add_model(xgb_imb_spec)
+```
+
+## Cross-validated metrics: no upsample
+
+```{r}
+#| label: day04-imb-no-upsample
+#| echo: true
+#| message: false
+set.seed(11)
+rs_imb <- fit_resamples(wf_imb, folds_imb, metrics = metrics_cls_imb)
+metrics_summary_table(rs_imb, "XGBoost, no upsample")
+```
+
+On this DGP we often see **very high accuracy and ROC-AUC** already.
+
+## Cross-validated metrics: with `step_upsample(y)`
+
+```{r}
+#| label: day04-imb-with-upsample
+#| echo: true
+#| message: false
+set.seed(12)
+rs_imb_up <- fit_resamples(wf_imb_up, folds_imb, metrics = metrics_cls_imb)
+metrics_summary_table(rs_imb_up, "XGBoost + upsample")
+```
+
+**Upsampling is not a free lunch** — compare tables in the next section (confusion matrix, ROC/PR, facet plot).

@@ -1,22 +1,15 @@
 ---
-title: "Day 4 (Thursday): Advanced Models, Preprocessing, and Evaluation"
-format:
-  revealjs:
-    theme: [default, ../assets/css/slides-theme.scss]
-    slide-number: true
-    incremental: true
-    scrollable: true
-    slide-level: 2
-    html-math-method: katex
+title: "Day 4 (Thursday): Models, Preprocessing, Metrics, and Importance"
+metadata-files: [_reveal-config.yml]
 ---
 
 ## Learning objectives
 
-- Find **model specs and hyperparameters** in **`parsnip`** / [tidymodels.org](https://www.tidymodels.org/find/parsnip/)
-- Explain **bagging (random forests)** and **boosting (XGBoost)** and see boosting **sharpen** a decision boundary round by round
-- Add **PCA**, **imputation**, and **upsampling** as **recipe steps** inside the same **`workflow()`** as Tuesday
-- Fit a **small neural network** with the same resampling discipline
-- Read **variable importance** and connect **metrics / SHAP** to deployment questions (not causation)
+- Swap **`parsnip` specs** (bagging, boosting, neural nets) on the **same recipe + workflow** from Tuesday
+- Compare **many models** fairly with **`fit_resamples()`** using **accuracy** until imbalance
+- Add **PCA**, **imputation**, and **resampling** as **recipe steps** inside grouped CV
+- Choose **metrics beyond accuracy** (sensitivity, PR-AUC, confusion matrices) for imbalanced data
+- Read **variable importance** without causal over-interpretation
 
 ## Navigation
 
@@ -24,42 +17,1084 @@ format:
 - [Curriculum Outline](../curriculum-outline.qmd)
 - [Module 05 — Advanced models](../modules/module-05-advanced-models.qmd)
 - [Module 08 — Compare learners](../modules/module-08-penguins-compare-models.qmd)
-- [Back: Tuesday deck](day-02-tuesday.qmd)
+- [Back: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
 
-## Same template as Tuesday — swap the engine
+# Part A — Recap (Tuesday’s pipeline)
 
-- **`peng_cls`:** Adelie vs Gentoo; **bill + island + sex + year** (same as [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday))
-- Keep **`recipe()` + `workflow()` + `fit_resamples()`** — change **`parsnip` spec** and optional recipe steps (PCA, impute, upsample)
+## What you already have
 
-{{< include ../_includes/day04-penguins-setup.qmd >}}
+- **`rec_base`** — `step_zv` → `step_dummy` → `step_normalize` on **`peng_bal`**
+- **`workflow()`** + **`decision_tree` / `rpart`** tuned on Tuesday
+- **`vfold_cv(..., strata = y)`** and **`metric_set(accuracy)`** for Parts B–D today
 
-{{< include ../_includes/day04-model-catalog.qmd >}}
+```{r}
+#| label: day04-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(palmerpenguins)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(rlang)
+  library(vip)
+  library(purrr)
+  library(themis)
+})
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
 
-{{< include ../_includes/day04-ensembles-boosting.qmd >}}
+peng_cls <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species, -flipper_length_mm, -body_mass_g) |>
+  tidyr::drop_na()
 
-{{< include ../_includes/day04-boosting-boundary-steps.qmd >}}
+folds <- vfold_cv(peng_cls, v = 5, strata = y)
+metrics_acc <- metric_set(accuracy)
 
-{{< include ../_includes/day04-pca-recipe.qmd >}}
+peng_bal <- peng_cls
 
-{{< include ../_includes/day04-mlp-quick.qmd >}}
+rec_base <- recipe(y ~ ., data = peng_bal) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
 
-{{< include ../_includes/day04-vip-importance.qmd >}}
+tree_spec <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
 
-{{< include ../_includes/day04-impute-balance.qmd >}}
+wf_tree <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec)
 
-## Metrics toolbox (when accuracy lies)
+set.seed(6)
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_acc)
 
-- **Accuracy:** fine when classes are balanced and errors cost the same
-- **Precision / recall / F1:** screening vs confirmation
-- **ROC-AUC:** ranking across thresholds
-- **PR-AUC:** often clearer when the positive class is **rare**
-- Details: [Module 07](../modules/module-07-penguins-choose-metrics.qmd)
+# Teaching scenarios (artificial problems — document real prevalence on the data card)
+set.seed(4)
+peng_imb <- peng_bal |>
+  group_by(y) |>
+  filter(y == "Adelie" | (y == "Gentoo" & dplyr::row_number() <= 10L)) |>
+  ungroup()
 
-## SHAP and local explanations (pointers)
+peng_na <- peng_bal
+na_bill <- sample(which(!is.na(peng_na$bill_length_mm)), size = 18L)
+peng_na$bill_length_mm[na_bill] <- NA
+na_sex <- sample(which(!is.na(peng_na$sex)), size = 5L)
+peng_na$sex[na_sex] <- NA
 
-- **SHAP:** which inputs pushed **this** prediction away from a baseline — **communication**, not causation
-- **TreeSHAP** for forests/boosting; **KernelSHAP** for other engines
-- Limits and plots: [Module 06](../modules/module-06-evaluation-and-interpretability.qmd) · prior prose in curriculum
+peng_pca <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species) |>
+  tidyr::drop_na()
+
+folds_imb <- vfold_cv(peng_imb, v = 5, strata = y)
+folds_pca <- vfold_cv(peng_pca, v = 5, strata = y)
+metrics_cls_imb <- metric_set(accuracy, sens, yardstick::spec, roc_auc, pr_auc)
+
+plot_class_balance <- function(df, title = "Class counts") {
+  ggplot(df, aes(y, fill = y)) +
+    geom_bar(show.legend = FALSE) +
+    geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.3, size = 4) +
+    scale_fill_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+    theme_minimal() +
+    labs(title = title, x = "Species (y)", y = "n")
+}
+
+plot_na_highlight <- function(df, xvar, yvar, title = NULL) {
+  df <- df |>
+    mutate(
+      missing_x = is.na(.data[[xvar]]),
+      x_plot = ifelse(missing_x, stats::median(.data[[xvar]], na.rm = TRUE), .data[[xvar]])
+    )
+  ggplot(df, aes(x = x_plot, y = .data[[yvar]])) +
+    geom_point(
+      data = dplyr::filter(df, !missing_x),
+      aes(color = y),
+      size = 2.4
+    ) +
+    geom_point(
+      data = dplyr::filter(df, missing_x),
+      aes(x = x_plot, y = .data[[yvar]]),
+      shape = 4,
+      color = "firebrick",
+      size = 3,
+      stroke = 1.2,
+      inherit.aes = FALSE
+    ) +
+    scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40"), name = "Species") +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = paste0(xvar, " (× = missing)"),
+      y = yvar,
+      caption = "Red × marks rows with NA on the x-axis"
+    )
+}
+
+metrics_summary_table <- function(fit_res, label) {
+  collect_metrics(fit_res) |>
+    dplyr::filter(.metric %in% c("accuracy", "sens", "spec", "roc_auc", "pr_auc")) |>
+    dplyr::select(.metric, mean, std_err) |>
+    dplyr::mutate(model = label) |>
+    dplyr::relocate(model)
+}
+
+compare_metrics_tbl <- function(...) {
+  tab <- purrr::imap_dfr(rlang::list2(...), ~ metrics_summary_table(.x, .y)) |>
+    dplyr::select(model, .metric, mean, std_err) |>
+    dplyr::mutate(cell = sprintf("%.3f (%.3f)", mean, std_err)) |>
+    dplyr::select(model, .metric, cell) |>
+    tidyr::pivot_wider(names_from = model, values_from = cell)
+  knitr::kable(tab, caption = "Cross-validated metrics: mean (std err)")
+}
+
+plot_prob_boundary <- function(
+    model,
+    data,
+    f1 = "bill_length_mm",
+    f2 = "bill_depth_mm",
+    title = NULL
+) {
+  r1 <- range(data[[f1]], na.rm = TRUE)
+  r2 <- range(data[[f2]], na.rm = TRUE)
+  grid <- expand.grid(
+    seq(r1[1] - 0.5, r1[2] + 0.5, length.out = 120),
+    seq(r2[1] - 0.5, r2[2] + 0.5, length.out = 120)
+  )
+  names(grid) <- c(f1, f2)
+  for (nm in setdiff(names(data), c(f1, f2, "y"))) {
+    v <- data[[nm]]
+    grid[[nm]] <- if (is.numeric(v)) stats::median(v, na.rm = TRUE) else {
+      tab <- table(v)
+      names(tab)[which.max(tab)]
+    }
+  }
+  grid$prob <- predict(model, new_data = grid, type = "prob")$.pred_Gentoo
+  ggplot(data, aes(!!sym(f1), !!sym(f2))) +
+    geom_raster(
+      data = grid,
+      aes(!!sym(f1), !!sym(f2), fill = prob),
+      interpolate = TRUE,
+      inherit.aes = FALSE
+    ) +
+    geom_point(aes(color = y), size = 2.2) +
+    scale_fill_gradient(low = "turquoise", high = "magenta", name = "P(Gentoo)") +
+    scale_color_manual(values = c(Adelie = "black", Gentoo = "white"), name = "Species") +
+    theme_minimal() +
+    labs(title = title, x = f1, y = f2)
+}
+
+save_day04_composite <- function(model, data, title, chunk_id, f1 = "bill_length_mm", f2 = "bill_depth_mm") {
+  path <- paste0(knitr::fig_chunk(chunk_id), ".png")
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  if (requireNamespace("ragg", quietly = TRUE)) {
+    ragg::agg_png(path, width = 10, height = 5, units = "in", res = 120)
+  } else {
+    png(path, width = 10, height = 5, units = "in", res = 120)
+  }
+  on.exit(dev.off(), add = TRUE)
+  layout(matrix(1:2, nrow = 1, ncol = 2))
+  par(mar = c(1, 1, 3, 1))
+  if (inherits(model, "workflow")) {
+    fit_obj <- extract_fit_parsnip(model)
+    if (inherits(fit_obj$fit, "rpart")) {
+      rpart.plot::rpart.plot(fit_obj$fit, type = 4, extra = 104, main = title, cex = 0.8)
+    } else {
+      plot(1, type = "n", xlab = "", ylab = "", main = title)
+      text(1, 1, "Tree plot: rpart engine only", cex = 0.9)
+    }
+  } else {
+    plot(1, type = "n", xlab = "", ylab = "", main = title)
+    text(1, 1, "See boundary panel", cex = 0.9)
+  }
+  print(plot_prob_boundary(model, data, f1, f2))
+  path
+}
+```
+
+## Teaching scenarios (Part C extensions)
+
+We deliberately stress the penguins in three ways — document real prevalence and missingness on a **data card** in production; do not manufacture problems silently.
+
+```{r}
+#| label: day04-scenarios-show
+#| echo: true
+#| message: false
+dplyr::count(peng_imb, y, name = "n")
+sum(is.na(peng_na$bill_length_mm))
+ncol(peng_pca)
+```
+
+| Object | Stress | Recipe extension (Part C) |
+|--------|--------|---------------------------|
+| **`peng_imb`** | Rare Gentoo (~10 vs ~150 Adelie) | `step_upsample(y)` — when it helps |
+| **`peng_na`** | Missing bill length and some `sex` | `step_impute_*()` |
+| **`peng_pca`** | Extra size measures (correlated) | `step_pca()` |
+
+# Part B — Many models (accuracy only) {#part-b-models}
+
+**Rule:** keep **`add_recipe(rec_base)`** and **`folds`** — change **`add_model(spec)`** only.
+
+## Model catalog and engines
+
+**Same `rec_base` from Tuesday** — change **`spec`** (and `set_engine()`); keep **`workflow()`** + **`folds`**.
+
+| Model spec | Typical tuned knobs | Common engines |
+|------------|---------------------|----------------|
+| `decision_tree()` | `tree_depth`, `min_n`, `cost_complexity` | `rpart`, `C5.0` |
+| `rand_forest()` | `mtry`, `min_n`, `trees` | `ranger`, `randomForest` |
+| `boost_tree()` | `trees`, `tree_depth`, `learn_rate` | `xgboost`, `lightgbm`, `C5.0` |
+| `logistic_reg()` | `penalty` | `glm`, `glmnet` |
+| `linear_reg()` | `penalty` | `lm`, `glmnet` |
+| `mlp()` | `hidden_units`, `penalty`, `epochs` | `nnet`, `keras` |
+| `svm_rbf()` | `cost`, `rbf_sigma` | `kernlab` |
+| `nearest_neighbor()` | `neighbors` | `kknn` |
+
+- **`tune()`** marks hyperparameters for **`tune_grid()`**.
+- Lookup: [tidymodels — find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
+- More depth: [Module 05](../modules/module-05-advanced-models.qmd) · [Module 08](../modules/module-08-penguins-compare-models.qmd).
+
+## Parsnip: type → engine → mode
+
+Every spec needs: **model type** → **`set_engine()`** → **`set_mode("classification")`** (or regression).
+
+```{r}
+#| label: day04-catalog-dials
+#| echo: true
+#| message: false
+rf_tune_spec <- rand_forest(trees = tune(), mtry = tune()) |>
+  set_engine("ranger") |>
+  set_mode("classification")
+extract_parameter_set_dials(rf_tune_spec)
+```
+
+## Same recipe, swap the `spec`
+
+Part A gave **`wf_tree`** (`rec_base` + `tree_spec`). Below: **random forest** (bagging) and **XGBoost** (boosting) on the same **`folds`**.
+
+## Bagging: random forests
+
+- **Many trees** on **bootstrap** samples of rows; each split sees only a **random subset** of predictors → lower variance than one deep tree.
+- **`rand_forest(mtry = …, trees = …, min_n = …) |> set_engine("ranger")`**
+
+## Boosting: gradient boosted trees
+
+- Trees are added **sequentially**; each new tree targets **errors left by the ensemble** so far.
+- **`boost_tree(trees = …, tree_depth = …, learn_rate = …) |> set_engine("xgboost")`**
+- **`learn_rate`**: shrink each tree’s contribution (smaller → more trees needed, often smoother).
+
+## Forest and boosting specs (code)
+
+```{r}
+#| label: day04-ensemble-specs
+#| echo: true
+#| message: false
+rf_spec <- rand_forest(mtry = 3, trees = 400, min_n = 2) |>
+  set_engine("ranger", importance = "impurity") |>
+  set_mode("classification")
+xgb_spec <- boost_tree(trees = 150, tree_depth = 3, learn_rate = 0.05) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+list(tree = tree_spec, rf = rf_spec, xgb = xgb_spec)
+```
+
+```{r}
+#| label: day04-ensemble-prep
+#| echo: true
+#| message: false
+wf_rf <- workflow() |> add_recipe(rec_base) |> add_model(rf_spec)
+wf_xgb <- workflow() |> add_recipe(rec_base) |> add_model(xgb_spec)
+```
+
+### Cross-validated ROC AUC (code + table)
+
+```{r}
+#| label: day04-ensemble-resamples
+#| echo: true
+#| message: false
+set.seed(7)
+rs_rf <- fit_resamples(wf_rf, folds, metrics = metrics_acc)
+rs_xgb <- fit_resamples(wf_xgb, folds, metrics = metrics_acc)
+
+cmp_ens <- bind_rows(
+  collect_metrics(rs_tree) |> mutate(model = "Single tree"),
+  collect_metrics(rs_rf) |> mutate(model = "Random forest"),
+  collect_metrics(rs_xgb) |> mutate(model = "XGBoost")
+) |>
+  filter(.metric == "accuracy")
+
+cmp_ens |>
+  select(model, mean, std_err) |>
+  arrange(desc(mean))
+```
+
+```{r}
+#| label: day04-ensemble-auc-bar
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4
+cmp_ens |>
+  ggplot(aes(reorder(model, mean), mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.12) +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    title = "Same folds, same recipe — different spec (accuracy)",
+    x = NULL,
+    y = "Mean accuracy"
+  )
+```
+
+Fixed settings here for speed — in projects, wrap each spec in **`tune_grid()`** like [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).
+
+## Boosting: watch the boundary sharpen
+
+We fix **`tree_depth = 2`** and **`learn_rate = 0.3`**, then increase **`trees`** from 1 to 6. Each round adds small trees that correct leftover mistakes — the **Gentoo probability surface** becomes more **nonlinear**.
+
+```{r}
+#| label: day04-boost-spec-show
+#| echo: true
+#| message: false
+boost_tree(trees = 6, tree_depth = 2, learn_rate = 0.3) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+```
+
+```{r}
+#| label: day04-boost-boundary-prep
+#| echo: false
+#| results: hide
+boost_trees <- 1:6
+for (i in boost_trees) {
+  spec_i <- boost_tree(
+    trees = i,
+    tree_depth = 2,
+    learn_rate = 0.3
+  ) |>
+    set_engine("xgboost") |>
+    set_mode("classification")
+  wf_i <- workflow() |>
+    add_recipe(rec_base) |>
+    add_model(spec_i)
+  assign(paste0("boost_fit_", i), fit(wf_i, peng_cls))
+}
+```
+
+## Boosting round 1
+
+```{r}
+#| label: day04-boost-step-1
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_1"), peng_cls,
+    title = "XGBoost after 1 tree (bill length × bill depth)"
+  )
+)
+```
+
+One shallow tree: rough split — mostly **underfits** the Gentoo cloud.
+
+## Boosting round 2
+
+```{r}
+#| label: day04-boost-step-2
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_2"), peng_cls,
+    title = "XGBoost after 2 trees"
+  )
+)
+```
+
+## Boosting round 3
+
+```{r}
+#| label: day04-boost-step-3
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_3"), peng_cls,
+    title = "XGBoost after 3 trees"
+  )
+)
+```
+
+## Boosting round 4
+
+```{r}
+#| label: day04-boost-step-4
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_4"), peng_cls,
+    title = "XGBoost after 4 trees"
+  )
+)
+```
+
+## Boosting round 5
+
+```{r}
+#| label: day04-boost-step-5
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_5"), peng_cls,
+    title = "XGBoost after 5 trees"
+  )
+)
+```
+
+## Boosting round 6
+
+```{r}
+#| label: day04-boost-step-6
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    get("boost_fit_6"), peng_cls,
+    title = "XGBoost after 6 trees"
+  )
+)
+```
+
+## Bagging vs boosting (same bill plane)
+
+```{r}
+#| label: day04-rf-boundary-prep
+#| echo: false
+#| results: hide
+rf_boundary_fit <- fit(wf_rf, peng_bal)
+```
+
+```{r}
+#| label: day04-rf-boundary
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+print(
+  plot_prob_boundary(
+    rf_boundary_fit, peng_bal,
+    title = "Random forest — smoother averaged surface"
+  )
+)
+```
+
+Contrast **bagging**: a random forest **averages** many trees — boundaries are often **smoother** than boosting’s **staged** corrections (previous slide).
+
+## Bagging vs boosting (side by side)
+
+```{r}
+#| label: day04-rf-xgb-compare
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.5
+p_rf <- plot_prob_boundary(
+  rf_boundary_fit, peng_bal,
+  title = "Random forest (bagging)"
+)
+p_xgb <- plot_prob_boundary(
+  get("boost_fit_6"), peng_cls,
+  title = "XGBoost after 6 trees"
+)
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_rf + p_xgb + patchwork::plot_layout(ncol = 2))
+} else {
+  print(p_rf)
+  print(p_xgb)
+}
+```
+
+## Neural network (small MLP) — API literacy
+
+- **`mlp(hidden_units = …, penalty = …, epochs = …) |> set_engine("nnet")`** — one hidden layer, weight decay, counts passes through the data.
+- **Requires scaling** (already in `rec_base` via `step_normalize`).
+- On **small tabular** data, trees often match or beat MLPs — still worth knowing the **same workflow** interface.
+
+```{r}
+#| label: day04-mlp-spec
+#| echo: true
+mlp_spec <- mlp(hidden_units = 8, penalty = 0.1, epochs = 150) |>
+  set_engine("nnet", trace = FALSE) |>
+  set_mode("classification")
+
+wf_mlp <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(mlp_spec)
+```
+
+```{r}
+#| label: day04-mlp-resamples
+#| echo: true
+#| message: false
+set.seed(9)
+rs_mlp <- fit_resamples(wf_mlp, folds, metrics = metrics_acc)
+mlp_cmp <- bind_rows(
+  collect_metrics(rs_rf) |> mutate(model = "Random forest"),
+  collect_metrics(rs_xgb) |> mutate(model = "XGBoost"),
+  collect_metrics(rs_mlp) |> mutate(model = "MLP (nnet)")
+) |>
+  filter(.metric == "accuracy")
+
+mlp_cmp |>
+  select(model, .metric, mean, std_err)
+```
+
+```{r}
+#| label: day04-mlp-bar
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4
+mlp_cmp |>
+  ggplot(aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.12) +
+  theme_minimal() +
+  labs(title = "Same recipe — accuracy across specs", x = NULL, y = "Mean accuracy")
+```
+
+Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).
+
+# Part C — Dimension reduction (accuracy only) {#part-c-pca}
+
+## Extension: PCA inside the recipe (`peng_pca`)
+
+Add **`step_pca()`** to the Part A recipe chain — fit on training folds only, same as `step_normalize()`.
+
+## PCA motivation: correlated measurements
+
+For PCA we add back **flipper length** and **body mass** — bills and size track together on penguins.
+
+```{r}
+#| label: day04-pca-corr
+#| echo: true
+#| fig-width: 7
+#| fig-height: 5
+num_cols <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "year")
+cor_pca <- cor(peng_pca[, num_cols])
+cor_df <- as.data.frame(as.table(cor_pca)) |>
+  dplyr::rename(var1 = Var1, var2 = Var2, r = Freq)
+ggplot(cor_df, aes(var1, var2, fill = r)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "steelblue", mid = "white", high = "firebrick", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(title = "Correlated morphometrics (why PCA?)", fill = "r")
+```
+
+## Recipe with `step_pca()`
+
+```{r}
+#| label: day04-pca-recipe-code
+#| echo: true
+rec_pca <- recipe(y ~ ., data = peng_pca) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors()) |>
+  step_pca(all_numeric_predictors(), num_comp = 2)
+
+rec_pca
+```
+
+```{r}
+#| label: day04-pca-variance
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+num_scaled <- peng_pca |>
+  dplyr::select(dplyr::all_of(num_cols)) |>
+  scale()
+pc_fit <- prcomp(num_scaled, center = FALSE, scale. = FALSE)
+var_pct <- pc_fit$sdev^2 / sum(pc_fit$sdev^2) * 100
+var_df <- tibble(PC = paste0("PC", seq_along(var_pct)), variance_pct = var_pct)
+ggplot(var_df, aes(PC, variance_pct)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "Variance explained (same numerics as step_pca)",
+    x = NULL,
+    y = "% variance"
+  )
+```
+
+## Model with PCA vs without (same folds)
+
+```{r}
+#| label: day04-pca-prep-models
+#| echo: false
+#| results: hide
+xgb_pca_spec <- boost_tree(trees = 100, tree_depth = 3, learn_rate = 0.05) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+rec_no_pca <- recipe(y ~ ., data = peng_pca) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+wf_pca <- workflow() |> add_recipe(rec_pca) |> add_model(xgb_pca_spec)
+wf_no_pca <- workflow() |> add_recipe(rec_no_pca) |> add_model(xgb_pca_spec)
+```
+
+```{r}
+#| label: day04-pca-fit-compare
+#| echo: true
+#| message: false
+set.seed(8)
+rs_pca <- fit_resamples(wf_pca, folds_pca, metrics = metrics_acc)
+set.seed(8)
+rs_no_pca <- fit_resamples(wf_no_pca, folds_pca, metrics = metrics_acc)
+bind_rows(
+  collect_metrics(rs_pca) |> mutate(model = "XGB + PCA (2 comp.)"),
+  collect_metrics(rs_no_pca) |> mutate(model = "XGB, no PCA")
+) |>
+  filter(.metric == "accuracy") |>
+  select(model, mean, std_err)
+```
+
+```{r}
+#| label: day04-pca-auc-bar
+#| echo: false
+#| fig-width: 7
+#| fig-height: 3.5
+bind_rows(
+  collect_metrics(rs_pca) |> mutate(model = "With PCA"),
+  collect_metrics(rs_no_pca) |> mutate(model = "No PCA")
+) |>
+  filter(.metric == "accuracy") |>
+  ggplot(aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.12) +
+  theme_minimal() +
+  labs(title = "Accuracy: PCA vs all scaled numerics", x = NULL, y = "Mean accuracy")
+```
+
+**Tradeoff:** components are **not** “bill mm” anymore — VIP on PCA columns is harder to explain biologically.
+
+**Leakage check:** always fit PCA **inside** `workflow()` + resampling, never on the full table before splitting.
+
+# Part D — Missing data (accuracy only) {#part-d-impute}
+
+## Extension: imputation inside the recipe (`peng_na`)
+
+Add **`step_impute_*()`** before `step_zv()` / dummies / normalize — never `drop_na()` on the full table before splitting.
+
+## Artificial missing data: bill length
+
+We set **~15%** of `bill_length_mm` (and a few `sex`) to **NA** to practice imputation — not a real sensor failure pattern.
+
+```{r}
+#| label: day04-na-scatter
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4.5
+plot_na_highlight(
+  peng_na, "bill_length_mm", "bill_depth_mm",
+  title = "Missing bill length (red ×)"
+)
+```
+
+## Wrong fix: drop rows with `drop_na()`
+
+```{r}
+#| label: day04-na-drop-demo
+#| echo: true
+tibble(
+  rows_before = nrow(peng_na),
+  rows_after_drop_na = nrow(tidyr::drop_na(peng_na))
+)
+```
+
+Dropping loses penguins and can **bias** who remains — never drop on the **full** table before splitting.
+
+## Right fix: impute inside the recipe
+
+```{r}
+#| label: day04-impute-recipe
+#| echo: true
+rec_impute <- recipe(y ~ ., data = peng_na) |>
+  step_impute_median(bill_length_mm) |>
+  step_impute_mode(sex) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+```
+
+## Before vs after imputation (plots)
+
+```{r}
+#| label: day04-impute-before-after
+#| echo: true
+#| fig-width: 10
+#| fig-height: 4.5
+prep_impute <- prep(rec_impute, peng_na)
+peng_baked <- bake(prep_impute, peng_na)
+
+p_before <- plot_na_highlight(
+  peng_na, "bill_length_mm", "bill_depth_mm",
+  title = "Before imputation"
+)
+p_after <- ggplot(peng_baked, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.4) +
+  scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40")) +
+  theme_minimal() +
+  labs(title = "After median/mode imputation", x = "bill_length_mm", y = "bill_depth_mm")
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_before + p_after + patchwork::plot_layout(ncol = 2))
+} else {
+  print(p_before)
+  print(p_after)
+}
+```
+
+```{r}
+#| label: day04-impute-na-count
+#| echo: true
+sum(is.na(bake(prep_impute, peng_na)$bill_length_mm))
+```
+
+## Imputation inside cross-validation
+
+```{r}
+#| label: day04-impute-cv
+#| echo: true
+#| message: false
+xgb_na_spec <- boost_tree(trees = 80, tree_depth = 3, learn_rate = 0.08) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+wf_na <- workflow() |>
+  add_recipe(rec_impute) |>
+  add_model(xgb_na_spec)
+folds_na <- vfold_cv(peng_na, v = 5, strata = y)
+set.seed(14)
+rs_na <- fit_resamples(wf_na, folds_na, metrics = metrics_acc)
+collect_metrics(rs_na) |>
+  filter(.metric == "accuracy") |>
+  select(mean, std_err)
+```
+
+The workflow accepts **NA** in raw rows; each fold **learns** imputation on analysis data only.
+
+## Metrics and deployment (reminders)
+
+- Pick **metrics before** peeking at holdout data; report **subgroup** tables when ethically appropriate.
+- **Data card:** document NA handling and class prevalence **before** modeling.
+- **Model card:** intended use, limits, monitoring — finish the draft you started Monday.
+
+Continue: [Module 06 — Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.qmd).
+
+# Part E — Imbalance, metrics, and confusion matrices {#part-e-metrics}
+
+## Extension: class imbalance (`peng_imb`)
+
+**Recipe extension:** add **`step_upsample(y)`** (or **`step_downsample()`** on the majority) near the top of the chain — still inside CV folds.
+
+## Artificial imbalance: rare Gentoo
+
+We **downsampled** Gentoo (~10 vs ~150 Adelie). Real cohorts can look like this when the event is rare.
+
+```{r}
+#| label: day04-imb-balance-plot
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+print(plot_class_balance(peng_imb, "Manufactured class imbalance"))
+```
+
+A model that always predicts **Adelie** can still show **high accuracy** — but **miss every Gentoo** (low **sensitivity**).
+
+## Bill space is still separable
+
+```{r}
+#| label: day04-imb-scatter
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_imb, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Rare Gentoo — bills still separate species",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
+**Upsampling duplicates minority rows in training** — useful when the learner **ignores** the rare class, not when the boundary is already easy.
+
+## Recipes on `peng_imb` (code)
+
+```{r}
+#| label: day04-imb-recipes
+#| echo: true
+#| message: false
+xgb_imb_spec <- boost_tree(trees = 80, tree_depth = 3, learn_rate = 0.08) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+rec_imb <- recipe(y ~ ., data = peng_imb) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_imb_up <- recipe(y ~ ., data = peng_imb) |>
+  step_upsample(y) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_imb
+rec_imb_up
+```
+
+```{r}
+#| label: day04-imb-prep
+#| echo: true
+#| message: false
+wf_imb <- workflow() |> add_recipe(rec_imb) |> add_model(xgb_imb_spec)
+wf_imb_up <- workflow() |> add_recipe(rec_imb_up) |> add_model(xgb_imb_spec)
+```
+
+## Cross-validated metrics: no upsample
+
+```{r}
+#| label: day04-imb-no-upsample
+#| echo: true
+#| message: false
+set.seed(11)
+rs_imb <- fit_resamples(wf_imb, folds_imb, metrics = metrics_cls_imb)
+metrics_summary_table(rs_imb, "XGBoost, no upsample")
+```
+
+On this DGP we often see **very high accuracy and ROC-AUC** already.
+
+## Cross-validated metrics: with `step_upsample(y)`
+
+```{r}
+#| label: day04-imb-with-upsample
+#| echo: true
+#| message: false
+set.seed(12)
+rs_imb_up <- fit_resamples(wf_imb_up, folds_imb, metrics = metrics_cls_imb)
+metrics_summary_table(rs_imb_up, "XGBoost + upsample")
+```
+
+**Upsampling is not a free lunch** — compare tables in the next section (confusion matrix, ROC/PR, facet plot).
+
+## Why accuracy misleads (imbalanced data)
+
+```{r}
+#| label: day04-metrics-majority
+#| echo: true
+#| message: false
+tibble(
+  strategy = "Always predict Adelie",
+  accuracy_on_peng_imb = mean(peng_imb$y == "Adelie")
+)
+```
+
+- **~94% accuracy** from never calling **Gentoo** — useless for screening rare events.
+- Parts B–D used **`accuracy`** on **balanced** `peng_bal`; from here we add **metric_set** members for **rare positives**.
+
+## Metrics toolbox (`yardstick`)
+
+| Metric | Question it answers | When it shines |
+|--------|---------------------|----------------|
+| **accuracy** | Overall correct? | Balanced classes, equal error costs |
+| **sens** (sensitivity, recall) | Of true Gentoo, how many caught? | Screening — missing positives is costly |
+| **yardstick::spec** (specificity) | Of true Adelie, how many caught? | Avoid false alarms |
+| **precision** | Of predicted Gentoo, how many correct? | Confirmation after a screen |
+| **f_meas** (F1) | Balance precision & recall | Single score when both matter |
+| **roc_auc** | Ranking quality across thresholds | Class separability, balanced-ish prevalence |
+| **pr_auc** | Precision–recall area | **Rare** positive class |
+
+```{r}
+#| label: day04-metrics-set-show
+#| echo: true
+#| message: false
+metrics_cls_imb
+```
+
+- Use **`yardstick::spec`** in code so R does not confuse **specificity** with a **`spec`** model object.
+
+## Confusion matrix (read the rare-class row)
+
+From the imbalance block — **held-out 20%**, no upsampling:
+
+```{r}
+#| label: day04-metrics-conf-mat
+#| echo: true
+#| message: false
+set.seed(13)
+split_imb <- initial_split(peng_imb, prop = 0.8, strata = y)
+fit_imb <- fit(wf_imb, training(split_imb))
+pred_imb <- augment(fit_imb, testing(split_imb))
+pred_imb |>
+  conf_mat(truth = y, estimate = .pred_class)
+```
+
+- **Rows** = true species; **columns** = predictions.
+- **Gentoo row, Adelie column** = false negatives (missed Gentoo) — costly in screening.
+
+## ROC vs PR curve (rare positive)
+
+```{r}
+#| label: day04-metrics-roc-pr
+#| echo: true
+#| fig-width: 9
+#| fig-height: 4
+#| message: false
+set.seed(15)
+split_pr <- initial_split(peng_imb, prop = 0.8, strata = y)
+fit_pr <- fit(wf_imb, training(split_pr))
+pred_pr <- augment(fit_pr, testing(split_pr))
+
+p_roc <- pred_pr |>
+  roc_curve(truth = y, .pred_Gentoo) |>
+  autoplot() +
+  labs(title = "ROC curve (held-out 20%)") +
+  theme_minimal()
+
+p_pr <- pred_pr |>
+  pr_curve(truth = y, .pred_Gentoo) |>
+  autoplot() +
+  labs(title = "PR curve (held-out 20%)") +
+  theme_minimal()
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_roc + p_pr)
+} else {
+  print(p_roc)
+  print(p_pr)
+}
+```
+
+## Side-by-side CV metrics (imbalanced data)
+
+```{r}
+#| label: day04-metrics-compare-kable
+#| echo: true
+#| message: false
+compare_metrics_tbl(
+  "No upsample" = rs_imb,
+  "Upsample" = rs_imb_up
+)
+```
+
+```{r}
+#| label: day04-metrics-compare-bar
+#| echo: false
+#| fig-width: 9
+#| fig-height: 4.5
+bind_rows(
+  collect_metrics(rs_imb) |> mutate(model = "No upsample"),
+  collect_metrics(rs_imb_up) |> mutate(model = "Upsample")
+) |>
+  filter(.metric %in% c("accuracy", "sens", "roc_auc", "pr_auc")) |>
+  ggplot(aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.15) +
+  facet_wrap(~.metric, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Imbalanced data: metrics need not move together",
+    x = NULL,
+    y = "Mean metric (5-fold CV)"
+  )
+```
+
+- Pick the metric that matches **deployment cost** before tuning (`select_best(metric = "...")` in the lab).
+
+# Part F — Variable importance {#part-f-vip}
+
+## Data the forest sees (bill plane)
+
+```{r}
+#| label: day04-vip-scatter
+#| echo: true
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Adelie vs Gentoo in bill space",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
+## Variable importance (random forest)
+
+- **`vip`** on a fitted **`ranger`** model: how often splits use each **baked** predictor (impurity).
+- **Correlated** bill measures can **share** importance — not proof that changing one bill mm **causes** species shift.
+
+```{r}
+#| label: day04-vip-prep
+#| echo: false
+#| results: hide
+rf_fit <- fit(wf_rf, peng_cls)
+```
+
+```{r}
+#| label: day04-vip-plot
+#| echo: true
+#| fig-width: 9
+#| fig-height: 5
+rf_fit |>
+  extract_fit_parsnip() |>
+  vip(geom = "point", num_features = 12) +
+  theme_minimal() +
+  labs(
+    title = "Variable importance (random forest)",
+    subtitle = "Adelie vs Gentoo — descriptive ranking, not causal"
+  )
+```
+
+**Model-agnostic alternative:** **permutation importance** (shuffle one column, watch metric drop) — see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
+
+**Local explanations:** SHAP (TreeSHAP for forests) — same module; treat as **communication**, not intervention.
+
+## SHAP (pointer)
+
+- **SHAP:** local explanations for **one prediction** — communication, not causation
+- **TreeSHAP** for forests/boosting; details in [Module 06](../modules/module-06-evaluation-and-interpretability.qmd)
+
+# Part G — Wrap-up
 
 ## Nested resampling (when tuning gets serious)
 
@@ -68,7 +1103,8 @@ format:
 
 ## End-of-day checklist
 
-- Where do you look up **`tune()`** knobs for `rand_forest` and `boost_tree`?
-- What changes in the **boosting boundary** slides as `trees` increases?
-- Why must **`step_impute_*()`** and **`step_pca()`** live **inside** the recipe?
+- Name three **`parsnip` model types** and a valid **engine** for each
+- Why must **`step_pca()`** and **`step_impute_*()`** live **inside** the recipe?
+- When might **`step_upsample()`** not improve CV scores?
+- Which metric would you report for a **rare-event screening** study?
 - One reason **VIP** on correlated bills is **not** a causal claim

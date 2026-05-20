@@ -1,0 +1,165 @@
+Hald cement (heat evolved vs four chemistry predictors) — multicollinearity before the gene simulations.
+
+```{r}
+#| label: day01-hald-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(MASS)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(broom)
+})
+data(cement)
+hald <- cement
+hald_scaled <- hald
+hald_scaled[, c("x1", "x2", "x3", "x4")] <- scale(hald[, c("x1", "x2", "x3", "x4")])
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  out.width = "100%",
+  dpi = 120
+)
+theme_set(theme_classic())
+```
+
+## The data (`MASS::cement`)
+
+```{r}
+#| label: day01-hald-table
+#| echo: false
+knitr::kable(head(hald, 6), digits = 1, caption = "Hald cement (first 6 of 13 rows)")
+```
+
+- **Outcome `y`:** heat evolved (calories per gram cement) — left on the original scale  
+- **Predictors `x1`–`x4`:** oxide composition — we **standardize** them (`scale()`) so slopes are comparable and units do not dominate the fit  
+
+## Standardize predictors first
+
+```{r}
+#| label: day01-hald-scale-note
+#| echo: true
+hald_scaled[, c("x1", "x2", "x3", "x4")] <- scale(hald[, c("x1", "x2", "x3", "x4")])
+# All regressions below use hald_scaled (z-scored x1–x4, original y)
+```
+
+- Each $\hat\beta_j$ is the change in **y** (heat) per **1 SD** increase in $x_j$, holding other predictors fixed  
+- Correlations among predictors are unchanged by scaling — but coefficient tables are easier to read
+
+## One predictor at a time vs all four together
+
+```{r}
+#| label: day01-hald-simple-vs-full
+#| echo: false
+simple_slopes <- bind_rows(lapply(c("x1", "x2", "x3", "x4"), function(v) {
+  m <- lm(as.formula(paste("y ~", v)), data = hald_scaled)
+  tidy(m) |> filter(term != "(Intercept)")
+})) |>
+  transmute(predictor = term, simple_estimate = estimate, simple_p = p.value)
+
+full_fit <- lm(y ~ x1 + x2 + x3 + x4, data = hald_scaled)
+full_slopes <- tidy(full_fit) |>
+  filter(term != "(Intercept)") |>
+  transmute(predictor = term, full_estimate = estimate, full_p = p.value)
+
+compare_tbl <- left_join(simple_slopes, full_slopes, by = "predictor") |>
+  mutate(
+    simple_sig = ifelse(simple_p < 0.05, "yes", "no"),
+    full_sig = ifelse(full_p < 0.05, "yes", "no")
+  )
+
+knitr::kable(compare_tbl, digits = 6,
+  caption = "Simple vs four-predictor model (scaled predictors)")
+```
+
+- **Simple** fits: **x1**, **x2**, **x4** significant; **x3** borderline  
+- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline) — joint inference breaks down when columns overlap
+
+```{r}
+#| label: day01-hald-full-summary
+#| echo: false
+tidy(full_fit) |>
+  mutate(across(c(estimate, std.error, statistic, p.value), \(x) round(x, 4))) |>
+  knitr::kable(caption = "Four-predictor model (scaled predictors)")
+```
+
+<!-- ## Two predictors — `y ~ x1 + x2` -->
+
+<!-- ```{r} -->
+<!-- #| label: day01-hald-x1x2 -->
+<!-- #| echo: false -->
+<!-- fit_x1x2 <- lm(y ~ x1 + x2, data = hald_scaled) -->
+<!-- tidy(fit_x1x2) |> -->
+<!--   mutate(across(c(estimate, std.error, statistic, p.value), \(x) round(x, 4))) |> -->
+<!--   knitr::kable(caption = "Two-predictor model (scaled predictors)") -->
+<!-- ``` -->
+
+<!-- - **Both x1 and x2** significant and **positive** (heat increases with each oxide, holding the other fixed) -->
+
+## Correlations among `x1`–`x4`
+
+```{r}
+#| label: day01-hald-corr-plot
+#| echo: false
+#| fig-height: 4.5
+#| fig-width: 5.5
+hald_cor <- cor(hald_scaled[, c("x1", "x2", "x3", "x4")])
+cor_long <- as.data.frame(as.table(hald_cor)) |>
+  rename(var1 = Var1, var2 = Var2, r = Freq)
+
+ggplot(cor_long, aes(var1, var2, fill = r)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.2f", r)), size = 3.5) +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b", midpoint = 0, limits = c(-1, 1)) +
+  coord_fixed() +
+  labs(title = "Predictor correlations (Hald cement)", x = NULL, y = NULL, fill = "r")
+```
+
+Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx -0.82$). **x3–x4** are nearly uncorrelated ($r \approx 0.03$); **x1–x4** weakly negative ($r \approx -0.25$).
+
+<!-- ## Quiz — predict the fit before you run it -->
+
+<!-- Use the **scaled-predictor** fits above and the correlation plot. For each model, which statement best describes **significance at $\alpha = 0.05$** and the **signs** of the coefficients? -->
+
+<!-- ## Question 1 — `y ~ x1 + x3` -->
+
+<!-- - A. Both x1 and x3 significant; **same** sign   -->
+<!-- - B. Both significant; **opposite** signs   -->
+<!-- - C. Only x1 significant   -->
+<!-- - D. Only x3 significant   -->
+<!-- - E. Neither significant   -->
+
+<!-- ## Question 1 — answer -->
+
+<!-- **C** — only **x1** significant (positive); x3 not ($r_{1,3} \approx -0.82$ makes the pair unstable, but x1 retains a clear partial effect here). -->
+
+<!-- ## Question 2 — `y ~ x3 + x4` -->
+
+<!-- - A. Neither significant   -->
+<!-- - B. Both significant; same (negative) sign   -->
+<!-- - C. Both significant; opposite signs   -->
+<!-- - D. Only x3 significant   -->
+<!-- - E. Only x4 significant   -->
+
+<!-- ## Question 2 — answer -->
+
+<!-- **B** — both significant and **negative** ($\hat\beta_3 \approx -7.7$, $\hat\beta_4 \approx -12.1$) even though x3 and x4 are almost uncorrelated in this sample. -->
+
+<!-- ## Question 3 — `y ~ x1 + x4` -->
+
+<!-- - A. Neither significant   -->
+<!-- - B. Both significant; **same** sign   -->
+<!-- - C. Both significant; opposite signs (x1 positive, x4 negative) -->
+<!-- - D. Only x1 significant   -->
+<!-- - E. Only x4 significant   -->
+
+<!-- ## Question 3 — answer -->
+
+<!-- **C** — both significant; **x1 positive**, **x4 negative** ($\hat\beta_1 \approx 8.5$, $\hat\beta_4 \approx -10.3$). -->
+
+## Takeaway 
+
+- Signs and p-values can **flip** when you add or drop correlated columns 
+
+- Later today: **lasso** and **AIC** help navigate this kind of data

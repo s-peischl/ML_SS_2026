@@ -1,27 +1,32 @@
-## Model catalog (`parsnip`)
+## Model catalog and engines
 
-- **`parsnip`** names the **model family**; **`set_engine()`** picks the R implementation (`"rpart"`, `"ranger"`, `"xgboost"`, `"glm"`, `"nnet"`, …).
-- **`tune()`** marks hyperparameters you will search later with **`tune_grid()`**.
-- **Discover arguments:** `?rand_forest`, then in R: `extract_parameter_set_dials(mod_spec)`.
+**Same `rec_base` from Tuesday** — change **`spec`** (and `set_engine()`); keep **`workflow()`** + **`folds`**.
 
-| Model spec | Typical tuned knobs | Common engine |
-|------------|---------------------|---------------|
-| `decision_tree()` | `tree_depth`, `min_n`, `cost_complexity` | `rpart` |
-| `rand_forest()` | `mtry`, `min_n`, `trees` | `ranger` |
-| `boost_tree()` | `trees`, `tree_depth`, `learn_rate` | `xgboost` |
-| `logistic_reg()` | `penalty` (glmnet) | `glm` / `glmnet` |
-| `mlp()` | `hidden_units`, `penalty`, `epochs` | `nnet` / `keras` |
+| Model spec | Typical tuned knobs | Common engines |
+|------------|---------------------|----------------|
+| `decision_tree()` | `tree_depth`, `min_n`, `cost_complexity` | `rpart`, `C5.0` |
+| `rand_forest()` | `mtry`, `min_n`, `trees` | `ranger`, `randomForest` |
+| `boost_tree()` | `trees`, `tree_depth`, `learn_rate` | `xgboost`, `lightgbm`, `C5.0` |
+| `logistic_reg()` | `penalty` | `glm`, `glmnet` |
+| `linear_reg()` | `penalty` | `lm`, `glmnet` |
+| `mlp()` | `hidden_units`, `penalty`, `epochs` | `nnet`, `keras` |
+| `svm_rbf()` | `cost`, `rbf_sigma` | `kernlab` |
+| `nearest_neighbor()` | `neighbors` | `kknn` |
 
-Official lists: [tidymodels — find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
+- **`tune()`** marks hyperparameters for **`tune_grid()`**.
+- Lookup: [tidymodels — find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
+- More depth: [Module 05](../modules/module-05-advanced-models.qmd) · [Module 08](../modules/module-08-penguins-compare-models.qmd).
 
-More depth: [Module 05 — Advanced models](../modules/module-05-advanced-models.qmd) · [Module 08 — Compare learners](../modules/module-08-penguins-compare-models.qmd).
+## Parsnip: type → engine → mode
+
+Every spec needs: **model type** → **`set_engine()`** → **`set_mode("classification")`** (or regression).
 
 ```{r}
 #| label: day04-catalog-dials
 #| echo: true
 #| message: false
-rf_spec <- rand_forest(trees = tune(), mtry = tune()) |>
+rf_tune_spec <- rand_forest(trees = tune(), mtry = tune()) |>
   set_engine("ranger") |>
   set_mode("classification")
-extract_parameter_set_dials(rf_spec)
+extract_parameter_set_dials(rf_tune_spec)
 ```

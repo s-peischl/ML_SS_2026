@@ -1,44 +1,103 @@
-## Missing data: impute inside the recipe
+## Extension: imputation inside the recipe (`peng_na`)
 
-- **`step_impute_mean()`** / **`step_impute_median()`** for numerics; **`step_impute_mode()`** for factors — statistics computed on **analysis** folds only when resampled.
-- **Never** fill NA using test rows before scoring.
+Add **`step_impute_*()`** before `step_zv()` / dummies / normalize — never `drop_na()` on the full table before splitting.
+
+## Artificial missing data: bill length
+
+We set **~15%** of `bill_length_mm` (and a few `sex`) to **NA** to practice imputation — not a real sensor failure pattern.
 
 ```{r}
-#| label: day04-impute-demo
+#| label: day04-na-scatter
 #| echo: true
-#| message: false
-peng_na <- peng_cls
-set.seed(2)
-na_idx <- sample(which(!is.na(peng_na$bill_length_mm)), size = 12)
-peng_na$bill_length_mm[na_idx] <- NA
+#| fig-width: 8
+#| fig-height: 4.5
+plot_na_highlight(
+  peng_na, "bill_length_mm", "bill_depth_mm",
+  title = "Missing bill length (red ×)"
+)
+```
 
+## Wrong fix: drop rows with `drop_na()`
+
+```{r}
+#| label: day04-na-drop-demo
+#| echo: true
+tibble(
+  rows_before = nrow(peng_na),
+  rows_after_drop_na = nrow(tidyr::drop_na(peng_na))
+)
+```
+
+Dropping loses penguins and can **bias** who remains — never drop on the **full** table before splitting.
+
+## Right fix: impute inside the recipe
+
+```{r}
+#| label: day04-impute-recipe
+#| echo: true
 rec_impute <- recipe(y ~ ., data = peng_na) |>
   step_impute_median(bill_length_mm) |>
-  step_impute_mode(all_nominal_predictors()) |>
+  step_impute_mode(sex) |>
   step_zv(all_predictors()) |>
   step_dummy(all_nominal_predictors()) |>
   step_normalize(all_numeric_predictors())
+```
 
+## Before vs after imputation (plots)
+
+```{r}
+#| label: day04-impute-before-after
+#| echo: true
+#| fig-width: 10
+#| fig-height: 4.5
 prep_impute <- prep(rec_impute, peng_na)
+peng_baked <- bake(prep_impute, peng_na)
+
+p_before <- plot_na_highlight(
+  peng_na, "bill_length_mm", "bill_depth_mm",
+  title = "Before imputation"
+)
+p_after <- ggplot(peng_baked, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.4) +
+  scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40")) +
+  theme_minimal() +
+  labs(title = "After median/mode imputation", x = "bill_length_mm", y = "bill_depth_mm")
+
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_before + p_after + patchwork::plot_layout(ncol = 2))
+} else {
+  print(p_before)
+  print(p_after)
+}
+```
+
+```{r}
+#| label: day04-impute-na-count
+#| echo: true
 sum(is.na(bake(prep_impute, peng_na)$bill_length_mm))
 ```
 
-## Class imbalance: upsample in the recipe
-
-- **`themis::step_upsample(y)`** draws extra **minority** rows **inside training** only (with replacement) before fitting.
-- Alternatives: **`step_smote()`**, **class weights** in the engine, **threshold tuning** on predicted probabilities.
+## Imputation inside cross-validation
 
 ```{r}
-#| label: day04-upsample-recipe
+#| label: day04-impute-cv
 #| echo: true
-rec_up <- recipe(y ~ ., data = peng_cls) |>
-  step_upsample(y) |>
-  step_zv(all_predictors()) |>
-  step_dummy(all_nominal_predictors()) |>
-  step_normalize(all_numeric_predictors())
+#| message: false
+xgb_na_spec <- boost_tree(trees = 80, tree_depth = 3, learn_rate = 0.08) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+wf_na <- workflow() |>
+  add_recipe(rec_impute) |>
+  add_model(xgb_na_spec)
+folds_na <- vfold_cv(peng_na, v = 5, strata = y)
+set.seed(14)
+rs_na <- fit_resamples(wf_na, folds_na, metrics = metrics_acc)
+collect_metrics(rs_na) |>
+  filter(.metric == "accuracy") |>
+  select(mean, std_err)
 ```
 
-When **false negatives** cost more (miss a rare disease), tune **recall** / **sensitivity** and report **PR-AUC** — not accuracy alone ([Module 07](../modules/module-07-penguins-choose-metrics.qmd)).
+The workflow accepts **NA** in raw rows; each fold **learns** imputation on analysis data only.
 
 ## Metrics and deployment (reminders)
 
@@ -46,4 +105,4 @@ When **false negatives** cost more (miss a rare disease), tune **recall** / **se
 - **Data card:** document NA handling and class prevalence **before** modeling.
 - **Model card:** intended use, limits, monitoring — finish the draft you started Monday.
 
-Continue: [Module 06 — Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 pipeline](../slides/day-02-tuesday.qmd).
+Continue: [Module 06 — Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.qmd).

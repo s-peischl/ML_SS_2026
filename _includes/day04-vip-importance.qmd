@@ -1,3 +1,21 @@
+## Data the forest sees (bill plane)
+
+```{r}
+#| label: day04-vip-scatter
+#| echo: true
+#| fig-width: 7
+#| fig-height: 4.5
+ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
+  geom_point(size = 2.6) +
+  scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+  theme_minimal() +
+  labs(
+    title = "Adelie vs Gentoo in bill space",
+    x = "Bill length (mm)",
+    y = "Bill depth (mm)"
+  )
+```
+
 ## Variable importance (random forest)
 
 - **`vip`** on a fitted **`ranger`** model: how often splits use each **baked** predictor (impurity).

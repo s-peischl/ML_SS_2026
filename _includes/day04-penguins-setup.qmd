@@ -30,12 +30,108 @@ peng_cls <- palmerpenguins::penguins |>
   tidyr::drop_na()
 
 folds <- vfold_cv(peng_cls, v = 5, strata = y)
-metrics_cls <- metric_set(roc_auc, accuracy, sens, yardstick::spec)
+metrics_acc <- metric_set(accuracy)
 
-rec_base <- recipe(y ~ ., data = peng_cls) |>
+peng_bal <- peng_cls
+
+rec_base <- recipe(y ~ ., data = peng_bal) |>
   step_zv(all_predictors()) |>
   step_dummy(all_nominal_predictors()) |>
   step_normalize(all_numeric_predictors())
+
+tree_spec <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+wf_tree <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_spec)
+
+set.seed(6)
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_acc)
+
+# Teaching scenarios (artificial problems — document real prevalence on the data card)
+set.seed(4)
+peng_imb <- peng_bal |>
+  group_by(y) |>
+  filter(y == "Adelie" | (y == "Gentoo" & dplyr::row_number() <= 10L)) |>
+  ungroup()
+
+peng_na <- peng_bal
+na_bill <- sample(which(!is.na(peng_na$bill_length_mm)), size = 18L)
+peng_na$bill_length_mm[na_bill] <- NA
+na_sex <- sample(which(!is.na(peng_na$sex)), size = 5L)
+peng_na$sex[na_sex] <- NA
+
+peng_pca <- palmerpenguins::penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  dplyr::select(-species) |>
+  tidyr::drop_na()
+
+folds_imb <- vfold_cv(peng_imb, v = 5, strata = y)
+folds_pca <- vfold_cv(peng_pca, v = 5, strata = y)
+metrics_cls_imb <- metric_set(accuracy, sens, yardstick::spec, roc_auc, pr_auc)
+
+plot_class_balance <- function(df, title = "Class counts") {
+  ggplot(df, aes(y, fill = y)) +
+    geom_bar(show.legend = FALSE) +
+    geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.3, size = 4) +
+    scale_fill_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
+    theme_minimal() +
+    labs(title = title, x = "Species (y)", y = "n")
+}
+
+plot_na_highlight <- function(df, xvar, yvar, title = NULL) {
+  df <- df |>
+    mutate(
+      missing_x = is.na(.data[[xvar]]),
+      x_plot = ifelse(missing_x, stats::median(.data[[xvar]], na.rm = TRUE), .data[[xvar]])
+    )
+  ggplot(df, aes(x = x_plot, y = .data[[yvar]])) +
+    geom_point(
+      data = dplyr::filter(df, !missing_x),
+      aes(color = y),
+      size = 2.4
+    ) +
+    geom_point(
+      data = dplyr::filter(df, missing_x),
+      aes(x = x_plot, y = .data[[yvar]]),
+      shape = 4,
+      color = "firebrick",
+      size = 3,
+      stroke = 1.2,
+      inherit.aes = FALSE
+    ) +
+    scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40"), name = "Species") +
+    theme_minimal() +
+    labs(
+      title = title,
+      x = paste0(xvar, " (× = missing)"),
+      y = yvar,
+      caption = "Red × marks rows with NA on the x-axis"
+    )
+}
+
+metrics_summary_table <- function(fit_res, label) {
+  collect_metrics(fit_res) |>
+    dplyr::filter(.metric %in% c("accuracy", "sens", "spec", "roc_auc", "pr_auc")) |>
+    dplyr::select(.metric, mean, std_err) |>
+    dplyr::mutate(model = label) |>
+    dplyr::relocate(model)
+}
+
+compare_metrics_tbl <- function(...) {
+  tab <- purrr::imap_dfr(rlang::list2(...), ~ metrics_summary_table(.x, .y)) |>
+    dplyr::select(model, .metric, mean, std_err) |>
+    dplyr::mutate(cell = sprintf("%.3f (%.3f)", mean, std_err)) |>
+    dplyr::select(model, .metric, cell) |>
+    tidyr::pivot_wider(names_from = model, values_from = cell)
+  knitr::kable(tab, caption = "Cross-validated metrics: mean (std err)")
+}
 
 plot_prob_boundary <- function(
     model,

@@ -5,7 +5,7 @@ format:
     toc: true
 ---
 
-This page describes the **Palmer Penguins** dataset, which we use **all week** for plots, regression (predicting a number), and classification (predicting a category). **Tuesday’s slides** walk through a full **prediction workflow in R** using the same penguin table (the code uses the `tidymodels` family of packages — you do not need to have seen them before Monday’s `lm` / `glm` work).
+This page describes the **Palmer Penguins** dataset, which we use **all week** for plots, regression (predicting a number), and classification (predicting a category). **Day 2 (Tuesday) slides** walk through a full **prediction workflow in R** using the same penguin table (the code uses the `tidymodels` family of packages — you do not need to have seen them before Monday’s `lm` / `glm` work).
 
 ::: {.callout-note appearance="simple"}
 ## Synthetic gene notebooks (unchanged)
@@ -42,13 +42,13 @@ data(penguins, package = "palmerpenguins")
 ## Why we use it in this course
 
 - **Plots read well in class** (colour by `species`, pairs of measurements).
-- **Same table everywhere** — Monday exploratory plots, Tuesday’s full **fit–check–tune** example in R, Thursday’s discussion of scores and explanations.
+- **Same table everywhere** — Day 1 exploratory plots, Day 2’s full **fit–check–tune** example in R, Day 4’s discussion of scores and explanations.
 - You can practice **regression** (for example predicting **body mass**), **two-group classification** (one species pair, or **sex**), and **three-species** classification on one familiar dataset.
 
 ## Student notebooks vs `tidymodels` modules (Palmer Penguins)
 
 - **Notebooks** (`.Rmd` in [`notebooks/`](notebooks/index.qmd)): long **IDE labs** — **`lm` / `glm` / `rpart` / `glmnet`** for models; **`tidymodels`** (`rsample`, `recipes`, `yardstick`) for splits, scaling, and confusion tables.
-- **Modules** [04 — train/test](modules/module-04-pipeline.qmd#train-test-last-fit) and [04 — Tuesday pipeline](modules/module-04-pipeline.qmd#canonical-pipeline-tuesday) (shared include with slides), [07](modules/module-07-penguins-choose-metrics.qmd), [08](modules/module-08-penguins-compare-models.qmd): **`tidymodels`** walk-throughs on the **same Adelie vs Gentoo** task as the slides.
+- **Modules** [04 — train/test](modules/module-04-pipeline.qmd#train-test-last-fit) and [04 — Day 2 pipeline](modules/module-04-pipeline.qmd#canonical-pipeline-tuesday) (shared include with slides), [07](modules/module-07-penguins-choose-metrics.qmd), [08](modules/module-08-penguins-compare-models.qmd): **`tidymodels`** walk-throughs on the **same Adelie vs Gentoo** task as the slides.
 
 ### Student notebooks (Palmer Penguins only)
 

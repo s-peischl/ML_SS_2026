@@ -2,9 +2,11 @@
 title: "Curriculum Outline"
 ---
 
-# Three-Day Curriculum (Monday, Tuesday, Thursday)
+# Course week (Days 1–4)
 
-This outline keeps **exercises outside the hub** while weaving a few ideas through the week: **two parallel examples** (simulated **genes** where we know the truth + **Palmer Penguins** as one real table), **what a wrong prediction costs** (thresholds, prevalence), **calibration**, **“correlation is not causation”** when reading importance plots, short **data and model summaries**, **reproducibility**, **fairness-style subgroup checks**, and assignments that reward **honest wording** (especially around SHAP).
+**Teaching decks on this site:** Day 1 (Monday), Day 2 (Tuesday), and Day 4 (Thursday). **Day 3 (Wednesday)** is a mini symposium and social event — no lecture deck here.
+
+This outline links to **[afternoon lab exercises](exercises/mlss2026-lab-exercises.qmd)** (with [solutions](exercises/index.qmd)) while weaving a few ideas through the week: **two parallel examples** (simulated **genes** where we know the truth + **Palmer Penguins** as one real table), **what a wrong prediction costs** (thresholds, prevalence), **calibration**, **“correlation is not causation”** when reading importance plots, short **data and model summaries**, **reproducibility**, **fairness-style subgroup checks**, and assignments that reward **honest wording** (especially around SHAP).
 
 ## Integrated design principles (built into the week)
 
@@ -16,7 +18,7 @@ This outline keeps **exercises outside the hub** while weaving a few ideas throu
 - **Fairness as a metric choice** — Thursday explicitly compares overall vs subgroup metrics on **Palmer Penguins** (e.g. `species` or `island` as a subgroup lens) when a sensitive attribute exists (or simulate site/batch as a stand-in).
 - **Assessment that teaches humility** — include a **short oral or written prompt**: “What would you *not* claim from this SHAP summary?” graded with a published mini-rubric (correctness, diagnostics, communication).
 
-## Monday: Foundations and Regularization
+## Day 1 (Monday): Foundations and Regularization
 
 ### Learning goals
 
@@ -31,57 +33,50 @@ This outline keeps **exercises outside the hub** while weaving a few ideas throu
 2. Linear regression as baseline and bias–variance discussion (**synthetic gene–trait** story in notebooks; **penguins** for real EDA in parallel)
 3. Logistic regression for classification intuition (same patient/scientific framing as Thursday metrics)
 4. Overfitting/underfitting diagnostics (learning curves; train vs validation) on a held-out split (genes or penguins)
-5. Regularization: ridge and lasso, shrinkage paths, feature selection; **preview elastic net** as the “unsure” default
+5. Regularization: ridge and lasso, shrinkage paths, feature selection; **preview elastic net** — [Module 02](modules/module-02-regularization.qmd) + [Day 1 slides](slides/day-01-monday.html#/elastic-net)
 6. **Calibration intuition (light)** — reliability of predicted probabilities even within linear models; sets up Thursday without heavy math
 7. Transition to algorithmic methods + assign **reproducibility mini-task** (directory + render script)
 
-## Tuesday: Two Cultures, Trees, and Pipelines
+## Day 2 (Tuesday): Trees, rpart, and the tidymodels Pipeline
 
 ### Learning goals
 
-- Compare mathematical and algorithmic modeling mindsets (**explicit “prediction vs explanation for intervention”** caveat)
-- Build intuition for decision trees and their operating assumptions
-- Use a modern `tidymodels` pipeline that can be reused across models on **Palmer Penguins** (same include as Module 04)
-- Establish **reproducible project layout** and optional `renv`/environment pinning policy
+- Compare mathematical and algorithmic modeling mindsets (**two cultures**)
+- Build intuition for **decision trees** (`rpart`) on gene simulations and Palmer Penguins
+- Master **`recipe → spec → workflow → tune → fit`** with **`decision_tree` + `rpart`** and **accuracy** on CV
+- Establish **reproducible project layout** (microbiome lab)
 
 ### Sequence
 
-1. Breiman **two cultures** (data modeling vs algorithmic) — not “stats vs ML”
-2. **Gene × disease `rpart`:** final tree + decision surface, then step-by-step depth (tree + partition side by side)
-3. Why workflows matter: preprocessing, modeling, tuning, validation (**leakage checklist**)
-4. `tidymodels` blueprint on **Palmer Penguins:** recipes, parsnip, workflows, rsample, tune
-5. Reusable classification pipeline skeleton **frozen to Adelie vs Gentoo** (shared include with Module 04; extend in exercises)
-6. **Reproducibility sprint (lab)** — one-button `quarto render` / `targets::tar_make()` sketch; what must be in version control vs ignored artifacts
-7. **Model card draft** — students sketch intended use, metrics to monitor, and known failure modes before ensembles
+1. Breiman **two cultures**; **gene `rpart`** (classification + regression)
+2. **Incremental pipeline walkthrough** on penguins ([`day02-tidymodels-walkthrough.qmd`](_includes/day02-tidymodels-walkthrough.qmd) — also Module 04)
+3. **`tune_grid`** for `tree_depth` and `min_n`; tuning plot, tree plot, light VIP
+4. Microbiome lab: same grammar on OTU data (grouped CV)
 
-## Day 4 (Thursday): Advanced Models, Preprocessing, and Evaluation
+## Day 4 (Thursday): Models, Preprocessing, Metrics, and Importance
 
-**Deck:** [day-04-thursday.qmd](slides/day-04-thursday.qmd) (executable includes: `day04-*.qmd`)
+**Deck:** [day-04-thursday.qmd](slides/day-04-thursday.qmd) (includes: `day04-*.qmd`)
 
 ### Learning goals
 
-- **`parsnip` model catalog** and where to find hyperparameters
-- **Random forests** and **XGBoost** with **boosting boundary** visuals (bill length × bill depth)
-- **PCA**, **imputation**, and **upsampling** as recipe steps inside `workflow()`
-- **Small MLP** via `nnet`; **VIP** importance; metrics / SHAP pointers ([Module 06](modules/module-06-evaluation-and-interpretability.qmd))
+- Swap **`parsnip` specs** (forest, boosting, MLP) on Tuesday’s **`rec_base`**
+- **PCA**, **imputation**, **resampling** as recipe steps; **accuracy** until imbalance
+- **Metrics beyond accuracy**, confusion matrices, ROC/PR on imbalanced data
+- **VIP** and non-causal interpretation ([Module 06](modules/module-06-evaluation-and-interpretability.qmd))
 
 ### Sequence (matches slides)
 
-1. Shared `peng_cls` setup (same columns as Module 04 tuning slice)
-2. Model catalog + `extract_parameter_set_dials()`
-3. Bagging vs boosting; `fit_resamples` comparison (tree, RF, XGB)
-4. Boosting rounds 1–6: probability surfaces sharpen
-5. `step_pca()` + boosted workflow
-6. Quick `mlp()` + `fit_resamples`
-7. `vip` on random forest
-8. `step_impute_*`, `step_upsample()`, metrics / data-card reminders
-9. SHAP and nested resampling — concept pointers (Module 06; exercises)
+1. **Part A:** recap setup + stressed scenarios
+2. **Part B:** model catalog; bagging/boosting/MLP; multi-model `fit_resamples` (**accuracy**)
+3. **Part C–D:** `step_pca()`, `step_impute_*()` (**accuracy**)
+4. **Part E:** imbalance, metrics toolbox, confusion matrices, compare upsampling
+5. **Part F:** VIP on random forest; SHAP pointer
 
 ## Delivery Notes
 
 - Exercises are run separately from this hub but should **reference Palmer Penguins** (and optionally **gene** simulations) and reuse the **data/model card** templates.
 - Each day has one dedicated revealjs deck; optional live R snippets or board work replace separate app demos.
-- The same `tidymodels` pipeline grammar is reused from Tuesday onward; Day 4 swaps engines and adds recipe steps (PCA, impute, upsample), not project structure.
+- The same `tidymodels` pipeline grammar is reused from Day 2 (Tuesday) onward; Day 4 (Thursday) swaps engines and adds recipe steps (PCA, impute, upsample), not project structure.
 - **`caret` removed** from the hub; splits/scaling/metrics use **`tidymodels`** / **`yardstick`** in slides, modules, and notebooks.
 - Student **`.Rmd`** notebooks live under `notebooks/`: **gene** pair unchanged; **penguin** pair added; align exercises with the same **penguin** export where possible.
 

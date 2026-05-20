@@ -1,40 +1,116 @@
-## PCA inside a recipe
+## Extension: PCA inside the recipe (`peng_pca`)
 
-- **`step_pca(all_numeric_predictors(), num_comp = k)`** learns orthogonal directions from **training rows only** (inside each CV fold when resampled).
-- Use when you have **many correlated** measurements and want a compact input layer for a flexible model.
-- **Tradeoff:** components are **not** “bill length” anymore — harder to tell a biological story from loadings alone.
+Add **`step_pca()`** to the Part A recipe chain — fit on training folds only, same as `step_normalize()`.
+
+## PCA motivation: correlated measurements
+
+For PCA we add back **flipper length** and **body mass** — bills and size track together on penguins.
+
+```{r}
+#| label: day04-pca-corr
+#| echo: true
+#| fig-width: 7
+#| fig-height: 5
+num_cols <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "year")
+cor_pca <- cor(peng_pca[, num_cols])
+cor_df <- as.data.frame(as.table(cor_pca)) |>
+  dplyr::rename(var1 = Var1, var2 = Var2, r = Freq)
+ggplot(cor_df, aes(var1, var2, fill = r)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "steelblue", mid = "white", high = "firebrick", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_fixed() +
+  labs(title = "Correlated morphometrics (why PCA?)", fill = "r")
+```
+
+## Recipe with `step_pca()`
 
 ```{r}
 #| label: day04-pca-recipe-code
 #| echo: true
-rec_pca <- recipe(y ~ ., data = peng_cls) |>
+rec_pca <- recipe(y ~ ., data = peng_pca) |>
   step_zv(all_predictors()) |>
   step_dummy(all_nominal_predictors()) |>
   step_normalize(all_numeric_predictors()) |>
-  step_pca(all_numeric_predictors(), num_comp = 3)
+  step_pca(all_numeric_predictors(), num_comp = 2)
 
 rec_pca
 ```
 
 ```{r}
-#| label: day04-pca-fit
-#| echo: true
-#| message: false
+#| label: day04-pca-variance
+#| echo: false
+#| fig-width: 7
+#| fig-height: 4
+num_scaled <- peng_pca |>
+  dplyr::select(dplyr::all_of(num_cols)) |>
+  scale()
+pc_fit <- prcomp(num_scaled, center = FALSE, scale. = FALSE)
+var_pct <- pc_fit$sdev^2 / sum(pc_fit$sdev^2) * 100
+var_df <- tibble(PC = paste0("PC", seq_along(var_pct)), variance_pct = var_pct)
+ggplot(var_df, aes(PC, variance_pct)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(
+    title = "Variance explained (same numerics as step_pca)",
+    x = NULL,
+    y = "% variance"
+  )
+```
+
+## Model with PCA vs without (same folds)
+
+```{r}
+#| label: day04-pca-prep-models
+#| echo: false
+#| results: hide
 xgb_pca_spec <- boost_tree(trees = 100, tree_depth = 3, learn_rate = 0.05) |>
   set_engine("xgboost") |>
   set_mode("classification")
 
-wf_pca <- workflow() |>
-  add_recipe(rec_pca) |>
-  add_model(xgb_pca_spec)
+rec_no_pca <- recipe(y ~ ., data = peng_pca) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
 
-set.seed(8)
-rs_pca <- fit_resamples(wf_pca, folds, metrics = metrics_cls)
-collect_metrics(rs_pca) |>
-  filter(.metric == "roc_auc") |>
-  select(mean, std_err)
+wf_pca <- workflow() |> add_recipe(rec_pca) |> add_model(xgb_pca_spec)
+wf_no_pca <- workflow() |> add_recipe(rec_no_pca) |> add_model(xgb_pca_spec)
 ```
 
-Compare to **no PCA** XGBoost from the ensemble slide — similar AUC is common here because we only have a few bill + year numerics after dummy coding.
+```{r}
+#| label: day04-pca-fit-compare
+#| echo: true
+#| message: false
+set.seed(8)
+rs_pca <- fit_resamples(wf_pca, folds_pca, metrics = metrics_acc)
+set.seed(8)
+rs_no_pca <- fit_resamples(wf_no_pca, folds_pca, metrics = metrics_acc)
+bind_rows(
+  collect_metrics(rs_pca) |> mutate(model = "XGB + PCA (2 comp.)"),
+  collect_metrics(rs_no_pca) |> mutate(model = "XGB, no PCA")
+) |>
+  filter(.metric == "accuracy") |>
+  select(model, mean, std_err)
+```
 
-**Leakage check:** never `step_pca()` on the **full** table before splitting; always inside **`workflow()`** + **`fit_resamples()`** or train-only `fit()`.
+```{r}
+#| label: day04-pca-auc-bar
+#| echo: false
+#| fig-width: 7
+#| fig-height: 3.5
+bind_rows(
+  collect_metrics(rs_pca) |> mutate(model = "With PCA"),
+  collect_metrics(rs_no_pca) |> mutate(model = "No PCA")
+) |>
+  filter(.metric == "accuracy") |>
+  ggplot(aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.12) +
+  theme_minimal() +
+  labs(title = "Accuracy: PCA vs all scaled numerics", x = NULL, y = "Mean accuracy")
+```
+
+**Tradeoff:** components are **not** “bill mm” anymore — VIP on PCA columns is harder to explain biologically.
+
+**Leakage check:** always fit PCA **inside** `workflow()` + resampling, never on the full table before splitting.

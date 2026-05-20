@@ -83,13 +83,13 @@ tibble(truth = test$species, .pred_class = pred_multi) |>
 ```
 
 ```{r fig.width=5.5, fig.height=4.5}
-cm <- conf_mat(
+cm_obj <- conf_mat(
   tibble(truth = test$species, .pred_class = pred_multi),
   truth = truth,
   estimate = .pred_class
-) |>
-  as_tibble() |>
-  dplyr::rename(Reference = truth, Prediction = .pred_class, Freq = n)
+)
+cm <- as.data.frame.table(cm_obj$table, stringsAsFactors = FALSE) |>
+  dplyr::rename(Reference = Truth)
 ggplot(cm, aes(Reference, Prediction, fill = Freq)) +
   geom_tile(color = "gray80") +
   geom_text(aes(label = Freq), color = "gray15") +
@@ -122,4 +122,4 @@ tibble(truth = test$species, .pred_class = pred_t) |>
 
 - **Chinstrap** is often the hardest class (smaller *n*, overlap in measurement space) — inspect **per-class** metrics, not only overall accuracy.
 - Multiclass **ROC** and **one-vs-rest** calibration are natural Thursday extensions; here we stay with **confusion matrices** + trees for clarity.
-- Compare with the **binary** pipeline in `_includes/tidymodels-pipeline.qmd` (Adelie vs Gentoo slice).
+- Compare with the **binary** pipeline in `_includes/day02-tidymodels-walkthrough.qmd` (Adelie vs Gentoo slice).

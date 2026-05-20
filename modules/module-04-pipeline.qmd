@@ -2,7 +2,7 @@
 title: "Module 04: Modeling pipeline in R"
 ---
 
-- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, evaluate honestly, then (below) cross-validate and tune like Tuesday’s slides.
+- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, evaluate honestly, then (below) cross-validate and tune like Day 2 (Tuesday) slides.
 - **Key message:** keep **preprocessing, fitting, and scoring** in one reproducible object so every model you compare is treated **fairly** — same **scientific task** (Adelie vs Gentoo) as the [penguin classification notebook](../notebooks/penguins-classification.Rmd), but that notebook uses **classical `glm` / `rpart`** with **all** morphometrics; **this page** uses **bill + island + sex + year** so **tree tuning** shows a real bias–variance tradeoff (flipper and body mass make CV scores too flat). Follow-up labs: [Module 07](module-07-penguins-choose-metrics.qmd) (several metrics while tuning), [Module 08](module-08-penguins-compare-models.qmd) (compare RF / XGBoost / MLP).
 
 ## How to read this page
@@ -10,15 +10,26 @@ title: "Module 04: Modeling pipeline in R"
 You already know **`lm`** and **`glm`**. Here, R uses a slightly richer vocabulary: a **recipe** is “the list of preprocessing steps,” a **workflow** glues those steps to a **model specification**, and **`tune_grid`** tries several settings using **cross-validation**.
 
 1. **First section** — one **train/test split**, **no tuning**: smallest honest **`last_fit`** story (logistic regression) on the **same `peng_cls` columns** as below.  
-2. **Second section** — the **same** Tuesday walk-through as the slides: tuned **classification tree**, wider `tune_grid`, figures (shared include).
+2. **Second section** — the **same** Day 2 (Tuesday) walk-through as the slides: tuned **classification tree**, wider `tune_grid`, figures (shared include).
 
 [← Module library (all modules)](index.qmd)
 
 ---
 
+## On the slides (Day 2)
+
+| Section | Topic | Slide link |
+|---------|--------|------------|
+| Part C | Incremental `recipe` → `workflow` → **`tune_grid`** (tree, **accuracy**) | [Part C pipeline](../slides/day-02-tuesday.html#/part-c-pipeline) |
+| Source | Same code as this page (canonical include) | [`day02-tidymodels-walkthrough.qmd`](../_includes/day02-tidymodels-walkthrough.qmd) |
+
+Thursday swaps **`spec`** only — [Part B models](../slides/day-04-thursday.html#/part-b-models).
+
+---
+
 ## First: one split, one model, no tuning (`last_fit`) {#train-test-last-fit}
 
-Tuesday’s deck focuses on **cross-validation + tuning** (faster to teach one rhythm in the room). If you want the **smallest** end-to-end `tidymodels` example first — **hold out test rows**, fit on training only, then score — work through this block.
+Day 2 (Tuesday) slides focus on **cross-validation + tuning** (faster to teach one rhythm in the room). If you want the **smallest** end-to-end `tidymodels` example first — **hold out test rows**, fit on training only, then score — work through this block.
 
 **Predictors (both sections):** **bill length & depth**, **island**, **sex**, **year** — we **drop flipper length and body mass** so the tuned tree section below is not “everything wins at 99%.” The [classification notebook](../notebooks/penguins-classification.Rmd) still uses full morphology for classical `glm` / `rpart` plots.
 
@@ -89,8 +100,10 @@ When you continue to the **canonical pipeline** below, you **redefine `peng_cls`
 
 ---
 
-## Canonical pipeline (Tuesday slides + tuning) {#canonical-pipeline-tuesday}
+## Canonical pipeline (Day 2 slides + tuning) {#canonical-pipeline-tuesday}
 
-Read the **concept slide** before each **code chunk** in the include — chunk names match the Tuesday deck. Tuning uses **`tree_depth` 1–6** and **`min_n` 2–50** (four levels each).
+Read the **concept slide** before each **code chunk** in the include — chunk names match the Day 2 (Tuesday) deck. Tuning uses **`tree_depth` 1–6** and **`min_n` 2–50** (four levels each).
 
-{{< include ../_includes/tidymodels-pipeline.qmd >}}
+{{< include ../_includes/day02-penguins-setup.qmd >}}
+
+{{< include ../_includes/day02-tidymodels-walkthrough.qmd >}}

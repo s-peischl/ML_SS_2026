@@ -1,0 +1,98 @@
+---
+title: "Solution 4B — Microbiome class imbalance and upsampling"
+format:
+  html:
+    toc: true
+    code-tools: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(themis)
+  library(dplyr)
+  library(ggplot2)
+})
+source("_load_microbiome.R")
+```
+
+```{r mic-imb}
+set.seed(4)
+mic <- load_microbiome()
+otu_cols <- mic_otu_cols(mic)
+
+mic_imb <- mic |>
+  group_by(Label) |>
+  filter(Label == "Early" | (Label == "Late" & row_number() <= max(1L, round(0.10 * sum(Label == "Late"))))) |>
+  ungroup()
+
+ggplot(mic_imb, aes(Label)) +
+  geom_bar() +
+  labs(title = "Manufactured imbalance (all Early, ~10% of Late)")
+```
+
+```{r specs}
+xgb_spec <- boost_tree(trees = 80, tree_depth = 3, learn_rate = 0.08) |>
+  set_engine("xgboost") |>
+  set_mode("classification")
+
+rec_base <- recipe(Label ~ ., data = mic_imb) |>
+  update_role(sample_id, Individual, Sex, Day, new_role = "id") |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_up <- recipe(Label ~ ., data = mic_imb) |>
+  update_role(sample_id, Individual, Sex, Day, new_role = "id") |>
+  step_upsample(Label) |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+folds_imb <- mic_group_folds(mic_imb, v = 5)
+metrics_imb <- metric_set(roc_auc, accuracy, sens, yardstick::spec, pr_auc)
+```
+
+```{r resample}
+set.seed(11)
+rs_no <- fit_resamples(
+  workflow() |> add_recipe(rec_base) |> add_model(xgb_spec),
+  folds_imb, metrics_imb
+)
+set.seed(12)
+rs_up <- fit_resamples(
+  workflow() |> add_recipe(rec_up) |> add_model(xgb_spec),
+  folds_imb, metrics_imb
+)
+
+bind_rows(
+  collect_metrics(rs_no) |> mutate(model = "No upsample"),
+  collect_metrics(rs_up) |> mutate(model = "Upsample")
+) |>
+  filter(.metric %in% c("accuracy", "sens", "pr_auc")) |>
+  select(model, .metric, mean, std_err)
+```
+
+## Interpretation
+
+Compare **accuracy**, **sensitivity**, and **`pr_auc`** between the two models.
+
+- If metrics were already strong **without** upsampling, say so — upsampling duplicates minority rows in training; it helps when the learner **under-predicts** the rare class (`Late`), not when separation is already easy.
+- For a **screening** study, emphasize **sensitivity** and **`pr_auc`** (cost of missing `Late`); for a methods comparison on balanced prevalence, **ROC-AUC** may suffice.
+- Tie conclusions to the confusion matrix below (false negatives on `Late`).
+
+```{r conf-mat}
+set.seed(13)
+split_imb <- initial_split(mic_imb, prop = 0.8, strata = Label)
+fit_imb <- fit(
+  workflow() |> add_recipe(rec_base) |> add_model(xgb_spec),
+  training(split_imb)
+)
+augment(fit_imb, testing(split_imb)) |>
+  conf_mat(truth = Label, estimate = .pred_class)
+```
+
+```{r session, echo=FALSE}
+sessionInfo()
+```
