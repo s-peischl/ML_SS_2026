@@ -28,7 +28,7 @@ Try each block yourself first. When you are stuck, open the matching **solution*
 
 - [Day 1 (Monday)](../slides/day-01-monday.qmd)
 - [Day 2 (Tuesday)](../slides/day-02-tuesday.qmd)
-- [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
+- [Day 4 (Thursday)](../slides/day-04-thursday.html)
 
 ---
 
@@ -319,7 +319,7 @@ No graded practical. Optional:
 
 # Day 4 (Thursday) — Models, preprocessing, metrics
 
-**Lecture:** [Day 4 slides](../slides/day-04-thursday.qmd) — order: **many models** → **PCA** → **imputation** → **imbalance + metrics** → **VIP**
+**Lecture:** [Day 4 slides](../slides/day-04-thursday.html) — order: **many models** → **PCA** → **imputation** → **imbalance + metrics** → **VIP**
 
 **Primary track:** **Schloss mouse 16S microbiome** (same data as Day 2) — ~282 samples, ~200+ OTUs after prevalence filter, outcome `Early` vs `Late`.
 

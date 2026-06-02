@@ -769,13 +769,13 @@ print(
 ```{r}
 #| label: day04-mlp-schematic
 #| echo: false
-#| fig-width: 9
-#| fig-height: 5
+#| fig-width: 14
+#| fig-height: 7
 #| out-width: 100%
 print(plot_mlp_schematic())
 ```
 
-## Neural network (small MLP)  -  API literacy
+## Neural network (small MLP) 
 
 - **MLP** = **multilayer perceptron**: one hidden layer of neurons; **`hidden_units`** sets its width.
 - **`epochs`**: how many full passes through the training data.

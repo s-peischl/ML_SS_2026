@@ -28,7 +28,7 @@ This notebook predicts **`sex`** (female vs male) from **morphometrics and islan
 
 **Models:** `glm` and `rpart`. **Train/test split and confusion tables:** `tidymodels` (`initial_split`, `yardstick::conf_mat`). For a full Adelie-vs-Gentoo pipeline, see [Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit).
 
-See **[Palmer Penguins data card](../data/cards/palmer-penguins.qmd)** and the related notebooks (mass, species, multiclass). For **SHAP** on this task (without `species`), see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) and [Day 4 slides](../slides/day-04-thursday.qmd). For **SHAP** explanations on this task (without `species`), see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) and [Day 4 slides](../slides/day-04-thursday.qmd).
+See **[Palmer Penguins data card](../data/cards/palmer-penguins.qmd)** and the related notebooks (mass, species, multiclass). For **SHAP** on this task (without `species`), see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) and [Day 4 slides](../slides/day-04-thursday.html).
 
 ## Prepare data (complete cases on `sex`)
 

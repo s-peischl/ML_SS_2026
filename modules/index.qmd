@@ -36,7 +36,7 @@ Open a section directly after `quarto render`:
 | [Curriculum outline](../curriculum-outline.qmd) | Concept |
 | [Day 1 (Monday) slides](../slides/day-01-monday.qmd) | Concept |
 | [Day 2 (Tuesday) slides](../slides/day-02-tuesday.qmd) | Concept + **Canonical_code** (shared pipeline with Module 04) |
-| [Day 4 (Thursday) slides](../slides/day-04-thursday.qmd) | Concept + code |
+| [Day 4 (Thursday) slides](../slides/day-04-thursday.html) | Concept + code |
 | [Notebook index](../notebooks/index.qmd) | **Lab_exploration** (+ homework when assigned) |
 
 **Format inventory (modules 01–08)** — tag = main job of the page

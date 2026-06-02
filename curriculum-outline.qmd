@@ -55,7 +55,7 @@ This outline links to **[afternoon lab exercises](exercises/mlss2026-lab-exercis
 
 ## Day 4 (Thursday): Models, Preprocessing, Metrics, and Importance
 
-**Deck:** [day-04-thursday.qmd](slides/day-04-thursday.qmd) (includes: `day04-*.qmd`)
+**Deck:** [day-04-thursday.html](slides/day-04-thursday.html) (includes: `day04-*.qmd`)
 
 ### Learning goals
 

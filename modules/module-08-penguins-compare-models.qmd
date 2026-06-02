@@ -141,4 +141,4 @@ If one fold is consistently harder, inspect whether it has unusual class balance
 ## Course links
 
 - **Advanced models (concepts):** [Module 05](module-05-advanced-models.qmd)
-- **Day 2 (Tuesday) / Day 4 (Thursday) slides:** [day-02](../slides/day-02-tuesday.qmd), [day-04](../slides/day-04-thursday.qmd)
+- **Day 2 (Tuesday) / Day 4 (Thursday) slides:** [day-02](../slides/day-02-tuesday.html), [day-04](../slides/day-04-thursday.html)

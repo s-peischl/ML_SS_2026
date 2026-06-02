@@ -1,0 +1,184 @@
+---
+title: "Palmer Penguins — SHAP walkthrough"
+author: "ML Summer School"
+format:
+  html:
+    toc: true
+    code-tools: true
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(palmerpenguins)
+  library(shapviz)
+  library(kernelshap)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+```
+
+# Overview
+
+Self-contained SHAP example on **Palmer Penguins**.
+
+- Task: predict `sex` from morphometrics + island/year (no `species`)
+- One model: random forest (`ranger`)
+- SHAP outputs: **beeswarm with individual points**, **mean absolute SHAP bar plot**, and **waterfall plots** for individual penguins
+
+Related: [Module 06 SHAP section](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex)
+
+## Prepare data
+
+```{r}
+pg_sex <- palmerpenguins::penguins |>
+  tidyr::drop_na(
+    sex, bill_length_mm, bill_depth_mm,
+    flipper_length_mm, body_mass_g, island, year
+  ) |>
+  mutate(
+    sex = droplevels(sex),
+    year = as.numeric(year)
+  ) |>
+  select(-species)
+```
+
+```{r}
+pg_sex |>
+  count(sex) |>
+  knitr::kable(col.names = c("Sex", "n"))
+```
+
+## Fit one explicit model (random forest)
+
+```{r}
+rec_sex <- recipe(
+  sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm +
+    body_mass_g + island + year,
+  data = pg_sex
+) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rf_spec <- rand_forest(trees = 300, mtry = 3, min_n = 2) |>
+  set_engine("ranger", probability = TRUE) |>
+  set_mode("classification")
+
+wf_sex <- workflow() |>
+  add_recipe(rec_sex) |>
+  add_model(rf_spec)
+
+fit_sex <- fit(wf_sex, data = pg_sex)
+```
+
+## Compute SHAP values explicitly
+
+This section does the SHAP workflow in small steps:
+
+1. **Extract trained preprocessing** from the fitted workflow.
+2. **Bake predictors** so we get the numeric model matrix used by the forest.
+3. Choose a subset of rows to explain (`X_shap`) and a background reference set (`bg_X`).
+4. Define `pred_fun` to return **P(male)** from the fitted `ranger` model.
+5. Run `kernelshap()` to estimate contributions, then wrap with `shapviz()`.
+6. Identify one male and one female row for waterfall examples.
+
+```{r}
+rec_est <- extract_recipe(fit_sex, estimated = TRUE)
+X_model <- bake(rec_est, new_data = pg_sex, all_predictors())
+
+set.seed(11)
+X_shap <- dplyr::slice_sample(X_model, n = min(80, nrow(X_model)))
+bg_X <- dplyr::slice_sample(X_model, n = min(35, nrow(X_model)))
+
+rf_engine <- extract_fit_parsnip(fit_sex)$fit
+pred_fun <- function(object, X_new) {
+  as.numeric(predict(object, data = X_new)$predictions[, "male"])
+}
+
+ks <- kernelshap::kernelshap(rf_engine, X = X_shap, pred_fun = pred_fun, bg_X = bg_X)
+shp <- shapviz::shapviz(ks, X_pred = X_shap)
+
+sex_sample <- pg_sex$sex[as.integer(rownames(X_shap))]
+male_row <- which(sex_sample == "male")[1]
+female_row <- which(sex_sample == "female")[1]
+```
+
+## What positive/negative SHAP means
+
+- We explain **P(male)**, so each SHAP value is a push on that probability scale.
+- **Positive SHAP value**: this feature pushes the prediction toward **male** (higher P(male)).
+- **Negative SHAP value**: this feature pushes the prediction away from male (toward **female**).
+- In a waterfall plot, baseline + all SHAP contributions = final model output for that row.
+
+## SHAP beeswarm (individual points)
+
+Each dot is one penguin; horizontal position is SHAP contribution.
+
+```{r fig.width=9, fig.height=6}
+shapviz::sv_importance(
+  shp,
+  kind = "beeswarm",
+  max_display = 12
+) +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "SHAP beeswarm (individual penguins)",
+    subtitle = "Color = feature value; x-axis = push toward/away from P(male)"
+  )
+```
+
+## Mean absolute SHAP values (global importance)
+
+This aggregates absolute contributions across rows.
+
+```{r fig.width=8, fig.height=5}
+shapviz::sv_importance(
+  shp,
+  kind = "bar",
+  max_display = 12
+) +
+  theme_minimal(base_size = 13) +
+  labs(
+    title = "Mean absolute SHAP values",
+    subtitle = "Average |SHAP| per feature"
+  )
+```
+
+## Waterfall plot for individual penguins
+
+### Example 1 — one male penguin
+
+```{r fig.width=9, fig.height=5.5}
+shapviz::sv_waterfall(
+  shp,
+  row_id = male_row
+) +
+  labs(
+    title = "Waterfall: one male penguin",
+    subtitle = "Positive bars push toward male, negative bars push toward female"
+  )
+```
+
+### Example 2 — one female penguin
+
+```{r fig.width=9, fig.height=5.5}
+shapviz::sv_waterfall(
+  shp,
+  row_id = female_row
+) +
+  labs(
+    title = "Waterfall: one female penguin",
+    subtitle = "Same model, opposite pushes can lead to a female prediction"
+  )
+```
+
+## Quick interpretation checklist
+
+- Beeswarm = distribution of local effects across many rows
+- Mean |SHAP| bar = global ranking of influential features
+- Waterfall = local explanation for one row only
+- SHAP explains this fitted model; it does **not** prove causality

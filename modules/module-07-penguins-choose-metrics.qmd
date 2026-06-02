@@ -124,4 +124,4 @@ autoplot(tune_res, metric = "roc_auc")
 ## Course links
 
 - **Concepts:** [Module 06 — Metrics & SHAP](module-06-evaluation-and-interpretability.qmd)
-- **Day 4 (Thursday) slides:** [Metrics toolbox](../slides/day-04-thursday.qmd)
+- **Day 4 (Thursday) slides:** [Metrics toolbox](../slides/day-04-thursday.html)

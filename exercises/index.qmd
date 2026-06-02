@@ -9,7 +9,7 @@ format:
 
 Each teaching day has about **4 hours** of hands-on work (blocks A–F on Day 4). Tasks are in the **[lab exercises handbook](mlss2026-lab-exercises.qmd)**. **Solutions are linked below** — there is no graded submission on this site; try each block yourself first, then compare when you are stuck.
 
-**Also on this site:** [Home](../index.qmd) · [Curriculum](../curriculum-outline.qmd) · [Day 1 slides](../slides/day-01-monday.qmd) · [Day 2](../slides/day-02-tuesday.qmd) · [Day 4](../slides/day-04-thursday.qmd)
+**Also on this site:** [Home](../index.qmd) · [Curriculum](../curriculum-outline.qmd) · [Day 1 slides](../slides/day-01-monday.html) · [Day 2](../slides/day-02-tuesday.html) · [Day 4](../slides/day-04-thursday.html)
 
 ---
 

@@ -49,6 +49,10 @@ website:
             href: notebooks/penguins-species-multiclass.Rmd
           - text: Penguins — multiclass upsampling
             href: notebooks/penguins-multiclass-upsampling.Rmd
+          - text: Penguins — SHAP
+            href: notebooks/penguins-shap.Rmd
+          - text: Penguins — PCA
+            href: notebooks/penguins-pca.Rmd
 
 format:
   html:

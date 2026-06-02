@@ -16,7 +16,7 @@ title: "Module 05: Advanced Models"
 
 | Part | Topic | Slide link |
 |------|--------|------------|
-| A | Recap `rec_base`, stressed scenarios | [Day 4 deck](../slides/day-04-thursday.qmd) |
+| A | Recap `rec_base`, stressed scenarios | [Day 4 deck](../slides/day-04-thursday.html) |
 | B | RF, XGB, MLP, model catalog, **accuracy** compare | [Part B — Models](../slides/day-04-thursday.html#/part-b-models) |
 | C | `step_pca()` | [Part C — PCA](../slides/day-04-thursday.html#/part-c-pca) |
 | D | `step_impute_*()` | [Part D — Impute](../slides/day-04-thursday.html#/part-d-impute) |
@@ -96,7 +96,7 @@ wf_ext <- workflow() |>
 
 ## Course links
 
-- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
+- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html)
 - **Pipeline:** [Module 04](module-04-pipeline.qmd)
 - **Compare engines:** [Module 08](module-08-penguins-compare-models.qmd)
 - **Metrics & SHAP:** [Module 06](module-06-evaluation-and-interpretability.qmd)

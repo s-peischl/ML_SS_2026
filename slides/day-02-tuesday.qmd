@@ -28,7 +28,7 @@ format:
 - [Module 03  -  Trees & cultures](../modules/module-03-trees-and-cultures.qmd)
 - [Module 04  -  Pipeline](../modules/module-04-pipeline.qmd)
 - [Back: Day 1 (Monday) deck](day-01-monday.qmd)
-- [Next: Day 4 (Thursday) deck](day-04-thursday.qmd)
+- [Next: Day 4 (Thursday) deck](day-04-thursday.html)
 
 # Part A  -  Two cultures and trees {#part-a-cultures}
 

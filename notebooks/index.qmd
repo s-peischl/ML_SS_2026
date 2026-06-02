@@ -12,15 +12,17 @@ Run these documents in **RStudio** or **Positron** (or render with Quarto). The 
 
 **Notebook inventory**
 
-| Notebook | Primary role | Companion module(s) |
-|----------|----------------|----------------------|
-| [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) (concepts) |
-| [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd), [Module 03](../modules/module-03-trees-and-cultures.qmd) |
-| [penguins-body-mass.Rmd](penguins-body-mass.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) |
-| [penguins-classification.Rmd](penguins-classification.Rmd) | Lab_exploration | [Module 03](../modules/module-03-trees-and-cultures.qmd); **`tidymodels`** path: [04 train/test](../modules/module-04-pipeline.qmd#train-test-last-fit), [04 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [07](../modules/module-07-penguins-choose-metrics.qmd), [08](../modules/module-08-penguins-compare-models.qmd) |
-| [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd) (splits / leakage ideas) |
-| [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) | Lab_exploration | [Module 06](../modules/module-06-evaluation-and-interpretability.qmd) |
-| [penguins-multiclass-upsampling.Rmd](penguins-multiclass-upsampling.Rmd) | Minimal lab | [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics) |
+| Notebook | Primary role | Companion module(s) | Download |
+|----------|----------------|----------------------|----------|
+| [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) (concepts) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/linear-regression-lasso.Rmd) |
+| [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd), [Module 03](../modules/module-03-trees-and-cultures.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/logistic-regression-gene-disease.Rmd) |
+| [penguins-body-mass.Rmd](penguins-body-mass.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-body-mass.Rmd) |
+| [penguins-classification.Rmd](penguins-classification.Rmd) | Lab_exploration | [Module 03](../modules/module-03-trees-and-cultures.qmd); **`tidymodels`** path: [04 train/test](../modules/module-04-pipeline.qmd#train-test-last-fit), [04 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [07](../modules/module-07-penguins-choose-metrics.qmd), [08](../modules/module-08-penguins-compare-models.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-classification.Rmd) |
+| [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd) (splits / leakage ideas) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-sex-classification.Rmd) |
+| [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) | Lab_exploration | [Module 06](../modules/module-06-evaluation-and-interpretability.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-species-multiclass.Rmd) |
+| [penguins-multiclass-upsampling.Rmd](penguins-multiclass-upsampling.Rmd) | Minimal lab | [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-multiclass-upsampling.Rmd) |
+| [penguins-shap.Rmd](penguins-shap.Rmd) | Lab_exploration | [Module 06 SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-shap.Rmd) |
+| [penguins-pca.Rmd](penguins-pca.Rmd) | Lab_exploration | [Day 4 PCA block](../slides/day-04-thursday.html#/part-c-recipes) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-pca.Rmd) |
 :::
 
 ::: {.hub-muted}
@@ -45,6 +47,8 @@ For the **Day 2 (Tuesday) `tidymodels` pipeline** (recipe + workflow + cross-val
 - [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) — **female vs male** from size measures (**species left out on purpose**), train/test split, same two model types.  
 - [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) — **three species**: multinomial logistic regression (`nnet::multinom`) and a multiclass tree, confusion tables and a heatmap.  
 - [penguins-multiclass-upsampling.Rmd](penguins-multiclass-upsampling.Rmd) — **rare Chinstrap** + one tree model: compare confusion matrices with and without `step_upsample()`.
+- [penguins-shap.Rmd](penguins-shap.Rmd) — SHAP notebook: beeswarm with individual points, mean \|SHAP\| ranking, and waterfall plots for individual penguins.
+- [penguins-pca.Rmd](penguins-pca.Rmd) — PCA notebook: PCA biplot/loadings and compact with-vs-without PCA model comparison.
 
 ## Requirements
 
