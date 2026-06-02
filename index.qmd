@@ -33,7 +33,8 @@ Palmer Penguins
 :::
 ### Our real-data running example
 
-- **[About the dataset](dataset-penguins.qmd)** — variables, biology, caveats, and how we reuse penguins **Monday → Thursday**  
+- **[Data catalog](data/index.qmd)** — data cards for every dataset (penguins, genes, Old Faithful, Hald, microbiome)  
+- **[Palmer Penguins card](data/cards/palmer-penguins.qmd)** — variables, biology, caveats, teaching slices **Monday → Thursday**  
 - Links to **penguin-only** notebooks from that page (mass, binary species, sex, three-class species); **`tidymodels`** walk-throughs live as **Module 04** (+ **07–08** follow-ups; see [module library](modules/index.qmd)).
 
 Synthetic **gene** notebooks are there so we **know the true story behind the data** (which “genes” really matter) while we teach LASSO, ridge, and AIC.
@@ -45,9 +46,9 @@ Class slides
 :::
 ### Follow along day by day
 
-- **[Day 1 (Monday)](slides/day-01-monday.qmd)** — from questions to simple models: when a straight line (or curve) helps, and when a model is “trying too hard.”  
-- **[Day 2 (Tuesday)](slides/day-02-tuesday.qmd)** — branching decisions (trees), and how to keep your code organized so Day 4 still makes sense.  
-- **[Day 4 (Thursday)](slides/day-04-thursday.qmd)** — forests, boosting, neural nets, PCA/imputation in recipes, variable importance, and evaluation.  
+- **[Day 1 (Monday)](slides/day-01-monday.html)** — from questions to simple models: when a straight line (or curve) helps, and when a model is “trying too hard.”  
+- **[Day 2 (Tuesday)](slides/day-02-tuesday.html)** — branching decisions (trees), and how to keep your code organized so Day 4 still makes sense.  
+- **[Day 4 (Thursday)](slides/day-04-thursday.html)** — forests, boosting, neural nets, PCA/imputation in recipes, variable importance, and evaluation.  
 
 Each deck links back here from the **footer** if you get lost.
 :::
@@ -104,11 +105,12 @@ Think of it as one story in three chapters: **see the pattern**, **keep your wor
 ::: {.callout-note collapse="true" appearance="simple"}
 ## For instructors & TAs
 
-- **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.  
+- **Local preview:** from this project folder run `quarto preview` so links resolve; after `quarto render`, you can serve `_site/` with any static file server.
+- **Slide decks (Reveal.js):** use the navbar Day links or open `_site/slides/day-02-tuesday.html` after render. IDE preview of a `.qmd` file shows a scrolling article — that is not the slide deck. To preview one deck: `quarto preview slides/day-02-tuesday.html`.  
 
 - **Course design detail** — the [curriculum outline](curriculum-outline.qmd) describes the two-track story (genes + Palmer Penguins), calibration, causal guardrails around explainability, data/model cards, reproducibility, and assessment prompts.  
 - **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
-- **Palmer Penguins** — [About the dataset](dataset-penguins.qmd); Day 2 (Tuesday) **modeling pipeline** examples use the same **Adelie vs Gentoo** setup as the penguin classification notebook (implemented with the `tidymodels` R packages).  
+- **Palmer Penguins** — [Data card](data/cards/palmer-penguins.qmd) and [full catalog](data/index.qmd); Day 2 (Tuesday) **modeling pipeline** examples use the same **Adelie vs Gentoo** setup as the penguin classification notebook (implemented with the `tidymodels` R packages).  
 
 - **Single source for the canonical penguin pipeline** — [`_includes/day02-tidymodels-walkthrough.qmd`](_includes/day02-tidymodels-walkthrough.qmd) (Day 2 slides + Module 04 via `tidymodels-pipeline.qmd` wrapper).
 - **Slide reveal mode** — edit `incremental` in [`slides/_reveal-config.yml`](slides/_reveal-config.yml) (`false` = full slide at once; `true` = step-by-step bullets), then re-render the day deck.

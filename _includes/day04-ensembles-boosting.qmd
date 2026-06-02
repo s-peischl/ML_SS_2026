@@ -37,6 +37,8 @@ wf_rf <- workflow() |> add_recipe(rec_base) |> add_model(rf_spec)
 wf_xgb <- workflow() |> add_recipe(rec_base) |> add_model(xgb_spec)
 ```
 
+{{< include ../_includes/tidymodels-evaluation-workflow.qmd >}}
+
 ### Cross-validated ROC AUC (code + table)
 
 ```{r}

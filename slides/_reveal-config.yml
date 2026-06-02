@@ -1,16 +1,2 @@
-# Shared Reveal.js options for Day 1 / 2 / 4 slide decks.
-# Toggle bullet-by-bullet reveals: set incremental to true or false, then re-render the deck(s).
-#
-#   incremental: false  → entire slide visible at once (default here)
-#   incremental: true   → lists and nested content appear step-by-step
-#
-# Render:  cd teaching-hub && quarto render slides/day-02-tuesday.qmd
-
-format:
-  revealjs:
-    theme: [default, ../assets/css/slides-theme.scss]
-    slide-number: true
-    incremental: false
-    scrollable: true
-    slide-level: 2
-    html-math-method: katex
+# Reference only — Reveal options are declared in each slide deck's YAML header.
+# (Quarto does not reliably apply format: revealjs from metadata-files inside website projects.)

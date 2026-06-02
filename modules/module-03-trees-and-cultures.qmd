@@ -97,4 +97,4 @@ Thursday keeps **`rec_base`** and **`workflow()`** but swaps **`spec`** to fores
 - **Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.qmd)
 - **Notebook:** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (`glm` + `rpart`)
 - **Pipeline:** [Module 04](module-04-pipeline.qmd)
-- **Data:** [Palmer Penguins](../dataset-penguins.qmd)
+- **Data:** [Palmer Penguins](../data/cards/palmer-penguins.qmd) · [Data catalog](../data/index.qmd)

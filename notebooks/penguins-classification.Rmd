@@ -24,7 +24,7 @@ theme_set(theme_classic())
 
 # Overview
 
-This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** for **classification**. We use a **binary** task — **Adelie vs Gentoo** — after dropping Chinstrap (cleaner boundaries in 2D plots; for **three species** see [`penguins-species-multiclass.Rmd`](penguins-species-multiclass.Rmd)).
+This notebook uses **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** for **classification**. We use a **binary** task — **Adelie vs Gentoo** — after dropping Chinstrap (cleaner boundaries in 2D plots; for **three species** see [`penguins-species-multiclass.Rmd`](penguins-species-multiclass.Rmd)).
 
 **Models:** `glm` logistic regression and an `rpart` tree. **Splits and metrics:** `tidymodels` / `yardstick` (`conf_mat`).
 

@@ -1,6 +1,16 @@
 ---
 title: "Day 1 (Monday): Foundations and Regularization"
-metadata-files: [_reveal-config.yml]
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: false
+    scrollable: true
+    slide-level: 2
+    html-math-method: katex
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a>'
+    output-file: day-01-monday.html
+    embed-resources: true
 ---
 
 
@@ -12,15 +22,15 @@ metadata-files: [_reveal-config.yml]
 - [Next: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
 
 
-# Part A — Setup
+# Part A  -  Setup
 
 ## Tools we use this week
 
-- **R** — language for statistics, graphics, and reproducible scripts  
-- **RStudio or Positron** — console, editor, projects, and **Render** for `.qmd` / `.Rmd`  
-- **tidyverse** — shared data and plot grammar (`dplyr`, `ggplot2`, …); you will see the pipe `|>` in notebooks  
-- **tidymodels** — recipes, workflows, and resampling for modeling pipelines (**Tuesday onward**); **Monday** stays mostly familiar **`lm`** / **`glm`**  
-- Install **`palmerpenguins`** before Tuesday — we use it in the penguin notebooks, not in today’s gene simulations  
+- **R**  -  language for statistics, graphics, and reproducible scripts  
+- **RStudio or Positron**  -  console, editor, projects, and **Render** for `.qmd` / `.Rmd`  
+- **tidyverse**  -  shared data and plot grammar (`dplyr`, `ggplot2`, ...); you will see the pipe `|>` in notebooks  
+- **tidymodels**  -  recipes, workflows, and resampling for modeling pipelines (**Tuesday onward**); **Monday** stays mostly familiar **`lm`** / **`glm`**  
+- Install **`palmerpenguins`** before Tuesday  -  we use it in the penguin notebooks, not in today's gene simulations  
 
 Details and installs: [Student notebooks](../notebooks/index.qmd) 
 
@@ -38,7 +48,7 @@ Details and installs: [Student notebooks](../notebooks/index.qmd)
 - Work through **two synthetic gene datasets** (continuous trait; binary disease) with known ground truth  
 - See **underfitting** (intercept-only) vs **overfitting risk** (all predictors) on the **same** data  
 - Use **forward and backward AIC** selection, then **lasso** as a continuous alternative  
-- Understand $\lambda$ and choosing it by **leave-one-out CV** (`cv.glmnet`, `nfold = n`) — not a train/test split today  
+- Explain **cross-validation** (leave-one-out and $k$-fold) for choosing tuning parameters such as lasso **$\lambda$** (`cv.glmnet`)  -  not a final test-set lockbox today  
 
 
 
@@ -58,28 +68,29 @@ knitr::opts_chunk$set(
   out.width = "100%",
   dpi = 120
 )
+source("../R/slide-viz-helpers.R")
 ```
 
 ## R and RStudio 
 
-- **R** — the language: objects, functions, statistics, graphics  
-- **RStudio Desktop** — a **workbench** around R (editor, console, plots, files)  
-- **Positron** — Posit’s newer IDE; same habits (script → console → plots)  
-- **R Project** — open the **course folder** as a project so paths and history stay in one place  
+- **R**  -  the language: objects, functions, statistics, graphics  
+- **RStudio Desktop**  -  a **workbench** around R (editor, console, plots, files)  
+- **Positron**  -  Posit's newer IDE; same habits (script → console → plots)  
+- **R Project**  -  open the **course folder** as a project so paths and history stay in one place  
 
 ## RStudio layout (four panes)
 
 | | |
 |---|---|
-| **Source / Editor** — write `.R` scripts; run lines with shortcuts | **Environment** — data frames and objects you have created |
-| **Console** — type commands; see output and errors | **Files / Plots / Packages / Help** — browse files; view figures; install packages |
+| **Source / Editor**  -  write `.R` scripts; run lines with shortcuts | **Environment**  -  data frames and objects you have created |
+| **Console**  -  type commands; see output and errors | **Files / Plots / Packages / Help**  -  browse files; view figures; install packages |
 
 ![](../assets/figures/01_Rstudio.png){#fig-my-image width=80% fig-align="center"}
 
 ## Install R, then RStudio
 
-1. **R** from [CRAN](https://cran.r-project.org/) (or use your lab’s managed install)  
-2. **RStudio Desktop** from [Posit — RStudio download](https://posit.co/download/rstudio-desktop/)  
+1. **R** from [CRAN](https://cran.r-project.org/) (or use your lab's managed install)  
+2. **RStudio Desktop** from [Posit  -  RStudio download](https://posit.co/download/rstudio-desktop/)  
 3. Open RStudio → **Console** → check it works:
 
 ```{r}
@@ -98,11 +109,19 @@ R.version.string
   - **Windows / Linux:** Ctrl + Enter  
   - **macOS:** Cmd + Enter  
 - Lines starting with **`#`** are **comments** (notes for humans; R ignores them)  
-- **Save** the `.R` file and re-run from the top when you change something — that is reproducibility in miniature  
+- **Save** the `.R` file and re-run from the top when you change something  -  that is reproducibility in miniature  
+
+## Old Faithful  -  our ggplot demo data
+
+The built-in **`faithful`** table records **eruption duration** and **waiting time** between eruptions at Yellowstone (minutes). [Data card](../data/cards/old-faithful.qmd)
+
+![](../assets/figures/shared/old_faithful.jpg){width=72% fig-align="center"}
+
+*Photo: Old Faithful geyser, Yellowstone (Wikimedia Commons, CC BY-SA 4.0).*
 
 ## Load data: built-in table
 
-Any rectangular table works. Here we use **`faithful`** (Old Faithful geyser eruptions) — no extra package required:
+Any rectangular table works. Here we use **`faithful`**  -  no extra package required:
 
 ```{r}
 #| label: day01-rstudio-load
@@ -130,9 +149,9 @@ glimpse(faithful_df)
 
 ## ggplot2 Grammar
 
-**Data** and **aesthetic mappings** (`aes`: x, y, colour, …) +
+**Data** and **aesthetic mappings** (`aes`: x, y, colour, ...) +
 
-**geometric layers** (`geom_point`, `geom_smooth`, …) + 
+**geometric layers** (`geom_point`, `geom_smooth`, ...) + 
 
 **`labs()`** + 
 
@@ -140,7 +159,7 @@ glimpse(faithful_df)
 
 Combine different steps with **`+`** at *end of line*, new command can start in next line.
 
-## Example plot — scatter
+## Example plot  -  scatter
 
 ```{r}
 #| label: day01-rstudio-plot-scatter
@@ -157,7 +176,7 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
   theme_minimal()
 ```
 
-## Example plot — add a layer (`geom_smooth`)
+## Example plot  -  add a layer (`geom_smooth`)
 
 Each **`+`** adds another layer or adjustment:
 
@@ -182,14 +201,14 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
 Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
 
 
-# Part B — Classical linear models
+# Part B  -  Classical linear models
 
 ## Classical statistics 
 
 - Data are **noisy**; models are **simplifying mathematical statements** about patterns, not automatic truths about biology  
 - We **estimate** unknown quantities and (when the design supports it) quantify **uncertainty** (standard errors, intervals)  
 
-- **Association** $\neq$ **causation** — a significant coefficient is still conditional on everything else in the model and on what was actually measured  
+- **Association** $\neq$ **causation**  -  a significant coefficient is still conditional on everything else in the model and on what was actually measured  
 
 ## Classical vs predictive wording 
 
@@ -211,11 +230,11 @@ additivity in the **chosen** predictor columns
 
 ## Key assumptions 
 
-- **Mean structure:** if the truth is a non-linear pattern, a single plane leaves **patterned residuals** — check the **residuals vs fitted** slide above  
-- **Independent measurements**: violated by repeated measures, batches, or spatial proximity — then naive confidence intervals become inaccurate 
+- **Mean structure:** if the truth is a non-linear pattern, a single plane leaves **patterned residuals**  -  check the **residuals vs fitted** slide above  
+- **Independent measurements**: violated by repeated measures, batches, or spatial proximity  -  then naive confidence intervals become inaccurate 
 - **Comparable error spread** across fitted values (heteroscedasticity $\Rightarrow$ cautious intervals)  
-- **Roughly normal errors** — check the **Q–Q** plot; matters most for **small-$n$** confidence intervals  
-- **Influence:** a handful of extreme points can **pull** slopes — always look at diagnostics before you tell a story 
+- **Roughly normal errors**  -  check the **Q-Q** plot; matters most for **small-$n$** confidence intervals  
+- **Influence:** a handful of extreme points can **pull** slopes  -  always look at diagnostics before you tell a story 
 
 
 
@@ -246,7 +265,7 @@ knitr::opts_chunk$set(
 
 ## One explanatory variable: line + scatter
 
-Each vertical “slice” is a Normal density centered on the **fitted line** — spread of $y$ at a given $x$.
+Each vertical "slice" is a Normal density centered on the **fitted line**  -  spread of $y$ at a given $x$.
 
 ```{r}
 #| label: day01-lr-intro-line
@@ -298,7 +317,7 @@ Fitting is done by minimizing sum of squared residuals (oridnary least squares, 
 
 ![](../assets/figures/01_residuals.png){#fig-my-image width=80% fig-align="center"}
 
-## Q–Q plot of residuals
+## Q-Q plot of residuals
 
 Checks whether residuals look **roughly Normal** (one assumption behind classical intervals).
 
@@ -311,7 +330,7 @@ ggplot(df.obs, aes(sample = residuals(mod_toy))) +
   stat_qq() +
   stat_qq_line(color = "firebrick3", linetype = "dashed", linewidth = 0.7) +
   labs(
-    title = "Q–Q plot of residuals",
+    title = "Q-Q plot of residuals",
     x = "Theoretical quantiles",
     y = "Sample quantiles"
   ) +
@@ -320,7 +339,7 @@ ggplot(df.obs, aes(sample = residuals(mod_toy))) +
 
 ## Residuals vs fitted values
 
-Look for **pattern** (curve, funnel shape) — not just random scatter around zero.
+Look for **pattern** (curve, funnel shape)  -  not just random scatter around zero.
 
 ```{r}
 #| label: day01-lr-intro-resid-fitted
@@ -379,8 +398,8 @@ s3d$plane3d(mod3, lty = "solid", lwd = 2, col = "firebrick3")
 
 ## The meaning of regression coefficeints $\hat{\beta}_j$ 
 
-- Each slope is **“holding other predictors constant”** — interpretable only in that mathematical sense, not as a controlled experiment unless design matches  
-- **Correlated predictors** inflate standard errors and swap signs of coefficients easily — **regularization** (lasso, later today) is one way to handle such data   
+- Each slope is **"holding other predictors constant"**  -  interpretable only in that mathematical sense, not as a controlled experiment unless design matches  
+- **Correlated predictors** inflate standard errors and swap signs of coefficients easily  -  **regularization** (lasso, later today) is one way to handle such data   
 - **Many predictors, modest $n$:** plain ordinary least sqaures (OLS) is unstable or non-unique 
 
 
@@ -412,14 +431,16 @@ theme_set(theme_classic())
 
 ## The data (`MASS::cement`)
 
+[Data card](../data/cards/hald-cement.qmd)
+
 ```{r}
 #| label: day01-hald-table
 #| echo: false
 knitr::kable(head(hald, 5), digits = 1, caption = "Hald cement (first 5 of 13 rows)") 
 ```
 
-- **Outcome `y`:** heat evolved (calories per gram cement) — left on the original scale  
-- **Predictors `x1`–`x4`:** oxide composition — we **standardize** them (`scale()`) so slopes are comparable and units do not dominate the fit  
+- **Outcome `y`:** heat evolved (calories per gram cement)  -  left on the original scale  
+- **Predictors `x1`-`x4`:** oxide composition  -  we **standardize** them (`scale()`) so slopes are comparable and units do not dominate the fit  
 
 ## Standardize predictors first
 
@@ -427,11 +448,11 @@ knitr::kable(head(hald, 5), digits = 1, caption = "Hald cement (first 5 of 13 ro
 #| label: day01-hald-scale-note
 #| echo: true
 hald_scaled[, c("x1", "x2", "x3", "x4")] <- scale(hald[, c("x1", "x2", "x3", "x4")])
-# All regressions below use hald_scaled (z-scored x1–x4, original y)
+# All regressions below use hald_scaled (z-scored x1-x4, original y)
 ```
 
 - Each $\hat\beta_j$ is the change in **y** (heat) per **1 SD** increase in $x_j$, holding other predictors fixed  
-- Correlations among predictors are unchanged by scaling — but coefficient tables are easier to read
+- Correlations among predictors are unchanged by scaling  -  but coefficient tables are easier to read
 
 ## One predictor at a time vs all four together
 
@@ -460,7 +481,7 @@ knitr::kable(compare_tbl, digits = 6,
 ```
 
 - **Simple** fits: **x1**, **x2**, **x4** significant; **x3** borderline  
-- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline) — joint inference breaks down when columns overlap
+- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline)  -  joint inference breaks down when columns overlap
 
 ```{r}
 #| label: day01-hald-full-summary
@@ -470,7 +491,7 @@ tidy(full_fit) |>
   knitr::kable(caption = "Four-predictor model (scaled predictors)")
 ```
 
-<!-- ## Two predictors — `y ~ x1 + x2` -->
+<!-- ## Two predictors  -  `y ~ x1 + x2` -->
 
 <!-- ```{r} -->
 <!-- #| label: day01-hald-x1x2 -->
@@ -483,7 +504,7 @@ tidy(full_fit) |>
 
 <!-- - **Both x1 and x2** significant and **positive** (heat increases with each oxide, holding the other fixed) -->
 
-## Correlations among `x1`–`x4`
+## Correlations among `x1`-`x4`
 
 ```{r}
 #| label: day01-hald-corr-plot
@@ -502,13 +523,13 @@ ggplot(cor_long, aes(var1, var2, fill = r)) +
   labs(title = "Predictor correlations (Hald cement)", x = NULL, y = NULL, fill = "r")
 ```
 
-Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx -0.82$). **x3–x4** are nearly uncorrelated ($r \approx 0.03$); **x1–x4** weakly negative ($r \approx -0.25$).
+Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.82$). **x3-x4** are nearly uncorrelated ($r \approx 0.03$); **x1-x4** weakly negative ($r \approx -0.25$).
 
-<!-- ## Quiz — predict the fit before you run it -->
+<!-- ## Quiz  -  predict the fit before you run it -->
 
 <!-- Use the **scaled-predictor** fits above and the correlation plot. For each model, which statement best describes **significance at $\alpha = 0.05$** and the **signs** of the coefficients? -->
 
-<!-- ## Question 1 — `y ~ x1 + x3` -->
+<!-- ## Question 1  -  `y ~ x1 + x3` -->
 
 <!-- - A. Both x1 and x3 significant; **same** sign   -->
 <!-- - B. Both significant; **opposite** signs   -->
@@ -516,11 +537,11 @@ Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx 
 <!-- - D. Only x3 significant   -->
 <!-- - E. Neither significant   -->
 
-<!-- ## Question 1 — answer -->
+<!-- ## Question 1  -  answer -->
 
-<!-- **C** — only **x1** significant (positive); x3 not ($r_{1,3} \approx -0.82$ makes the pair unstable, but x1 retains a clear partial effect here). -->
+<!-- **C**  -  only **x1** significant (positive); x3 not ($r_{1,3} \approx -0.82$ makes the pair unstable, but x1 retains a clear partial effect here). -->
 
-<!-- ## Question 2 — `y ~ x3 + x4` -->
+<!-- ## Question 2  -  `y ~ x3 + x4` -->
 
 <!-- - A. Neither significant   -->
 <!-- - B. Both significant; same (negative) sign   -->
@@ -528,11 +549,11 @@ Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx 
 <!-- - D. Only x3 significant   -->
 <!-- - E. Only x4 significant   -->
 
-<!-- ## Question 2 — answer -->
+<!-- ## Question 2  -  answer -->
 
-<!-- **B** — both significant and **negative** ($\hat\beta_3 \approx -7.7$, $\hat\beta_4 \approx -12.1$) even though x3 and x4 are almost uncorrelated in this sample. -->
+<!-- **B**  -  both significant and **negative** ($\hat\beta_3 \approx -7.7$, $\hat\beta_4 \approx -12.1$) even though x3 and x4 are almost uncorrelated in this sample. -->
 
-<!-- ## Question 3 — `y ~ x1 + x4` -->
+<!-- ## Question 3  -  `y ~ x1 + x4` -->
 
 <!-- - A. Neither significant   -->
 <!-- - B. Both significant; **same** sign   -->
@@ -540,9 +561,9 @@ Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx 
 <!-- - D. Only x1 significant   -->
 <!-- - E. Only x4 significant   -->
 
-<!-- ## Question 3 — answer -->
+<!-- ## Question 3  -  answer -->
 
-<!-- **C** — both significant; **x1 positive**, **x4 negative** ($\hat\beta_1 \approx 8.5$, $\hat\beta_4 \approx -10.3$). -->
+<!-- **C**  -  both significant; **x1 positive**, **x4 negative** ($\hat\beta_1 \approx 8.5$, $\hat\beta_4 \approx -10.3$). -->
 
 ## Takeaway 
 - Multiple linear regression is not the same as multiple simple lineaer regressions
@@ -554,10 +575,10 @@ Strong negative pairs: **x2–x4** ($r \approx -0.97$), **x1–x3** ($r \approx 
 - Later today: **lasso** and **AIC** help navigate this kind of data
 
 
-# Part C — Gene Expression (continuous response variable) {#part-c-gene-trait}
+# Part C  -  Gene Expression (continuous response variable) {#part-c-gene-trait}
 
 ## A synthetic dataset 
-- We use a synthetic dataset for illustrative purposes. This has the advantage that we know exactly what’s going on.
+- We use a synthetic dataset for illustrative purposes. This has the advantage that we know exactly what's going on.
 - In this simulated dataset, GeneA and GeneB are genes that directly influence a specific biological trait.
 - GeneC and GeneD are noise genes that are correlated with the trait but do not contribute causally. 
 - GeneJ is in strongly correlated to GeneA but not causally linked to the trait. 
@@ -581,8 +602,8 @@ Distribtuion of explanatory variables (gene expression levels) and response vari
 
 ## Overfitting vs underfitting
 
-- **Underfitting:** model too simple — high error even on data used to fit (e.g. intercept-only, ignores genes)  
-- **Overfitting risk:** model very flexible — can fit noise; unstable coefficients when predictors overlap  
+- **Underfitting:** model too simple  -  high error even on data used to fit (e.g. intercept-only, ignores genes)  
+- **Overfitting risk:** model very flexible  -  can fit noise; unstable coefficients when predictors overlap  
 
 - **Null model** (`trait ~ 1`): one parameter, ignores all genes → underfitting  
 - **Full model** (`trait ~ .`): all genes → lower training error, but many correlated predictors → shaky $\hat{\beta}_j$  
@@ -670,6 +691,46 @@ ggpairs(
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+## GeneA × GeneB  -  ground-truth surface
+
+```{r}
+#| label: day01-trait-surface-hero
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+geneA_values <- seq(-3.5, 3.5, length.out = 100)
+geneB_values <- seq(-3.5, 3.5, length.out = 100)
+grid_truth <- expand.grid(GeneA = geneA_values, GeneB = geneB_values)
+grid_truth$truth <- -0.5 * grid_truth$GeneA + 0.8 * grid_truth$GeneB
+trait_df <- data.frame(
+  GeneA = gene_data[, "GeneA"],
+  GeneB = gene_data[, "GeneB"],
+  trait = trait
+)
+ggplot() +
+  geom_raster(
+    data = grid_truth,
+    aes(GeneA, GeneB, fill = truth),
+    interpolate = TRUE
+  ) +
+  geom_point(
+    data = trait_df,
+    aes(GeneA, GeneB),
+    color = "black",
+    size = 2.2,
+    alpha = 0.75
+  ) +
+  scale_fill_gradient2(low = "turquoise", mid = "white", high = "magenta", midpoint = 0) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Known generating surface: trait = −0.5·GeneA + 0.8·GeneB + noise",
+    x = "GeneA",
+    y = "GeneB",
+    fill = "E(trait)"
+  )
+```
+
 ```{r}
 #| label: day01-trait-prep-full
 #| echo: false
@@ -706,7 +767,7 @@ Single intercept; no gene effects in the model.
 
 ## Full model (all genes)
 
-Every gene in the model — flexible, but many correlated predictors → unstable coefficients (**overfitting risk**).
+Every gene in the model  -  flexible, but many correlated predictors → unstable coefficients (**overfitting risk**).
 
 ```{r}
 #| label: day01-lm-full
@@ -865,8 +926,10 @@ ggplot(eff_plot, aes(x = estimate, y = term, color = model)) +
 
 - **Idea:** penalize large coefficients: lasso adds $\lambda \sum_j |\beta_j|$ penalty to OLS  
 - **$\lambda$** controls strength: larger $\lambda$ $\Rightarrow$ simpler model (more shrinkage toward zero)  
-- **Choosing $\lambda$:** leave-one-out cross-validation — `cv.glmnet(..., nfold = n)` holds out one row at a time  
-- This is **not** a train/test split; it only picks $\lambda$ on the same $n$ rows 
+- **Discrete AIC** picks variables in or out; **lasso** shrinks many coefficients toward **exactly zero** as $\lambda$ grows  
+- **How to choose $\lambda$?** Cross-validation on the next slides  -  then `cv.glmnet` and the CV error curve
+
+{{< include ../_includes/day01-cross-validation.qmd >}}
 
 ```{r}
 #| label: day01-lasso-cv
@@ -878,7 +941,7 @@ best_lam <- cv_lasso$lambda.1se
 lasso_fit <- glmnet(X_s, y, alpha = 1, lambda = best_lam)
 ```
 
-## Lasso: cross-validated choice of $\lambda$ {#lasso-cv}
+## Lasso: CV error vs $\lambda$ (from `cv.glmnet`)
 
 ```{r}
 #| label: day01-lasso-cv-plot
@@ -951,7 +1014,7 @@ knitr::kable(
 
 
 
-# Part D — Gene × disease (binary) {#part-d-gene-disease}
+# Part D  -  Gene × disease (binary) {#part-d-gene-disease}
 
 ## Another synthetic data set
 
@@ -973,7 +1036,7 @@ Response variable generated based on a linear combination of Gene1, Gene3, and G
 #| eval: false
 #| echo: true
 disease_presence <- ifelse(
-0.5 * Gene1 +  0.8 * Gene3 - 0.3 * Gene4 – 
+0.5 * Gene1 +  0.8 * Gene3 - 0.3 * Gene4 - 
  2  * Gene1 * Gene3 * + N(0,0.5) > 0, 
 1, 0)
 ```
@@ -1058,7 +1121,7 @@ Same workflow as before, see notebooks:
 
 - Cannot handle the interaction between Gene 1 and Gene 3 (misses Gene 1)
 
-- Finds 2 causal genes (Gene 3 and 4), but also a “noise Gene“ (Gene 8)
+- Finds 2 causal genes (Gene 3 and 4), but also a "noise Gene" (Gene 8)
 
 ![](../assets/figures/01_log_disease.png){#fig-my-image width=60% fig-align="center"}
 
@@ -1067,14 +1130,14 @@ Same workflow as before, see notebooks:
 
 - Cannot handle the interaction between Gene 1 and Gene 3 (misses Gene 1)
 
-- Finds 2 causal genes (Gene 3 and 4), but also a “noise Gene“ (Gene 8)
+- Finds 2 causal genes (Gene 3 and 4), but also a "noise Gene" (Gene 8)
 
 ![](../assets/figures/01_log_disease_2.png){#fig-my-image width=60% fig-align="center"}
 
 ## Null model (intercept only)
 
 
-Predicts the overall disease rate — ignores role of genes → **underfitting**.
+Predicts the overall disease rate  -  ignores role of genes → **underfitting**.
 
 ```{r}
 #| label: day01-logistic-null
@@ -1094,7 +1157,6 @@ broom::tidy(null_glm) |>
 
 Single intercept; no gene effects in the model.
 
-
 ## Full logistic model (all genes)
 
 ```{r}
@@ -1104,43 +1166,20 @@ Single intercept; no gene effects in the model.
 full_glm <- glm(disease_presence ~ ., data = bio_scaled, family = binomial())
 ```
 
+## Logistic decision boundary (Gene1 × Gene3)
+
+Smooth **P(disease)** regions  -  compare to **axis-aligned** tree partitions on Tuesday (white line = P = 0.5).
+
 ```{r}
 #| label: day01-logistic-boundary
 #| echo: false
-#| fig-height: 4.5
-#| fig-width: 7
-plot_decision_boundary_logistic <- function(model, data, feature1, feature2) {
-  r1 <- range(data[[feature1]])
-  r2 <- range(data[[feature2]])
-  grid <- expand.grid(
-    seq(r1[1] - 1, r1[2] + 1, length.out = 160),
-    seq(r2[1] - 1, r2[2] + 1, length.out = 160)
-  )
-  names(grid) <- c(feature1, feature2)
-  for (feat in setdiff(names(data), c(feature1, feature2, "disease_presence"))) {
-    grid[[feat]] <- mean(data[[feat]])
-  }
-  grid$response_prob <- predict(model, newdata = grid, type = "response")
-  grid$response_cls <- factor(
-    ifelse(grid$response_prob > 0.5, "Present", "Absent"),
-    levels = c("Absent", "Present")
-  )
-  ggplot(data, aes(!!sym(feature1), !!sym(feature2))) +
-    geom_tile(
-      data = grid,
-      aes(!!sym(feature1), !!sym(feature2), fill = response_cls),
-      alpha = 0.28,
-      inherit.aes = FALSE
-    ) +
-    geom_point(aes(fill = disease_presence), shape = 21, color = "black", size = 2.5) +
-    scale_fill_manual(values = c(Absent = "turquoise", Present = "magenta")) +
-    theme_minimal() +
-    labs(
-      title = "Logistic boundary (Gene1 vs Gene3; other genes at mean)",
-      x = feature1, y = feature2, fill = "Class"
-    )
-}
-print(plot_decision_boundary_logistic(full_glm, bio_scaled, "Gene1", "Gene3"))
+#| fig-height: 6
+#| fig-width: 9
+#| out-width: 100%
+print(plot_glm_logistic_boundary(
+  full_glm, bio_scaled, "Gene1", "Gene3", "disease_presence",
+  title = "Logistic regression  -  linear boundary (Gene1 × Gene3)"
+))
 ```
 
 ## Null vs full: in-sample misclassification
@@ -1220,7 +1259,7 @@ cat("**Forward AIC formula:** `", fmt_f(formula(forward_glm)), "`\n\n", sep = ""
 
 ## Lasso for classification
 
-- Same $\lambda$ story: `glmnet(..., family = "binomial", nfold = n)` for leave-one-out CV  
+- Same **$\lambda$** and **LOO-CV** story as the trait example ([cross-validation](#cross-validation)) — `glmnet(..., family = "binomial", nfold = n)`  
 - Then compare null, full `glm`, AIC models, and lasso in one **in-sample** summary table  
 
 
@@ -1313,7 +1352,7 @@ knitr::kable(
 - `glmnet` uses mixing parameter $\alpha \in [0, 1]$: $\alpha = 0$ is pure ridge, $\alpha = 1$ is pure lasso, values in between blend $L_1$ and $L_2$ penalties.  
 - Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).  
 
-# Part E — Wrap-up
+# Part E  -  Wrap-up
 
 ## Student notebooks (Day 1 focus)
 Have a look at notebooks. Open one and try to render in RStudio.
@@ -1325,9 +1364,9 @@ Have a look at notebooks. Open one and try to render in RStudio.
 
 ## End-of-day checklist 
 
-- Can you explain **null vs full** on the same data — which underfits, which risks overfitting?  
+- Can you explain **null vs full** on the same data  -  which underfits, which risks overfitting?  
 - Can you contrast **discrete** model search (AIC) with **continuous** shrinkage (lasso)?  
-- What does $\lambda$ do, and how does **leave-one-out CV** help choose it?  
+- What does $\lambda$ do? Contrast **leave-one-out** vs **$k$-fold** CV for choosing it.  
 - Did you open at least one **student `.Rmd`** and run all chunks? 
 - Does the notebook make sense to you?
 - Do you understand what is happening in the notebooks?

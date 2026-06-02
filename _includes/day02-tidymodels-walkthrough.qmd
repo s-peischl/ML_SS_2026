@@ -28,9 +28,35 @@ ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
   )
 ```
 
-## Pipeline map
+## The pipeline in principle
 
-**Data → recipe → spec → workflow → resampling/tuning → fit → figures**
+No code yet — the **shape** of every `tidymodels` project this week:
+
+```mermaid
+flowchart LR
+  data[Raw table] --> recipe[recipe prep bake]
+  recipe --> spec[parsnip spec]
+  spec --> wf[workflow]
+  folds[vfold_cv folds] --> tune[tune_grid]
+  metrics[metric_set] --> tune
+  wf --> tune
+  tune --> best[select_best finalize]
+  best --> fit[fit predict]
+  fit --> out[Plots and tables]
+```
+
+- **Recipe steps run inside each CV fold** — never scale or encode on the full table before splitting (avoids leakage).
+- **Today’s score:** **accuracy** only; Thursday adds metrics for imbalanced data.
+
+## Five steps — what each one does
+
+1. **Recipe** — declare preprocessing steps (drop useless columns, dummy-code categories, scale numerics). **`prep()`** learns rules on training rows; **`bake()`** applies them.
+2. **Spec** — choose model **type**, **engine**, **mode**, and which arguments to tune. Still a **blueprint** — not fitted.
+3. **Workflow** — glue **`recipe` + `spec`** so one **`fit()`** runs preprocessing and training in the right order.
+4. **Metrics** — define how to judge predictions (**`accuracy`** today).
+5. **Resample and tune** — search hyperparameters on **`vfold_cv`** folds, pick the best, then **`fit`** for plots and interpretation.
+
+## Packages in the pipeline
 
 | Package | Job |
 |---------|-----|
@@ -43,7 +69,13 @@ ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
 
 # Step 1 — Preprocessing (`recipe`)
 
-A **recipe** defines transforms **before** the model sees data. Steps run top to bottom.
+Turn raw columns into a model-ready table — **in order**, and **only on training rows** inside each fold.
+
+## Step 1 — Why a recipe?
+
+- A **recipe** is a **checklist** of transforms applied **before** the model sees the data.
+- Steps run **top to bottom**; order matters (e.g. dummy-code before scaling).
+- **`prep()`** learns parameters on training data; **`bake()`** applies them — a **`workflow()`** does both automatically inside CV.
 
 ## Start the recipe
 
@@ -106,17 +138,43 @@ rec_base <- rec
 rec_base
 ```
 
+## `prep()` and `bake()` — learn rules, then apply {#prep-and-bake}
+
+- **`prep(recipe, training = train)`** estimates each step on **training rows only**.
+- **`bake(prep, new_data = ...)`** applies those rules without re-learning (train, test, or new rows).
+- A **`workflow()`** runs **`prep` + `bake` + `fit`** inside each CV fold automatically.
+
+```{r}
+#| label: day02-walk-prep-bake-demo
+#| echo: true
+#| message: false
+set.seed(2)
+split_demo <- initial_split(peng_bal, prop = 0.75, strata = y)
+train_demo <- training(split_demo)
+test_demo <- testing(split_demo)
+
+rec_prep <- prep(rec_base, training = train_demo)
+bake_train <- bake(rec_prep, new_data = train_demo)
+bake_test <- bake(rec_prep, new_data = test_demo)
+
+dplyr::glimpse(bake_train)
+```
+
 ::: {.callout-note}
 ## Afternoon lab (microbiome)
 
 Same pattern on OTU counts — add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
 :::
 
-**`prep()`** learns rules; **`bake()`** applies them. A **`workflow()`** does both inside each CV fold.
-
 # Step 2 — Model blueprint (`spec`)
 
-**`parsnip`** stores the family and hyperparameters. **Nothing is fitted yet.**
+Choose the learner and its settings — still **no fitting**.
+
+## Step 2 — What is a spec?
+
+- **`parsnip`** stores the **model family** and hyperparameters in a **`spec`** object.
+- **`set_engine("rpart")`** picks the R implementation; **`set_mode("classification")`** matches a factor outcome.
+- **`tune()`** marks arguments we will search later — the spec stays a **blueprint** until **`fit()`**.
 
 ## Classification tree with `rpart`
 
@@ -175,6 +233,16 @@ decision_tree() |>
 
 # Step 3 — Workflow
 
+Bundle preprocessing and model into **one** object.
+
+## Step 3 — Bundle recipe and model
+
+- **`workflow()`** combines **`rec_base`** and **`tree_spec`** so you never preprocess the full table before splitting.
+- **`add_recipe()`** + **`add_model()`** — one object to pass to **`fit()`**, **`tune_grid()`**, or **`fit_resamples()`**.
+- Inside each resample, the workflow **prep → bake → train** on analysis rows only.
+
+## Step 3 — `workflow()` code
+
 ```{r}
 #| label: day02-walk-wf
 #| echo: true
@@ -185,9 +253,13 @@ wf <- workflow() |>
 wf
 ```
 
-- Preprocessing + model in **one** object — no scaling the full table before splitting.
+## Step 3 — One-shot fit (intuition)
 
-## One-shot fit (intuition)
+- **`fit(wf, data = peng_bal)`** on **all rows** is a quick way to **see** a decision boundary — not our final honest evaluation.
+- We use a **fixed** demo spec (`tree_spec_demo`) so the plot is stable before tuning.
+- After tuning (Step 5), we refit on all rows for teaching plots; in a project, keep a locked **test** set.
+
+## Step 3 — Fit and boundary (code)
 
 ```{r}
 #| label: day02-walk-fit-demo
@@ -209,6 +281,16 @@ print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"
 
 # Step 4 — Metrics (accuracy today)
 
+Decide **how** to score predictions **before** you tune.
+
+## Step 4 — Choose a metric before tuning
+
+- **`accuracy`** — fraction of correct class labels; fine when classes are balanced and errors cost the same.
+- **Thursday:** sensitivity, ROC-AUC, PR-AUC when the positive class is rare — accuracy can mislead.
+- **`metric_set(accuracy)`** bundles scorers for **`tune_grid()`** and **`fit_resamples()`**.
+
+## Step 4 — `metric_set` code
+
 ```{r}
 #| label: day02-walk-metrics
 #| echo: true
@@ -216,10 +298,17 @@ print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"
 metrics_day2
 ```
 
-- **`accuracy`** — fraction of correct class labels.
-- Thursday adds sensitivity, ROC-AUC, PR-AUC, and more when classes are imbalanced.
-
 # Step 5 — Cross-validation and tuning
+
+Search **`tree_depth`** and **`min_n`** on held-out folds, then finalize.
+
+## Step 5 — Search hyperparameters on folds
+
+- **`folds <- vfold_cv(..., strata = y)`** — each fold keeps both species represented.
+- **`tune_grid(wf, resamples = folds, grid = ..., metrics = metrics_day2)`** tries many specs; preprocessing is refit **inside** each fold.
+- Grid spans **stumps** (depth 1, large `min_n`) to **more flexible** trees.
+
+## Step 5 — `tune_grid` code
 
 ```{r}
 #| label: day02-walk-tune
@@ -238,10 +327,13 @@ tune_res <- tune_grid(
 )
 ```
 
-- **`vfold_cv(..., strata = y)`** — balanced species per fold.
-- Grid spans underfit (depth 1, large `min_n`) → more flexible trees.
+## Step 5 — Read the tuning plot
 
-## Read the tuning plot
+- **`autoplot(tune_res)`** shows mean **accuracy** vs **`tree_depth`** and **`min_n`**.
+- Expect **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+- Pick a region that balances fit and simplicity before **`select_best()`**.
+
+## Step 5 — Tuning plot (code)
 
 ```{r}
 #| label: day02-walk-autoplot
@@ -257,9 +349,16 @@ tune_res |>
   )
 ```
 
-- Look for **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+{{< include ../_includes/tidymodels-evaluation-workflow.qmd >}}
 
-## Finalize and fit
+## Step 5 — Finalize and refit
+
+- **`select_best(tune_res, metric = "accuracy")`** — best hyperparameters from CV.
+- **`finalize_workflow(wf, best)`** — plug tuned values into the blueprint.
+- **`fit(final_wf, data = peng_cls)`** — one tree on all rows for **plots**; **`fit_resamples()`** reports honest CV performance.
+- In projects, use **`last_fit()`** with a true test set instead of fitting on all rows for reporting.
+
+## Step 5 — Finalize and CV metrics (code)
 
 ```{r}
 #| label: day02-walk-finalize
@@ -280,8 +379,6 @@ wf_tree <- final_wf
 rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_day2)
 metrics_summary_table(rs_tree, "Tuned tree (5-fold CV)")
 ```
-
-Teaching speed: we **`fit` on all rows** after tuning; in projects, hold out a true test set with **`last_fit`**.
 
 ## Fitted tree structure
 

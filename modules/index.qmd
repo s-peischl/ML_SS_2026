@@ -6,7 +6,7 @@ title: "Module Library"
 
 These pages **follow the same story as the slides**, but you can read them slowly on the website: good for **before class**, **catching up after a missed day**, or **review** before an exam.
 
-We use **two kinds of examples**: **simulated genes** (we wrote the rules, so we know what is true) and **[Palmer Penguins](../dataset-penguins.qmd)** (real measurements you can plot and argue about).
+We use **two kinds of examples**: **simulated genes** (we wrote the rules, so we know what is true) and **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** (real measurements you can plot and argue about). See the **[data catalog](../data/index.qmd)** for a card on every dataset.
 
 ::: {.callout-tip appearance="simple"}
 ## Slide quick links (rendered decks)

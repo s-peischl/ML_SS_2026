@@ -1,0 +1,73 @@
+---
+title: "Datasets and data cards"
+format:
+  html:
+    toc: true
+---
+
+Each dataset used in the course has a **data card**: the same six sections students draft in the [lab handbook](../exercises/mlss2026-lab-exercises.qmd#data-card-start-day-1-revise-all-week) (source, outcome, predictors, sample size, leakage risks, subgroups). Use these pages as instructor references or starting points for your own one-pager.
+
+::: {.callout-note appearance="simple"}
+## Adding a dataset later
+
+1. Add an entry to [`datasets.yml`](datasets.yml).  
+2. Create `cards/your-dataset.qmd` using the six sections below any other card.  
+3. Add a row to the catalog table on this page.
+:::
+
+## Catalog
+
+| Dataset | Kind | Card | Used for |
+|---------|------|------|----------|
+| [Old Faithful eruptions](cards/old-faithful.qmd) | Real (base R) | [Open card](cards/old-faithful.qmd) | Day 1 ggplot intro |
+| [Hald cement](cards/hald-cement.qmd) | Real (classic) | [Open card](cards/hald-cement.qmd) | Day 1 correlated predictors |
+| [Synthetic gene x trait](cards/gene-trait-simulation.qmd) | Simulated | [Open card](cards/gene-trait-simulation.qmd) | Day 1-2 regression, LASSO, trees |
+| [Synthetic gene x disease](cards/gene-disease-simulation.qmd) | Simulated | [Open card](cards/gene-disease-simulation.qmd) | Day 1-2 logistic, trees |
+| [Palmer Penguins](cards/palmer-penguins.qmd) | Real | [Open card](cards/palmer-penguins.qmd) | Notebooks, modules, Day 2-4 slides |
+| [Mouse 16S microbiome](cards/microbiome-mouse-16s.qmd) | Real | [Open card](cards/microbiome-mouse-16s.qmd) | Day 2 and Day 4 afternoon labs |
+
+::: {.hub-grid}
+::: {.hub-card}
+::: {.hub-pill}
+Real data
+:::
+### Palmer Penguins
+
+Our main **real** running example all week: regression, classification, pipelines, metrics.
+
+[Open data card](cards/palmer-penguins.qmd)
+:::
+
+::: {.hub-card}
+::: {.hub-pill}
+Simulated
+:::
+### Gene simulations
+
+We wrote the rules so we know which genes should matter (trait and disease tracks).
+
+[Trait card](cards/gene-trait-simulation.qmd) · [Disease card](cards/gene-disease-simulation.qmd)
+:::
+
+::: {.hub-card}
+::: {.hub-pill}
+Labs
+:::
+### Microbiome (mouse 16S)
+
+Repeated measures per mouse; **grouped CV** is required.
+
+[Open data card](cards/microbiome-mouse-16s.qmd)
+:::
+:::
+
+## Data card template (student version)
+
+1. **Source** - where did rows come from?  
+2. **Outcome** - what are you predicting? units / levels?  
+3. **Predictors** - what measurements? how many?  
+4. **Sample size** - *n*; any missing values?  
+5. **Leakage risks** - repeated measures? normalization on full table? selection bias?  
+6. **Subgroups** - sex, batch, island, individual ID - for later fairness checks  
+
+Example student answer: [Day 1 gene simulation solution](../exercises/solutions/day01-data-card-example.qmd).

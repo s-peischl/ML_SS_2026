@@ -5,6 +5,8 @@ format: html
 
 # Data card — synthetic gene × trait / disease (example answer)
 
+Full instructor cards: [gene × trait](../../data/cards/gene-trait-simulation.qmd) · [gene × disease](../../data/cards/gene-disease-simulation.qmd) · [Data catalog](../../data/index.qmd)
+
 ## 1. Source
 
 Rows are **simulated** in R (`set.seed(420)` for trait; `set.seed(123)` for disease). No human or animal measurements. Ground truth: **GeneA** and **GeneB** affect continuous **trait**; **Gene1**, **Gene3**, **Gene4** (and Gene1×Gene3 interaction) affect binary **disease_presence**.

@@ -1,0 +1,60 @@
+---
+title: "Data card — Hald cement"
+format:
+  html:
+    toc: true
+---
+
+## How to load
+
+```r
+hald <- datasets::cement   # 13 rows; columns y, x1, x2, x3, x4
+# Slides often use z-scored predictors:
+hald_scaled <- hald
+hald_scaled[, c("x1", "x2", "x3", "x4")] <- scale(hald[, c("x1", "x2", "x3", "x4")])
+```
+
+## Where we use this
+
+- [Day 1 (Monday) slides](../../slides/day-01-monday.qmd) — correlated predictors, comparing one-predictor vs full `lm` models
+- [Module 02 — Regularization](../../modules/module-02-regularization.qmd) (collinearity motivation)
+
+## Caveats
+
+- **Tiny n (13)** — coefficients and R² are unstable; use for **ideas**, not inference.
+- **Classic teaching set** — predictors are highly correlated; illustrates why full OLS can mislead.
+
+---
+
+# Data card
+
+## 1. Source
+
+**Hald cement** data, available in R as `datasets::cement` (sometimes called the Hald dataset). Historical regression textbook example relating heat evolved during cement hardening to four chemical composition variables.
+
+## 2. Outcome
+
+- **`y`**: heat evolved (calories per gram of cement), numeric.
+
+## 3. Predictors
+
+Four numeric composition variables on the original scale in `cement`; in slides we often **z-score** `x1`–`x4` and keep **`y`** on the original scale:
+
+| Column | Role in class |
+|--------|----------------|
+| `x1`, `x2`, `x3`, `x4` | Predictors (correlated) |
+
+## 4. Sample size
+
+**13** observations. Complete cases only (no NA in the built-in table).
+
+## 5. Leakage risks
+
+- With **n = 13**, any in-sample comparison (AIC on the same rows, etc.) is **extremely optimistic** if reported as “generalization.”
+- **Correlated predictors** — selecting “significant” individual predictors without regularization or held-out data can flip with small perturbations.
+
+## 6. Subgroups
+
+Not applicable (no batch or site fields in this table).
+
+{{< include _footer.qmd >}}

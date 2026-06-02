@@ -57,8 +57,16 @@ peng_imb <- peng_bal |>
   filter(y == "Adelie" | (y == "Gentoo" & dplyr::row_number() <= 10L)) |>
   ungroup()
 
+peng_imb3 <- prep_penguins_multiclass_imbalance(
+  minority_class = "Chinstrap",
+  hard_to_class = "Adelie",
+  n_minority = 15L
+)
+
 peng_na <- peng_bal
-na_bill <- sample(which(!is.na(peng_na$bill_length_mm)), size = 18L)
+bill_length_true <- peng_na$bill_length_mm
+set.seed(4)
+na_bill <- sample(which(!is.na(peng_na$bill_length_mm)), size = 22L)
 peng_na$bill_length_mm[na_bill] <- NA
 na_sex <- sample(which(!is.na(peng_na$sex)), size = 5L)
 peng_na$sex[na_sex] <- NA
@@ -73,8 +81,27 @@ peng_pca <- palmerpenguins::penguins |>
   tidyr::drop_na()
 
 folds_imb <- vfold_cv(peng_imb, v = 5, strata = y)
+folds_imb3 <- vfold_cv(peng_imb3, v = 5, strata = y3)
 folds_pca <- vfold_cv(peng_pca, v = 5, strata = y)
-metrics_cls_imb <- metric_set(accuracy, sens, yardstick::spec, roc_auc, pr_auc)
+sens_gentoo <- yardstick::metric_tweak("sens", sens, event_level = "second")
+spec_gentoo <- yardstick::metric_tweak("spec", spec, event_level = "second")
+roc_auc_gentoo <- yardstick::metric_tweak("roc_auc", roc_auc, event_level = "second")
+pr_auc_gentoo <- yardstick::metric_tweak("pr_auc", pr_auc, event_level = "second")
+metrics_cls_imb <- metric_set(
+  accuracy,
+  sens_gentoo,
+  spec_gentoo,
+  roc_auc_gentoo,
+  pr_auc_gentoo
+)
+
+recall_macro <- yardstick::metric_tweak("recall_macro", sens, estimator = "macro")
+f_meas_macro <- yardstick::metric_tweak("f_meas_macro", f_meas, estimator = "macro")
+metrics_cls_imb3 <- metric_set(
+  accuracy,
+  recall_macro,
+  f_meas_macro
+)
 
 plot_class_balance <- function(df, title = "Class counts") {
   ggplot(df, aes(y, fill = y)) +
@@ -85,40 +112,168 @@ plot_class_balance <- function(df, title = "Class counts") {
     labs(title = title, x = "Species (y)", y = "n")
 }
 
-plot_na_highlight <- function(df, xvar, yvar, title = NULL) {
+plot_na_highlight <- function(df, xvar, yvar, title = NULL, margin_frac = 0.16) {
+  x_obs <- df[[xvar]]
+  x_rng <- range(x_obs, na.rm = TRUE)
+  x_pad <- diff(x_rng) * margin_frac
+  x_stub <- x_rng[1] - x_pad
+
   df <- df |>
     mutate(
       missing_x = is.na(.data[[xvar]]),
-      x_plot = ifelse(missing_x, stats::median(.data[[xvar]], na.rm = TRUE), .data[[xvar]])
+      x_plot = ifelse(missing_x, x_stub, .data[[xvar]])
     )
+  miss <- dplyr::filter(df, missing_x)
+  ok <- dplyr::filter(df, !missing_x)
+
   ggplot(df, aes(x = x_plot, y = .data[[yvar]])) +
+    annotate(
+      "rect",
+      xmin = x_stub - x_pad * 0.55,
+      xmax = x_rng[1] - x_pad * 0.05,
+      ymin = -Inf,
+      ymax = Inf,
+      fill = "#FFEBEE",
+      alpha = 0.45
+    ) +
+    geom_vline(xintercept = x_rng[1], linetype = "dotted", color = "gray55") +
     geom_point(
-      data = dplyr::filter(df, !missing_x),
+      data = ok,
       aes(color = y),
-      size = 2.4
+      size = 2.8,
+      alpha = 0.85
     ) +
     geom_point(
-      data = dplyr::filter(df, missing_x),
+      data = miss,
       aes(x = x_plot, y = .data[[yvar]]),
-      shape = 4,
-      color = "firebrick",
-      size = 3,
-      stroke = 1.2,
+      shape = 1,
+      color = "#B71C1C",
+      size = 12,
+      stroke = 2.2,
       inherit.aes = FALSE
     ) +
+    geom_point(
+      data = miss,
+      aes(x = x_plot, y = .data[[yvar]]),
+      shape = 4,
+      color = "#B71C1C",
+      size = 5.5,
+      stroke = 2.2,
+      inherit.aes = FALSE
+    ) +
+    scale_x_continuous(
+      limits = c(x_stub - x_pad * 0.5, x_rng[2] + x_pad * 0.1),
+      expand = expansion(mult = c(0.02, 0.02))
+    ) +
     scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40"), name = "Species") +
-    theme_minimal() +
+    theme_minimal(base_size = 14) +
     labs(
       title = title,
-      x = paste0(xvar, " (× = missing)"),
+      x = xvar,
       y = yvar,
-      caption = "Red × marks rows with NA on the x-axis"
+      caption = "Pink band: bill length unknown (NA). Red × markers are NOT placed at the eventual imputed value."
+    )
+}
+
+plot_imputed_highlight <- function(
+    raw,
+    filled,
+    xvar,
+    yvar,
+    title = NULL,
+    true_xvar = NULL,
+    margin_frac = 0.16
+) {
+  stopifnot(nrow(raw) == nrow(filled))
+
+  was_missing <- is.na(raw[[xvar]])
+  idx <- which(was_missing)
+  has_true <- !is.null(true_xvar) && true_xvar %in% names(raw)
+
+  ok_df <- data.frame(
+    x = filled[[xvar]][!was_missing],
+    y = raw[[yvar]][!was_missing],
+    species = raw$y[!was_missing],
+    stringsAsFactors = FALSE
+  )
+
+  imp_df <- data.frame(
+    x_imputed = filled[[xvar]][idx],
+    y = raw[[yvar]][idx],
+    species = raw$y[idx],
+    stringsAsFactors = FALSE
+  )
+  if (has_true) {
+    imp_df$x_true <- raw[[true_xvar]][idx]
+  }
+
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_point(
+      data = ok_df,
+      ggplot2::aes(x = x, y = y),
+      color = "gray80",
+      size = 2.4,
+      alpha = 0.7
+    )
+
+  if (has_true) {
+    p <- p +
+      ggplot2::geom_segment(
+        data = imp_df,
+        ggplot2::aes(x = x_true, xend = x_imputed, y = y, yend = y),
+        color = "#E65100",
+        linewidth = 0.9,
+        linetype = "dashed",
+        arrow = grid::arrow(length = grid::unit(0.12, "inches"), type = "closed")
+      ) +
+      ggplot2::geom_point(
+        data = imp_df,
+        ggplot2::aes(x = x_true, y = y),
+        shape = 1,
+        color = "#37474F",
+        size = 4.5,
+        stroke = 1.4
+      )
+  }
+
+  p +
+    ggplot2::geom_point(
+      data = imp_df,
+      ggplot2::aes(x = x_imputed, y = y),
+      shape = 21,
+      fill = "#FFC107",
+      color = "#B71C1C",
+      size = 5.5,
+      stroke = 2
+    ) +
+    ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0.06, 0.04))) +
+    ggplot2::theme_minimal(base_size = 14) +
+    ggplot2::labs(
+      title = title,
+      x = xvar,
+      y = yvar,
+      caption = if (has_true) {
+        paste(
+          "Open circles: true bill length (simulation only).",
+          "Gold: median-imputed value for that same penguin.",
+          "Gray background: birds with observed bill length."
+        )
+      } else {
+        "Gold: median-imputed bill length for penguins that were missing on input."
+      }
     )
 }
 
 metrics_summary_table <- function(fit_res, label) {
   collect_metrics(fit_res) |>
-    dplyr::filter(.metric %in% c("accuracy", "sens", "spec", "roc_auc", "pr_auc")) |>
+    dplyr::filter(.metric %in% c("accuracy", "sens_gentoo", "spec_gentoo", "roc_auc_gentoo", "pr_auc_gentoo")) |>
+    dplyr::mutate(
+      .metric = dplyr::recode(
+        .metric,
+        sens_gentoo = "sens (Gentoo+)",
+        spec_gentoo = "spec (Gentoo+)"
+      )
+    ) |>
     dplyr::select(.metric, mean, std_err) |>
     dplyr::mutate(model = label) |>
     dplyr::relocate(model)

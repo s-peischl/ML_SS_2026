@@ -20,6 +20,7 @@ title: "Module 02: Regularization — L1, L2, Lasso, Ridge, and Elastic Net"
 |-------|-------------------|
 | Gene × trait: null, full, AIC, lasso | [Part C — Gene trait](../slides/day-01-monday.html#/part-c-gene-trait) |
 | Lasso motivation | [Lasso vs discrete search](../slides/day-01-monday.html#/lasso-regression) |
+| Cross-validation (LOO and \(k\)-fold) | [CV concepts](../slides/day-01-monday.html#/cross-validation) · [LOO](../slides/day-01-monday.html#/loo-cv) · [\(k\)-fold](../slides/day-01-monday.html#/k-fold-cv) |
 | Cross-validated \(\lambda\) | [Lasso CV](../slides/day-01-monday.html#/lasso-cv) |
 | Logistic lasso | [Part D — Gene disease](../slides/day-01-monday.html#/part-d-gene-disease) |
 | Elastic net | [Elastic net slide](../slides/day-01-monday.html#/elastic-net) |

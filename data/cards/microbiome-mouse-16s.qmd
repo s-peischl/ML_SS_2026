@@ -1,0 +1,68 @@
+---
+title: "Data card — mouse 16S microbiome"
+format:
+  html:
+    toc: true
+---
+
+## How to load
+
+Public CSVs from the Quadram Institute workshop (see URLs below). Join metadata and OTU table on sample ID; transpose to **samples x OTUs**. Details in [Day 2 lab Block A](../../exercises/mlss2026-lab-exercises.qmd#day-2--block-a-import--eda).
+
+| File | URL |
+|------|-----|
+| Metadata | `https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/metadata.csv` |
+| OTU table | `https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/otutab_raw.csv` |
+| Taxonomy (optional) | `https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/taxonomy.csv` |
+
+**Source repo:** [Quadram — ML with microbiome](https://github.com/quadram-institute-bioscience/datasciencegroup/tree/main/4_machine_learning) (Python workshop; we use **R + tidymodels**).
+
+## Where we use this
+
+- [Lab handbook](../../exercises/mlss2026-lab-exercises.qmd) — Day 2 Blocks A-D, Day 4 imbalance / imputation / metrics blocks
+- Solutions: [EDA](../../exercises/solutions/day02-microbiome-eda.Rmd), [baseline workflow](../../exercises/solutions/day02-microbiome-baseline-workflow.Rmd), [tune CV](../../exercises/solutions/day02-microbiome-tune-cv.Rmd), Day 4 microbiome solutions
+
+## Caveats
+
+::: {.callout-important}
+## Leakage warning
+
+Samples are **repeated measures** per mouse (`Individual`). **Do not** use a random row split as your final answer.
+
+- **Research-grade (default):** `group_vfold_cv` with `group = Individual`, or hold out whole mice.
+- **Intro track:** one row per `Individual` (e.g. last timepoint only) — **document the simplification** on your data card.
+:::
+
+---
+
+# Data card
+
+## 1. Source
+
+**Schloss mouse 16S** data distributed for the Quadram datasciencegroup machine-learning tutorial. Downloaded from GitHub raw CSV URLs (see table above). Not collected for this summer school; we reuse it for **high-dimensional count** workflows.
+
+## 2. Outcome
+
+- **`Label`**: factor **`Early`** vs **`Late`** (community shift over time in the experiment).
+
+## 3. Predictors
+
+- **OTU abundances** (thousands of columns after transpose); typically **log1p** transformed in recipes.
+- Metadata columns (e.g. **`Individual`**, library size) — use for grouping and QC, not always as predictors.
+
+## 4. Sample size
+
+Roughly **~282** samples after aligning metadata and OTU table (exact *n* depends on filtering). **p >> n**. Library sizes and sparsity vary; EDA block explores this.
+
+## 5. Leakage risks
+
+- **Random row CV** when the same **mouse (`Individual`)** appears in train and test **inflates** performance.
+- **Normalizing or filtering OTUs on the full table** before splitting leaks.
+- **Intro track:** collapsing to one row per mouse simplifies analysis but changes the scientific question — state that explicitly.
+
+## 6. Subgroups
+
+- **`Individual`** (mouse ID) — primary grouping for honest resampling.
+- Any experimental batch or time fields in metadata — check during EDA for stratification or subgroup metrics.
+
+{{< include _footer.qmd >}}

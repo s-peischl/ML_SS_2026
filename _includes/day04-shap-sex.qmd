@@ -1,0 +1,157 @@
+## SHAP  -  what it means (game theory intuition)
+
+- **One penguin, one prediction:** the model outputs **P(male)** (or log-odds). SHAP asks: *how much did each measurement move this bird away from a baseline?*
+- **Players and coalitions:** treat each feature as a **player**. A **coalition** is any subset of features with the others **averaged over** the data. The model's output on that coalition is the coalition's **payout**.
+- **Shapley value:** for each feature, average its **marginal contribution** over all orders in which features can join the coalition. That fair share is the **SHAP value** \(\phi_j\) for feature \(j\).
+- **Additivity:** baseline \(\phi_0\) plus all feature contributions sums to the model output on the **link scale** (for this forest, **P(male)**):
+
+$$\phi_0 + \sum_j \phi_{i,j} \approx \hat{p}_i(\text{male})$$
+
+- **VIP vs SHAP:** **VIP** ranks predictors **globally** (how often splits use them). **SHAP** explains **one row** (why *this* penguin scored more male or female).
+
+## SHAP task  -  sex without `species`
+
+- **Outcome:** `sex` (female / male). **`species` is omitted** on purpose so the task is not trivial (see [sex notebook](../notebooks/penguins-sex-classification.Rmd)).
+- **Model:** same **`recipe` + random forest (`ranger`)** pattern as Tuesday; we **fit on all complete rows** here so SHAP curves are stable in class (in production, fit SHAP on training data only).
+- **Packages:** **`shapviz`** for plots; **`kernelshap`** to compute values on the fitted **`ranger`** forest.
+
+```{r}
+#| label: day04-shap-sex-setup
+#| include: false
+suppressPackageStartupMessages({
+  library(shapviz)
+  library(kernelshap)
+})
+pg_sex <- prep_penguins_sex()
+sex_shap <- fit_sex_shap_bundle(pg_sex, trees = 300, n_sample = 80, n_bg = 35, seed = 11)
+shp_sex <- sex_shap$shp
+```
+
+## Compute SHAP in R (workflow + `bake`)
+
+```{r}
+#| label: day04-shap-sex-code
+#| echo: true
+#| eval: false
+pg_sex <- prep_penguins_sex()
+
+rec_sex <- recipe(sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm +
+                    body_mass_g + island + year, data = pg_sex) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rf_sex_spec <- rand_forest(trees = 300, mtry = 3, min_n = 2) |>
+  set_engine("ranger", probability = TRUE) |>
+  set_mode("classification")
+
+wf_sex <- workflow() |>
+  add_recipe(rec_sex) |>
+  add_model(rf_sex_spec)
+
+fit_sex <- fit(wf_sex, pg_sex)
+```
+
+## Apply the recipe with `bake()` (model-ready columns)
+
+```{r}
+#| label: day04-shap-sex-bake
+#| echo: true
+#| eval: false
+rec_prepped <- prep(extract_recipe(fit_sex, estimated = TRUE), training = pg_sex)
+X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
+
+head(X_model, 3)
+```
+
+- **`prep()`** learned scaling and dummy columns when we **`fit()`** the workflow.
+- **`bake()`** produces the **same encoded matrix** the forest was trained on  -  required before **SHAP** (same idea as Tuesday's `prep` / `bake` demo).
+
+## KernelSHAP on the `ranger` object
+
+```{r}
+#| label: day04-shap-sex-shapviz
+#| echo: true
+#| eval: false
+rf_engine <- extract_fit_parsnip(fit_sex)$fit
+
+pred_fun <- function(object, X_new) {
+  as.numeric(predict(object, data = X_new)$predictions[, "male"])
+}
+
+set.seed(11)
+X_shap <- dplyr::slice_sample(X_model, n = 80)
+bg_X <- dplyr::slice_sample(X_model, n = 35)
+
+ks <- kernelshap(rf_engine, X = X_shap, pred_fun = pred_fun, bg_X = bg_X)
+shp_sex <- shapviz(ks, X_pred = X_shap)
+```
+
+- **`kernelshap()`** needs numeric predictors only  -  that is why we **`bake()`** first.
+- **`shapviz()`** wraps results for **beeswarm** and **waterfall** plots.
+
+## SHAP beeswarm  -  global pattern
+
+```{r}
+#| label: day04-shap-beeswarm
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+plot_shap_beeswarm(shp_sex)
+```
+
+- **y-axis:** features; **x-axis:** SHAP contribution toward **P(male)**.
+- **Color:** feature value (high vs low). Wide spread = this predictor matters **for many birds** in this model.
+
+## SHAP waterfall  -  two local explanations
+
+**Male example** (one bird labeled male in the SHAP sample):
+
+```{r}
+#| label: day04-shap-waterfall-male
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+plot_shap_waterfall(
+  shp_sex,
+  row_id = sex_shap$male_row,
+  title = "Waterfall: one male penguin",
+  subtitle = "Bars sum from baseline to model P(male) for this bird"
+)
+```
+
+**Female example** (contrasting profile):
+
+```{r}
+#| label: day04-shap-waterfall-female
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+plot_shap_waterfall(
+  shp_sex,
+  row_id = sex_shap$female_row,
+  title = "Waterfall: one female penguin",
+  subtitle = "Same model  -  different feature pushes"
+)
+```
+
+## Reading SHAP without over-claiming
+
+**Reasonable claims**
+
+- For **this** penguin, **higher body mass** (in the model, holding the coalition story fixed) pushed **P(male)** up or down.
+- **Globally**, bill depth and mass show the widest SHAP spread in **this fitted RF**.
+- SHAP describes **the trained model**, not a randomized experiment in the wild.
+
+**Avoid**
+
+- "Bill length **causes** males"  -  observational data; morphometrics are **correlated** ([data card](../data/cards/palmer-penguins.qmd)).
+- "We should **intervene** on flipper length"  -  policy from association.
+- "SHAP proves **fairness** by island"  -  needs explicit subgroup metrics, not one plot.
+
+**Humility prompt (assessment):** *What would you **not** claim from this SHAP beeswarm?*
+
+Full write-up: [Module 06  -  SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex)

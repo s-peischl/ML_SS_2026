@@ -1,0 +1,71 @@
+---
+title: "Data card — synthetic gene x disease"
+format:
+  html:
+    toc: true
+---
+
+## How to load
+
+```r
+set.seed(123)
+n <- 200
+p <- 10
+gene_names <- paste0("Gene", 1:p)
+genes_data <- data.frame(matrix(rnorm(n * p), nrow = n))
+colnames(genes_data) <- gene_names
+disease_presence <- ifelse(
+  0.5 * genes_data$Gene1 + 0.8 * genes_data$Gene3 - 0.3 * genes_data$Gene4 -
+    genes_data$Gene1 * genes_data$Gene3 * 2 + rnorm(n, sd = 0.5) > 0,
+  "Present", "Absent"
+)
+bio_data <- data.frame(genes_data, disease_presence = factor(disease_presence))
+```
+
+## Where we use this
+
+- [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd)
+- [Day 1 slides](../../slides/day-01-monday.qmd) — logistic regression, boundaries
+- [Day 2 slides](../../slides/day-02-tuesday.qmd) — classification trees, step-by-step splits in Gene1 x Gene3 plane
+
+## Caveats
+
+- **Simulated** — coefficients and interaction are for teaching, not biology.
+- **Instructor ground truth**: Gene1, Gene3, Gene4 (and Gene1 x Gene3 interaction) drive disease; other genes are noise.
+
+---
+
+# Data card
+
+## 1. Source
+
+**Simulated in R** (`set.seed(123)`). Same story as [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd) and the [Day 1 data card example](../../exercises/solutions/day01-data-card-example.qmd).
+
+## 2. Outcome
+
+- **`disease_presence`**: factor with levels **`Absent`** / **`Present`** (binary classification).
+
+## 3. Predictors
+
+Ten columns **`Gene1`**–**`Gene10`**, i.i.d. standard normal before the outcome is generated.
+
+| Gene | Role |
+|------|------|
+| Gene1, Gene3, Gene4 | **Causal** (linear terms + Gene1 x Gene3 interaction) |
+| Gene2, Gene5–Gene10 | Noise for classification |
+
+## 4. Sample size
+
+**n = 200**. No missing values in the simulation.
+
+## 5. Leakage risks
+
+- **In-sample accuracy** or AUC on the same rows used to tune or select features is optimistic.
+- Choosing hyperparameters (tree `cp`, lasso λ) on the **full table** before a holdout leaks information.
+- **Day 2 fix**: holdout test set; cross-validation inside training; microbiome labs add **grouped** resampling.
+
+## 6. Subgroups
+
+Not applicable in simulation.
+
+{{< include _footer.qmd >}}

@@ -1,0 +1,26 @@
+# Registry of dataset data cards (add a row in data/index.qmd when you add an entry here)
+datasets:
+  - id: old-faithful
+    title: Old Faithful eruptions
+    kind: real
+    card: cards/old-faithful.qmd
+  - id: hald-cement
+    title: Hald cement
+    kind: real
+    card: cards/hald-cement.qmd
+  - id: gene-trait-simulation
+    title: Synthetic gene x trait
+    kind: simulated
+    card: cards/gene-trait-simulation.qmd
+  - id: gene-disease-simulation
+    title: Synthetic gene x disease
+    kind: simulated
+    card: cards/gene-disease-simulation.qmd
+  - id: palmer-penguins
+    title: Palmer Penguins
+    kind: real
+    card: cards/palmer-penguins.qmd
+  - id: microbiome-mouse-16s
+    title: Mouse 16S microbiome
+    kind: real
+    card: cards/microbiome-mouse-16s.qmd

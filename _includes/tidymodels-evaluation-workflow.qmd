@@ -1,0 +1,14 @@
+## The honest evaluation workflow
+
+You split your data into **training** and **test** sets, then use **cross-validation on the training set** to tune hyperparameters for each model and compute their average performance. For each model type, you select the **best-performing hyperparameter combination** based on CV results, and then **compare these tuned models** to choose the best overall model. Finally, you **refit that selected model on the full training data** and evaluate it **once** on the untouched **test set** to get an **unbiased estimate** of real-world performance.
+
+| Stage | What happens | tidymodels tools (examples) |
+|-------|----------------|---------------------------|
+| Hold out test data | Test rows stay unused until the very end | `initial_split()`, `training()`, `testing()` |
+| Tune on training only | CV estimates average performance while searching hyperparameters | `vfold_cv()`, `tune_grid()`, `select_best()` |
+| Compare learners | Same folds + recipe; pick the best **model type** after tuning each | `fit_resamples()`, `collect_metrics()` |
+| Final report | Refit on **all** training rows; score **once** on test | `last_fit()` |
+
+- **Recipe steps** (dummy, scale, impute, PCA, upsample, …) must be fit **inside** each CV fold on training rows only  -  otherwise information leaks from held-out data.
+- **`fit_resamples()`** (next) averages CV metrics for a workflow  -  quick comparisons when specs are fixed or already tuned.
+- [Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit) walks through **`last_fit()`** with a real train/test split.

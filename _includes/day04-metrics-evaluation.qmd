@@ -1,123 +1,63 @@
-## Why accuracy misleads (imbalanced data)
+## Accuracy trap on multiclass imbalance
 
 ```{r}
-#| label: day04-metrics-majority
+#| label: day04-imb3-majority
 #| echo: true
 #| message: false
+majority_label <- peng_imb3 |>
+  dplyr::count(y3, sort = TRUE) |>
+  dplyr::slice(1) |>
+  dplyr::pull(y3) |>
+  as.character()
+
 tibble(
-  strategy = "Always predict Adelie",
-  accuracy_on_peng_imb = mean(peng_imb$y == "Adelie")
+  strategy = paste("Always predict", majority_label),
+  accuracy_on_peng_imb3 = mean(as.character(peng_imb3$y3) == majority_label)
 )
 ```
 
-- **~94% accuracy** from never calling **Gentoo** — useless for screening rare events.
-- Parts B–D used **`accuracy`** on **balanced** `peng_bal`; from here we add **metric_set** members for **rare positives**.
+- High overall accuracy can still hide poor minority detection.
+- For multiclass imbalance, report **macro recall**, **macro F1**, and **per-class recall**.
 
-## Metrics toolbox (`yardstick`)
-
-| Metric | Question it answers | When it shines |
-|--------|---------------------|----------------|
-| **accuracy** | Overall correct? | Balanced classes, equal error costs |
-| **sens** (sensitivity, recall) | Of true Gentoo, how many caught? | Screening — missing positives is costly |
-| **yardstick::spec** (specificity) | Of true Adelie, how many caught? | Avoid false alarms |
-| **precision** | Of predicted Gentoo, how many correct? | Confirmation after a screen |
-| **f_meas** (F1) | Balance precision & recall | Single score when both matter |
-| **roc_auc** | Ranking quality across thresholds | Class separability, balanced-ish prevalence |
-| **pr_auc** | Precision–recall area | **Rare** positive class |
+## Holdout confusion matrices (same split)
 
 ```{r}
-#| label: day04-metrics-set-show
-#| echo: true
-#| message: false
-metrics_cls_imb
-```
-
-- Use **`yardstick::spec`** in code so R does not confuse **specificity** with a **`spec`** model object.
-
-## Confusion matrix (read the rare-class row)
-
-From the imbalance block — **held-out 20%**, no upsampling:
-
-```{r}
-#| label: day04-metrics-conf-mat
+#| label: day04-imb3-holdout-no
 #| echo: true
 #| message: false
 set.seed(13)
-split_imb <- initial_split(peng_imb, prop = 0.8, strata = y)
-fit_imb <- fit(wf_imb, training(split_imb))
-pred_imb <- augment(fit_imb, testing(split_imb))
-pred_imb |>
-  conf_mat(truth = y, estimate = .pred_class)
+split_imb3 <- initial_split(peng_imb3, prop = 0.8, strata = y3)
+fit_imb3 <- fit(wf_imb3, training(split_imb3))
+pred_imb3 <- augment(fit_imb3, testing(split_imb3))
+
+pred_imb3 |>
+  conf_mat(truth = y3, estimate = .pred_class)
 ```
 
-- **Rows** = true species; **columns** = predictions.
-- **Gentoo row, Adelie column** = false negatives (missed Gentoo) — costly in screening.
-
-## ROC vs PR curve (rare positive)
-
 ```{r}
-#| label: day04-metrics-roc-pr
-#| echo: true
-#| fig-width: 9
-#| fig-height: 4
-#| message: false
-set.seed(15)
-split_pr <- initial_split(peng_imb, prop = 0.8, strata = y)
-fit_pr <- fit(wf_imb, training(split_pr))
-pred_pr <- augment(fit_pr, testing(split_pr))
-
-p_roc <- pred_pr |>
-  roc_curve(truth = y, .pred_Gentoo) |>
-  autoplot() +
-  labs(title = "ROC curve (held-out 20%)") +
-  theme_minimal()
-
-p_pr <- pred_pr |>
-  pr_curve(truth = y, .pred_Gentoo) |>
-  autoplot() +
-  labs(title = "PR curve (held-out 20%)") +
-  theme_minimal()
-
-if (requireNamespace("patchwork", quietly = TRUE)) {
-  print(p_roc + p_pr)
-} else {
-  print(p_roc)
-  print(p_pr)
-}
-```
-
-## Side-by-side CV metrics (imbalanced data)
-
-```{r}
-#| label: day04-metrics-compare-kable
+#| label: day04-imb3-holdout-up
 #| echo: true
 #| message: false
-compare_metrics_tbl(
-  "No upsample" = rs_imb,
-  "Upsample" = rs_imb_up
-)
+fit_imb3_up <- fit(wf_imb3_up, training(split_imb3))
+pred_imb3_up <- augment(fit_imb3_up, testing(split_imb3))
+
+pred_imb3_up |>
+  conf_mat(truth = y3, estimate = .pred_class)
 ```
 
+## Per-class recall comparison
+
 ```{r}
-#| label: day04-metrics-compare-bar
+#| label: day04-imb3-recall-kable
 #| echo: false
-#| fig-width: 9
-#| fig-height: 4.5
 bind_rows(
-  collect_metrics(rs_imb) |> mutate(model = "No upsample"),
-  collect_metrics(rs_imb_up) |> mutate(model = "Upsample")
+  multiclass_recall_table(pred_imb3, truth_col = "y3") |> mutate(model = "No upsample"),
+  multiclass_recall_table(pred_imb3_up, truth_col = "y3") |> mutate(model = "Upsample")
 ) |>
-  filter(.metric %in% c("accuracy", "sens", "roc_auc", "pr_auc")) |>
-  ggplot(aes(model, mean, fill = model)) +
-  geom_col(show.legend = FALSE) +
-  geom_errorbar(aes(ymin = mean - std_err, ymax = mean + std_err), width = 0.15) +
-  facet_wrap(~.metric, scales = "free_y") +
-  theme_minimal() +
-  labs(
-    title = "Imbalanced data: metrics need not move together",
-    x = NULL,
-    y = "Mean metric (5-fold CV)"
-  )
+  mutate(recall = round(recall, 3)) |>
+  select(model, truth, recall) |>
+  tidyr::pivot_wider(names_from = model, values_from = recall) |>
+  knitr::kable(caption = "Per-class recall (holdout)")
 ```
 
-- Pick the metric that matches **deployment cost** before tuning (`select_best(metric = "...")` in the lab).
+Upsampling improves the underrepresented class only if it increases minority recall at acceptable tradeoff.

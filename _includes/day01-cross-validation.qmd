@@ -1,0 +1,61 @@
+## Why cross-validation? {#cross-validation}
+
+- **Lasso** has a tuning knob **$\lambda$**: too small → overfits; too large → underfits.
+- Fitting and scoring on the **same** rows makes every $\lambda$ look artificially good.
+- **Cross-validation (CV)** repeatedly **holds out** part of the data, fits on the rest, scores on the holdout, then **averages** those scores.
+
+## The CV loop (in words)
+
+1. Split rows into a **training** block and a **validation** block (one row, one fold, or more).
+2. **Fit** the model on training rows only (for lasso: at a fixed $\lambda$).
+3. **Predict** the held-out rows and record error (e.g. MSE for trait, deviance for logistic lasso).
+4. **Repeat** for each holdout split; **average** errors across rounds.
+5. Compare averages across a **grid** of $\lambda$ values; pick the winner (or use the **1-SE rule** in `cv.glmnet`).
+
+- This is **not** the same as a final **test set** lockbox (Tuesday): today we use CV only to **choose** $\lambda$ on the same $n$ rows we already have.
+
+## Leave-one-out CV (LOO-CV) {#loo-cv}
+
+- **$n$ rounds** for $n$ rows: each round holds out **exactly one** row as validation, trains on the other $n - 1$.
+- **Pros:** uses almost all data each round; standard for `cv.glmnet(..., nfold = n)`.
+- **Cons:** $n$ fits per $\lambda$ — slow when $n$ is large.
+
+```{r}
+#| label: day01-cv-loo-fig
+#| echo: false
+#| fig-height: 3.2
+#| fig-width: 10
+#| out-width: 100%
+plot_cv_loo_schematic()
+```
+
+## $k$-fold CV {#k-fold-cv}
+
+- Partition rows into **$k$ folds** (often $k = 5$ or $10$). Each round, **one fold** is validation and the other $k - 1$ folds are training.
+- **Pros:** only $k$ fits per $\lambda$ — faster than LOO for large $n$.
+- **Cons:** slightly more variable than LOO because each fit sees fewer rows.
+- **Tuesday:** `vfold_cv()` in **tidymodels** automates this for trees and other models.
+
+```{r}
+#| label: day01-cv-kfold-assign-fig
+#| echo: false
+#| fig-height: 3.4
+#| fig-width: 9
+#| out-width: 92%
+plot_cv_kfold_assignment()
+```
+
+```{r}
+#| label: day01-cv-kfold-holdout-fig
+#| echo: false
+#| fig-height: 3
+#| fig-width: 9
+#| out-width: 92%
+plot_cv_kfold_holdout()
+```
+
+## Lasso: pick $\lambda$ with LOO-CV {#lasso-cv}
+
+- Try many **$\lambda$** values; for each, `cv.glmnet` averages **LOO** prediction error.
+- **`lambda.min`**: lowest CV error; **`lambda.1se`**: simpler model within one standard error of the minimum (our default).
+- Lab [1D](../exercises/solutions/day01-manual-kfold-cv.Rmd): manual **5-fold** loop vs `cv.glmnet` — same idea, different $k$.

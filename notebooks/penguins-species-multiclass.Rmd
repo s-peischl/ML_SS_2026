@@ -26,7 +26,7 @@ theme_set(theme_classic())
 
 Here we treat **`species`** as a **three-level** outcome (Adelie, Chinstrap, Gentoo) using **multinomial logistic regression** (`nnet::multinom`) and a **multiclass classification tree** (`rpart`). This complements the **binary** Adelie-vs-Gentoo notebook (`penguins-classification.Rmd`). For **metrics and multiclass intuition** on the site, see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
 
-See **[Palmer Penguins — about the dataset](../dataset-penguins.qmd)**.
+See **[Palmer Penguins data card](../data/cards/palmer-penguins.qmd)**.
 
 ## Prepare data
 

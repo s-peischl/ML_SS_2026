@@ -1,11 +1,21 @@
 ---
 title: "Day 2 (Tuesday): Trees, rpart, and the tidymodels Pipeline"
-metadata-files: [_reveal-config.yml]
+format:
+  revealjs:
+    theme: [default, ../assets/css/slides-theme.scss]
+    slide-number: true
+    incremental: false
+    scrollable: true
+    slide-level: 2
+    html-math-method: katex
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a>'
+    output-file: day-02-tuesday.html
+    embed-resources: true
 ---
 
 ## Learning objectives
 
-- Frame **Breiman’s two cultures**: same goals and problems, different **modeling approaches** (not “stats vs ML”)
+- Frame **Breiman's two cultures**: same goals and problems, different **modeling approaches** (not "stats vs ML")
 - Build intuition for **decision trees** (`rpart`): recursive splits, partitions, and interpretable rules
 - Walk through **gene × disease** (classification) and **gene × trait** (regression) trees step by step
 - Read **`|>`** chains for tidy tables and `tidymodels` preprocessing
@@ -15,31 +25,31 @@ metadata-files: [_reveal-config.yml]
 
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
-- [Module 03 — Trees & cultures](../modules/module-03-trees-and-cultures.qmd)
-- [Module 04 — Pipeline](../modules/module-04-pipeline.qmd)
+- [Module 03  -  Trees & cultures](../modules/module-03-trees-and-cultures.qmd)
+- [Module 04  -  Pipeline](../modules/module-04-pipeline.qmd)
 - [Back: Day 1 (Monday) deck](day-01-monday.qmd)
 - [Next: Day 4 (Thursday) deck](day-04-thursday.qmd)
 
-# Part A — Two cultures and trees {#part-a-cultures}
+# Part A  -  Two cultures and trees {#part-a-cultures}
 
 ## Two cultures (Breiman, 2001)
 
-Leo Breiman’s [*Statistical Modeling: The Two Cultures*](https://projecteuclid.org/journals/statistical-science/volume-16/issue-3/Statistical-Modeling--The-Two-Cultures/10.1214/ss/1009213726) argues the useful split is **not** “statistics vs machine learning.”
+Leo Breiman's [*Statistical Modeling: The Two Cultures*](https://projecteuclid.org/journals/statistical-science/volume-16/issue-3/Statistical-Modeling--The-Two-Cultures/10.1214/ss/1009213726) argues the useful split is **not** "statistics vs machine learning."
 
 - Scientists often share the **same goals** (learn patterns, predict, support decisions) and work on the **same kinds of data**
-- What differs is **how you build a model** — what you assume up front and what you optimize
+- What differs is **how you build a model**  -  what you assume up front and what you optimize
 
 ## Data modeling culture
 
 - Starts with a **stochastic model** one can write down (Monday: `lm`, `glm`, lasso on known structure)
 - Emphasizes **parameters**, uncertainty, and whether the **model class** is adequate
 - Strength: transparent assumptions
-- Risk: the model may be wrong in shape even when it fits “well”
+- Risk: the model may be wrong in shape even when it fits "well"
 
 ## Algorithmic modeling culture
 
 - Treat the data-generating mechanism as **largely unknown**
-- Let a **flexible algorithm** find structure; judge it by **predictive performance** on data not used to fit (today: trees; soon: cross-validation on penguins)
+- Let a **flexible algorithm** find structure; judge it by **predictive performance** on data not used to fit 
 - Strength: captures interactions and nonlinear boundaries
 - Risk: needs **careful evaluation** so flexibility does not fool you on the training data (*overfitting*)
 
@@ -48,23 +58,32 @@ Leo Breiman’s [*Statistical Modeling: The Two Cultures*](https://projecteuclid
 Linear models force us to look at the world through straight lines and additive math (`glm`). If two variables interact, we have to manually tell the model to multiply them. Decision trees change that. They naturally capture complex, non-linear relationships by asking a sequence of simple, nested questions.
 
 - Automatic Interactions: Captures non-linear boundaries and complex combinations of variables without you having to manually write out interaction terms.
-- Human-Readable Decision Logic: Every prediction can be traced back to a clear, if–then story based on actual measurements.
+- Human-Readable Decision Logic: Every prediction can be traced back to a clear, if-then story based on actual measurements.
 
 Today we will implement this splitting logic using the `tidymodels` framework, keeping `rpart` as our underlying engine.
 
 ## `rpart` in one slide
 
-- **Classification:** `rpart(factor_y ~ ., data = ..., method = "class")` — splits improve class purity (Gini)
-- **Regression:** `rpart(trait ~ GeneA + GeneB, data = ...)` — numeric $y$ uses **`method = "anova"`**; each leaf predicts a **mean** trait
-- **`cp`:** complexity penalty — larger `cp` → simpler tree (see trait block after disease)
-- **`control`:** `maxdepth`, `cp`, `minsplit` — same levers you will tune as **`tree_depth`** and **`min_n`** in `parsnip`
+### Function call:
 
-# Part B — Gene simulations
+- **Classification:** 
+`rpart(factor_y ~ ., data = ..., method = "class")`  -  splits improve class purity per cell
+- **Regression:** 
+`rpart(trait ~ GeneA + GeneB, data = ...)`  -  numeric $y$ uses **`method = "anova"`**; each leaf predicts a **mean** trait
+
+### Tuning parameters: 
+- **`cp`:** 
+complexity penalty  -  larger `cp` → simpler tree (see trait block after disease)
+- **`minsplit`:** 
+The minimum number of data points that must be in a node before rpart will even try to split it further.
+- **`maxdepth`:** The maximum number of levels (layers) the decision tree is allowed to grow from top to bottom.
+
+# Part B  -  Gene simulations
 
 ## Gene × disease (same simulation as Monday)
 
-- Binary **disease** from simulated **gene expression** — instructors know causal genes (**Gene1**, **Gene3**, **Gene4**, interaction)
-- **Today:** classification tree on **all genes**
+- Binary **disease** from simulated **gene expression**  -  instructors know causal genes (**Gene1**, **Gene3**, **Gene4**, interaction)
+- Classification tree on **all genes**
 - Visualized as a tree and in the **Gene1 × Gene3** plane (other genes kept constant at their means)
 
 
@@ -86,6 +105,7 @@ knitr::opts_chunk$set(
   out.width = "100%",
   dpi = 120
 )
+source("../R/slide-viz-helpers.R")
 
 plot_rpart_boundary <- function(
     model,
@@ -294,7 +314,7 @@ describe_new_split <- function(curr_model, prev_model = NULL) {
   if (is.null(split_info)) {
     return(paste0(
       "New split on **", split_var, "** (node ", highlight_node,
-      ") — highlighted in gold on the tree."
+      ")  -  highlighted in gold on the tree."
     ))
   }
 
@@ -384,7 +404,7 @@ for (i in seq_len(max_step_splits)) {
 
 ## Final decision surface (Gene1 vs Gene3)
 
-Other genes fixed at their sample means — same 2D slice as Monday’s logistic boundary.
+Other genes fixed at their sample means  -  same 2D slice as Monday's logistic boundary.
 
 ```{r}
 #| label: day02-rpart-final-boundary
@@ -394,7 +414,7 @@ Other genes fixed at their sample means — same 2D slice as Monday’s logistic
 print(
   plot_rpart_boundary(
     rpart_model, bio_data, "Gene1", "Gene3",
-    title = "rpart: predicted class in the Gene1–Gene3 plane"
+    title = "rpart: predicted class in the Gene1-Gene3 plane"
   )
 )
 ```
@@ -592,14 +612,49 @@ knitr::kable(
 )
 ```
 
+## Tree vs logistic  -  boundaries side by side
+
+Same **Gene1 × Gene3** slice; other genes at their means.
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: day02-logistic-boundary-compare
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5
+print(
+  plot_glm_logistic_boundary(
+    logistic_model, bio_data, "Gene1", "Gene3", "disease_presence",
+    title = "Logistic (glm)"
+  )
+)
+```
+:::
+::: {.column width="50%"}
+```{r}
+#| label: day02-tree-boundary-compare
+#| echo: false
+#| fig-width: 6
+#| fig-height: 5
+print(
+  plot_rpart_boundary(
+    rpart_model, bio_data, "Gene1", "Gene3",
+    title = "Decision tree (rpart)"
+  )
+)
+```
+:::
+::::
+
 
 ## Gene × trait (Monday simulation, regression tree)
 
-- Continuous **trait** from **GeneA** / **GeneB** — same ground truth as Monday’s `lm` / lasso block
-- **`rpart(trait ~ GeneA + GeneB, cp = ...)`** — sweep **`cp`** from `$cptable` to show how the predicted **surface** and tree change
+- Continuous **trait** from **GeneA** / **GeneB**  -  same ground truth as Monday's `lm` / lasso block
+- **`rpart(trait ~ GeneA + GeneB, cp = ...)`**  -  sweep **`cp`** from `$cptable` to show how the predicted **surface** and tree change
 - Notebook: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
 
-**Gene × trait — regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
+**Gene × trait  -  regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
 
 ```{r}
 #| label: day02-trait-rpart-setup
@@ -617,10 +672,19 @@ plot_trait_surface <- function(model, data, title = NULL) {
     ) +
     geom_point(
       data = data,
-      aes(x = GeneA, y = GeneB, color = trait),
-      size = 2.4,
-      inherit.aes = FALSE
+      aes(x = GeneA, y = GeneB),
+      size = 3,
+      inherit.aes = FALSE,
+      color = "black"
     ) +
+    geom_point(
+      data = data,
+      aes(x = GeneA, y = GeneB, fill = trait),
+      size = 2.8,
+      inherit.aes = FALSE,
+      shape = 21,
+      color = "black"
+    )+
     scale_fill_gradient(
       low = "turquoise",
       high = "magenta",
@@ -668,10 +732,10 @@ save_trait_composite <- function(model, cp, chunk_id) {
 describe_trait_cp <- function(model, cp) {
   n_split <- max(0L, nrow(model$frame) - 1L)
   paste0(
-    "**cp = ", signif(cp, 3), "** — ", n_split, " split",
+    "**cp = ", signif(cp, 3), "**  -  ", n_split, " split",
     if (n_split == 1L) "" else "s",
     ". Each region predicts a **constant** trait (piecewise average); ",
-    "background colour is the model’s prediction on a grid."
+    "background colour is the model's prediction on a grid."
   )
 }
 ```
@@ -721,7 +785,7 @@ for (i in seq_along(trait_cps)) {
 ## Gene × trait (continuous outcome)
 
 - Same story as **Monday**: trait = $-0.5 \times$ **GeneA** $+ 0.8 \times$ **GeneB** + noise (linear truth)
-- **`rpart(trait ~ GeneA + GeneB, ...)`** — default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
+- **`rpart(trait ~ GeneA + GeneB, ...)`**  -  default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
 - Contrast with disease block: **`method = "class"`** for a factor outcome
 - Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
 
@@ -819,18 +883,26 @@ knitr::kable(
     RMSE_in = c(rmse(X_train$trait, pred_lm), rmse(X_train$trait, pred_tree))
   ),
   digits = 3,
-  caption = "In-sample RMSE on all n rows — same genes as Monday’s simple linear model"
+  caption = "In-sample RMSE on all n rows  -  same genes as Monday's simple linear model"
 )
 ```
 
 
-# Part C — Palmer Penguins: tidymodels pipeline (trees only) {#part-c-pipeline}
+# Part C  -  Palmer Penguins: tidymodels pipeline (trees only) {#part-c-pipeline}
+
+## Meet the Palmer penguins
+
+Real data for the rest of Tuesday and again on **Thursday**: bill measurements, species labels, and honest evaluation.
+
+![](../assets/figures/shared/penguins/lter_penguins.png){width=75% fig-align="center"}
+
+*Artwork: Allison Horst / Palmer Penguins LTER study (teaching use).*
 
 ## From manual `rpart` to a reusable pipeline
 
 - Monday compared models **on all rows**; today we **hold out** information via **cross-validation** while tuning
-- **One workflow** runs preprocessing + tree on each fold — same discipline as the microbiome lab this afternoon
-- Real data: [Palmer Penguins](../dataset-penguins.qmd) — Adelie vs Gentoo; **bill + island + sex + year**
+- **One workflow** runs preprocessing + tree on each fold  -  same discipline as the microbiome lab this afternoon
+- Dataset: [Palmer Penguins data card](../data/cards/palmer-penguins.qmd)  -  Adelie vs Gentoo; **bill + island + sex + year**
 
 Short **tidyverse** refresher before the `tidymodels` pipeline (same pipe grammar as recipes and workflows).
 
@@ -845,7 +917,7 @@ knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 
 - Each **column** is one variable; each **row** is one penguin (or one sample)
 - **`x |> f()`** means: take the result of `x` and pass it as the **first argument** to `f()`
-- Read chains **top to bottom** — same habit you will use for `recipe() |> step_*()`
+- Read chains **top to bottom**  -  same habit you will use for `recipe() |> step_*()`
 
 ## Example: `filter` and `select`
 
@@ -874,7 +946,7 @@ pg |>
 
 - **Table pipelines:** `penguins |> filter(...) |> mutate(...)`
 - **Preprocessing:** `recipe(y ~ ., data = train) |> step_dummy() |> step_normalize()`
-- **Modeling objects:** `workflow() |> add_recipe(rec) |> add_model(spec)` — here you chain **objects**, not tables, but the **read left-to-right** habit is the same
+- **Modeling objects:** `workflow() |> add_recipe(rec) |> add_model(spec)`  -  here you chain **objects**, not tables, but the **read left-to-right** habit is the same
 
 ```{r}
 #| label: day02-penguins-setup
@@ -896,6 +968,9 @@ knitr::opts_chunk$set(
   out.width = "100%",
   dpi = 120
 )
+if (file.exists("../R/slide-viz-helpers.R")) {
+  source("../R/slide-viz-helpers.R")
+}
 
 peng_cls <- palmerpenguins::penguins |>
   filter(species %in% c("Adelie", "Gentoo")) |>
@@ -967,8 +1042,8 @@ metrics_summary_table <- function(fit_res, label) {
 ## Palmer Penguins: one table, one model family (trees)
 
 - **Outcome `y`:** Adelie vs Gentoo (complete cases).
-- **Predictors:** bill length & depth, **island**, **sex**, **year** — no flipper or body mass (so **`tree_depth`** and **`min_n`** show a real tuning tradeoff).
-- **Today’s engine:** **`decision_tree()` + `rpart` only** — forests and boosting come on **Thursday**.
+- **Predictors:** bill length & depth, **island**, **sex**, **year**  -  no flipper or body mass (so **`tree_depth`** and **`min_n`** show a real tuning tradeoff).
+- **Today's engine:** **`decision_tree()` + `rpart` only**  -  forests and boosting come on **Thursday**.
 
 ```{r}
 #| label: day02-walk-balance
@@ -988,28 +1063,60 @@ ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
   scale_color_manual(values = c(Adelie = "turquoise", Gentoo = "magenta")) +
   theme_minimal() +
   labs(
-    title = "Bill space — Adelie vs Gentoo",
+    title = "Bill space  -  Adelie vs Gentoo",
     x = "Bill length (mm)",
     y = "Bill depth (mm)"
   )
 ```
 
-## Pipeline map
+## The pipeline in principle
 
-**Data → recipe → spec → workflow → resampling/tuning → fit → figures**
+No code yet  -  the **shape** of every `tidymodels` project this week:
+
+```mermaid
+flowchart LR
+  data[Raw table] --> recipe[recipe prep bake]
+  recipe --> spec[parsnip spec]
+  spec --> wf[workflow]
+  folds[vfold_cv folds] --> tune[tune_grid]
+  metrics[metric_set] --> tune
+  wf --> tune
+  tune --> best[select_best finalize]
+  best --> fit[fit predict]
+  fit --> out[Plots and tables]
+```
+
+- **Recipe steps run inside each CV fold**  -  never scale or encode on the full table before splitting (avoids leakage).
+- **Today's score:** **accuracy** only; Thursday adds metrics for imbalanced data.
+
+## Five steps  -  what each one does
+
+1. **Recipe**  -  declare preprocessing steps (drop useless columns, dummy-code categories, scale numerics). **`prep()`** learns rules on training rows; **`bake()`** applies them.
+2. **Spec**  -  choose model **type**, **engine**, **mode**, and which arguments to tune. Still a **blueprint**  -  not fitted.
+3. **Workflow**  -  glue **`recipe` + `spec`** so one **`fit()`** runs preprocessing and training in the right order.
+4. **Metrics**  -  define how to judge predictions (**`accuracy`** today).
+5. **Resample and tune**  -  search hyperparameters on **`vfold_cv`** folds, pick the best, then **`fit`** for plots and interpretation.
+
+## Packages in the pipeline
 
 | Package | Job |
 |---------|-----|
 | **`rsample`** | Training vs assessment rows (`initial_split`, `vfold_cv`) |
-| **`recipes`** | Preprocessing checklist (dummy, scale, …) |
+| **`recipes`** | Preprocessing checklist (dummy, scale, ...) |
 | **`parsnip`** | Model **blueprint** (`decision_tree`, `set_engine("rpart")`) |
 | **`workflows`** | Glue recipe + model |
 | **`tune`** | Search `tree_depth` and `min_n` |
-| **`yardstick`** | Scores — **accuracy only** today; more metrics Thursday |
+| **`yardstick`** | Scores  -  **accuracy only** today; more metrics Thursday |
 
-# Step 1 — Preprocessing (`recipe`)
+# Step 1  -  Preprocessing (`recipe`)
 
-A **recipe** defines transforms **before** the model sees data. Steps run top to bottom.
+Turn raw columns into a model-ready table  -  **in order**, and **only on training rows** inside each fold.
+
+## Step 1  -  Why a recipe?
+
+- A **recipe** is a **checklist** of transforms applied **before** the model sees the data.
+- Steps run **top to bottom**; order matters (e.g. dummy-code before scaling).
+- **`prep()`** learns parameters on training data; **`bake()`** applies them  -  a **`workflow()`** does both automatically inside CV.
 
 ## Start the recipe
 
@@ -1021,10 +1128,10 @@ rec <- recipe(y ~ ., data = peng_bal)
 rec
 ```
 
-- **`recipe(y ~ ., data = peng_bal)`** — `y` is the outcome; **`.`** = all other columns are predictors.
-- Blueprint only — nothing transformed yet.
+- **`recipe(y ~ ., data = peng_bal)`**  -  `y` is the outcome; **`.`** = all other columns are predictors.
+- Blueprint only  -  nothing transformed yet.
 
-## `step_zv()` — drop zero-variance columns
+## `step_zv()`  -  drop zero-variance columns
 
 ```{r}
 #| label: day02-walk-rec-zv
@@ -1037,7 +1144,7 @@ rec
 
 - Removes columns with one unique value (no predictive power; can break algorithms in small folds).
 
-## `step_dummy()` — encode categories
+## `step_dummy()`  -  encode categories
 
 ```{r}
 #| label: day02-walk-rec-dummy
@@ -1050,7 +1157,7 @@ rec
 
 - **`island`** and **`sex`** → numeric 0/1 columns for **`rpart`**.
 
-## `step_normalize()` — scale numeric predictors
+## `step_normalize()`  -  scale numeric predictors
 
 ```{r}
 #| label: day02-walk-rec-norm
@@ -1072,17 +1179,46 @@ rec_base <- rec
 rec_base
 ```
 
+## `prep()` and `bake()` — learn rules, then apply {#prep-and-bake}
+
+- **`prep(recipe, training = train)`** estimates each step on **training rows only** (means for scaling, dummy levels, etc.).
+- **`bake(prep, new_data = ...)`** applies those rules to any table (train, test, or one new penguin) **without re-learning**.
+- A **`workflow()`** calls **`prep` + `bake` + `fit`** in the right order inside each CV fold  -  you rarely call them by hand except for checks and tools like **SHAP** (Thursday).
+
+```{r}
+#| label: day02-walk-prep-bake-demo
+#| echo: true
+#| message: false
+set.seed(2)
+split_demo <- initial_split(peng_bal, prop = 0.75, strata = y)
+train_demo <- training(split_demo)
+test_demo <- testing(split_demo)
+
+rec_prep <- prep(rec_base, training = train_demo)
+bake_train <- bake(rec_prep, new_data = train_demo)
+bake_test <- bake(rec_prep, new_data = test_demo)
+
+dplyr::glimpse(bake_train)
+```
+
+- **`bake_train`**: model-ready columns the tree sees during **`fit()`**.
+- **`bake_test`**: same encoding using **training** statistics  -  that is what prevents leakage.
+
 ::: {.callout-note}
 ## Afternoon lab (microbiome)
 
-Same pattern on OTU counts — add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
+Same pattern on OTU counts  -  add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
 :::
 
-**`prep()`** learns rules; **`bake()`** applies them. A **`workflow()`** does both inside each CV fold.
+# Step 2  -  Model blueprint (`spec`)
 
-# Step 2 — Model blueprint (`spec`)
+Choose the learner and its settings  -  still **no fitting**.
 
-**`parsnip`** stores the family and hyperparameters. **Nothing is fitted yet.**
+## Step 2  -  What is a spec?
+
+- **`parsnip`** stores the **model family** and hyperparameters in a **`spec`** object.
+- **`set_engine("rpart")`** picks the R implementation; **`set_mode("classification")`** matches a factor outcome.
+- **`tune()`** marks arguments we will search later  -  the spec stays a **blueprint** until **`fit()`**.
 
 ## Classification tree with `rpart`
 
@@ -1096,10 +1232,10 @@ tree_spec_demo <- decision_tree(tree_depth = 4, min_n = 10) |>
 tree_spec_demo
 ```
 
-- **`decision_tree()`** — fixed **parsnip** function name.
-- **`tree_depth`**, **`min_n`** — depth limit and minimum leaf size.
-- **`set_engine("rpart")`** — same engine as the gene trees this morning.
-- **`set_mode("classification")`** — factor outcome **`y`**.
+- **`decision_tree()`**  -  fixed **parsnip** function name.
+- **`tree_depth`**, **`min_n`**  -  depth limit and minimum leaf size.
+- **`set_engine("rpart")`**  -  same engine as the gene trees this morning.
+- **`set_mode("classification")`**  -  factor outcome **`y`**.
 
 ## Tuning knobs (`tune()`)
 
@@ -1116,7 +1252,7 @@ tree_spec <- decision_tree(
 tree_spec
 ```
 
-- **`tune()`** marks arguments **`tune_grid()`** will search — we pick winners by **cross-validated accuracy**.
+- **`tune()`** marks arguments **`tune_grid()`** will search  -  we pick winners by **cross-validated accuracy**.
 
 ## Parsnip: type → engine → mode
 
@@ -1126,7 +1262,7 @@ tree_spec
 | `rand_forest()` | `"ranger"`, `"randomForest"` | classification, regression |
 | `boost_tree()` | `"xgboost"`, `"lightgbm"` | classification, regression |
 
-Thursday swaps **`spec`** — same **`recipe`** and **`workflow()`** pattern.
+Thursday swaps **`spec`**  -  same **`recipe`** and **`workflow()`** pattern.
 
 ```{r}
 #| label: day02-walk-bad-engine
@@ -1139,7 +1275,17 @@ decision_tree() |>
 # Error: 'lm' is not a valid engine for decision_tree()
 ```
 
-# Step 3 — Workflow
+# Step 3  -  Workflow
+
+Bundle preprocessing and model into **one** object.
+
+## Step 3  -  Bundle recipe and model
+
+- **`workflow()`** combines **`rec_base`** and **`tree_spec`** so you never preprocess the full table before splitting.
+- **`add_recipe()`** + **`add_model()`**  -  one object to pass to **`fit()`**, **`tune_grid()`**, or **`fit_resamples()`**.
+- Inside each resample, the workflow **prep → bake → train** on analysis rows only.
+
+## Step 3  -  `workflow()` code
 
 ```{r}
 #| label: day02-walk-wf
@@ -1151,9 +1297,13 @@ wf <- workflow() |>
 wf
 ```
 
-- Preprocessing + model in **one** object — no scaling the full table before splitting.
+## Step 3  -  One-shot fit (intuition)
 
-## One-shot fit (intuition)
+- **`fit(wf, data = peng_bal)`** on **all rows** is a quick way to **see** a decision boundary  -  not our final honest evaluation.
+- We use a **fixed** demo spec (`tree_spec_demo`) so the plot is stable before tuning.
+- After tuning (Step 5), we refit on all rows for teaching plots; in a project, keep a locked **test** set.
+
+## Step 3  -  Fit and boundary (code)
 
 ```{r}
 #| label: day02-walk-fit-demo
@@ -1168,12 +1318,48 @@ fit_demo <- fit(wf_demo, data = peng_bal)
 ```{r}
 #| label: day02-walk-boundary
 #| echo: false
-#| fig-width: 7
-#| fig-height: 4.5
-print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"))
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree  -  P(Gentoo)"))
 ```
 
-# Step 4 — Metrics (accuracy today)
+## Logistic boundary on penguins (same bill plane)
+
+A **smooth** linear boundary from **`logistic_reg()`**  -  contrast with the **rectangular** tree regions above.
+
+```{r}
+#| label: day02-walk-glm-boundary
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+glm_spec_demo <- logistic_reg() |>
+  set_engine("glm") |>
+  set_mode("classification")
+wf_glm_demo <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(glm_spec_demo)
+fit_glm_demo <- fit(wf_glm_demo, peng_bal)
+print(
+  plot_workflow_prob_boundary(
+    fit_glm_demo, peng_bal, "bill_length_mm", "bill_depth_mm",
+    title = "Logistic regression  -  P(Gentoo) in bill space"
+  )
+)
+```
+
+# Step 4  -  Metrics 
+
+Decide **how** to score predictions **before** you tune.
+
+## Step 4  -  Choose a metric before tuning
+
+- Today wqe use **`accuracy`**  -  fraction of correct class labels; fine when classes are balanced and errors cost the same.
+- **Thursday:** we will add sensitivity, ROC-AUC, PR-AUC when the positive class is rare  -  accuracy can mislead.
+- **`metric_set(accuracy)`** bundles scorers for **`tune_grid()`** and **`fit_resamples()`**.
+
+## Step 4  -  `metric_set` code
 
 ```{r}
 #| label: day02-walk-metrics
@@ -1182,10 +1368,17 @@ print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree — P(Gentoo)"
 metrics_day2
 ```
 
-- **`accuracy`** — fraction of correct class labels.
-- Thursday adds sensitivity, ROC-AUC, PR-AUC, and more when classes are imbalanced.
+# Step 5  -  Cross-validation and tuning
 
-# Step 5 — Cross-validation and tuning
+Search **`tree_depth`** and **`min_n`** on held-out folds, then finalize.
+
+## Step 5  -  Search hyperparameters on folds
+
+- **`folds <- vfold_cv(..., strata = y)`**  -  each fold keeps both species represented.
+- **`tune_grid(wf, resamples = folds, grid = ..., metrics = metrics_day2)`** tries many specs; preprocessing is refit **inside** each fold.
+- Grid spans **stumps** (depth 1, large `min_n`) to **more flexible** trees.
+
+## Step 5  -  `tune_grid` code
 
 ```{r}
 #| label: day02-walk-tune
@@ -1204,10 +1397,13 @@ tune_res <- tune_grid(
 )
 ```
 
-- **`vfold_cv(..., strata = y)`** — balanced species per fold.
-- Grid spans underfit (depth 1, large `min_n`) → more flexible trees.
+## Step 5  -  Read the tuning plot
 
-## Read the tuning plot
+- **`autoplot(tune_res)`** shows mean **accuracy** vs **`tree_depth`** and **`min_n`**.
+- Expect **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+- Pick a region that balances fit and simplicity before **`select_best()`**.
+
+## Step 5  -  Tuning plot (code)
 
 ```{r}
 #| label: day02-walk-autoplot
@@ -1219,13 +1415,20 @@ tune_res |>
   theme_minimal() +
   labs(
     title = "Tuning: accuracy vs tree_depth and min_n",
-    subtitle = "Bill + island + sex + year — no flipper/mass"
+    subtitle = "Bill + island + sex + year  -  no flipper/mass"
   )
 ```
 
-- Look for **lower accuracy** at **`tree_depth = 1`** (stump) and with **large `min_n`** (heavy pruning).
+{{< include ../_includes/tidymodels-evaluation-workflow.qmd >}}
 
-## Finalize and fit
+## Step 5  -  Finalize and refit
+
+- **`select_best(tune_res, metric = "accuracy")`**  -  best hyperparameters from CV.
+- **`finalize_workflow(wf, best)`**  -  plug tuned values into the blueprint.
+- **`fit(final_wf, data = peng_cls)`**  -  one tree on all rows for **plots**; **`fit_resamples()`** reports honest CV performance.
+- In projects, use **`last_fit()`** with a true test set instead of fitting on all rows for reporting.
+
+## Step 5  -  Finalize and CV metrics (code)
 
 ```{r}
 #| label: day02-walk-finalize
@@ -1246,8 +1449,6 @@ wf_tree <- final_wf
 rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_day2)
 metrics_summary_table(rs_tree, "Tuned tree (5-fold CV)")
 ```
-
-Teaching speed: we **`fit` on all rows** after tuning; in projects, hold out a true test set with **`last_fit`**.
 
 ## Fitted tree structure
 
@@ -1280,21 +1481,21 @@ final_fit |>
   theme_minimal() +
   labs(
     title = "Split-based importance (single tree)",
-    subtitle = "Correlated bills ≠ causation — full VIP chapter on Thursday"
+    subtitle = "Correlated bills ≠ causation  -  full VIP chapter on Thursday"
   )
 ```
 
-# Part D — Wrap-up {#part-d-wrapup}
+# Part D  -  Wrap-up {#part-d-wrapup}
 
 ## Transition to Day 4 (Thursday)
 
 - You have **`rec_base`**, **`workflow()`**, **`vfold_cv`**, and **`tune_grid`** with a **tree**
-- Thursday: **same recipe** — swap in forests, boosting, neural nets; add PCA, imputation, imbalance; **richer metrics** and VIP
+- Thursday: **same recipe**  -  swap in forests, boosting, neural nets; add PCA, imputation, imbalance; **richer metrics** and VIP
 
 ## End-of-day checklist
 
-- Can you name Breiman’s **two cultures** in one sentence each?
-- For the gene **classification** tree: what does **one split** do to the Gene1–Gene3 partition?
+- Can you name Breiman's **two cultures** in one sentence each?
+- For the gene **classification** tree: what does **one split** do to the Gene1-Gene3 partition?
 - For the gene **trait** tree: what does a larger **`cp`** do to the number of regions?
 - What is the difference between **training**, **CV**, and **test** rows in the penguin workflow?
 - Which three objects does **`workflow()`** bundle?

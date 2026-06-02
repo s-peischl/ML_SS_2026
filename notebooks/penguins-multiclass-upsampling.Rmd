@@ -1,0 +1,124 @@
+---
+title: "Palmer Penguins — multiclass imbalance and upsampling"
+author: "ML Summer School"
+format:
+  html:
+    toc: true
+    code-tools: true
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(themis)
+  library(dplyr)
+  library(ggplot2)
+})
+source("../R/slide-viz-helpers.R")
+```
+
+# Overview
+
+Minimal walkthrough for [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics): three-species classification with a **rare Chinstrap** class, one model, and **`step_upsample()`** in the recipe.
+
+See also [three-species notebook](penguins-species-multiclass.Rmd) and the [Palmer Penguins data card](../data/cards/palmer-penguins.qmd).
+
+## Load imbalanced data
+
+We keep Adelie and Gentoo abundant and retain **15 Chinstrap** rows (deterministic rule: closest to the Adelie morphometric cloud).
+
+```{r}
+peng_imb3 <- prep_penguins_multiclass_imbalance(
+  minority_class = "Chinstrap",
+  hard_to_class = "Adelie",
+  n_minority = 15L
+)
+
+peng_imb3 |>
+  count(y3) |>
+  knitr::kable(col.names = c("Species", "n"))
+```
+
+```{r fig.width=6, fig.height=3.5}
+peng_imb3 |>
+  count(y3) |>
+  ggplot(aes(y3, n, fill = y3)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = n), vjust = -0.25, size = 4) +
+  theme_minimal() +
+  labs(title = "Class counts (rare Chinstrap)", x = NULL, y = "n")
+```
+
+## One model, two recipes
+
+Same **`decision_tree`** spec; only the recipe differs (with vs without upsampling).
+
+```{r}
+mc_tree_spec <- decision_tree(tree_depth = 4, min_n = 20) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+rec_no <- recipe(y3 ~ ., data = peng_imb3) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rec_up <- recipe(y3 ~ ., data = peng_imb3) |>
+  step_upsample(y3) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+wf_no <- workflow() |> add_recipe(rec_no) |> add_model(mc_tree_spec)
+wf_up <- workflow() |> add_recipe(rec_up) |> add_model(mc_tree_spec)
+```
+
+## Train / test split and fit
+
+```{r}
+set.seed(13)
+split <- initial_split(peng_imb3, prop = 0.8, strata = y3)
+train <- training(split)
+test <- testing(split)
+
+fit_no <- fit(wf_no, train)
+fit_up <- fit(wf_up, train)
+
+pred_no <- augment(fit_no, test)
+pred_up <- augment(fit_up, test)
+```
+
+## Confusion matrices (holdout)
+
+Rows = true species; columns = predicted species.
+
+**No upsampling:**
+
+```{r}
+pred_no |>
+  conf_mat(truth = y3, estimate = .pred_class)
+```
+
+**With `step_upsample(y3)`:**
+
+```{r}
+pred_up |>
+  conf_mat(truth = y3, estimate = .pred_class)
+```
+
+## Per-class recall (what improves)
+
+```{r}
+bind_rows(
+  multiclass_recall_table(pred_no, truth_col = "y3") |> mutate(model = "No upsample"),
+  multiclass_recall_table(pred_up, truth_col = "y3") |> mutate(model = "Upsample")
+) |>
+  mutate(recall = round(recall, 3)) |>
+  select(model, truth, recall) |>
+  tidyr::pivot_wider(names_from = model, values_from = recall) |>
+  knitr::kable(caption = "Holdout recall by species")
+```
+
+Focus on the **Chinstrap** row: upsampling is useful when it raises minority recall without hiding poor performance on other classes.

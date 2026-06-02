@@ -16,11 +16,12 @@ title: "Module 06: Metrics, Imbalance, and SHAP"
 
 | Part | Topic | Slide link |
 |------|--------|------------|
-| E (first) | Rare Gentoo, upsampling honesty | [Imbalance block](../slides/day-04-thursday.html#/part-e-metrics) |
-| E (metrics) | Toolbox, confusion matrix, ROC/PR | [Part E](../slides/day-04-thursday.html#/part-e-metrics) |
+| E (first) | Multiclass imbalance (rare Chinstrap), majority baseline | [Imbalance block](../slides/day-04-thursday.html#/part-e-metrics) |
+| E (metrics) | Macro metrics + per-class recall + confusion matrix | [Part E](../slides/day-04-thursday.html#/part-e-metrics) |
 | F | Random forest VIP | [Part F — VIP](../slides/day-04-thursday.html#/part-f-vip) |
+| F | SHAP on sex (no species) | [SHAP introduction](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition) |
 
-Tuesday lecture tunes on **accuracy only**; Thursday Part E introduces the full toolbox.
+Tuesday lecture tunes on **accuracy only**; Thursday Part E shows why multiclass imbalance needs **macro/per-class** metrics.
 
 ---
 
@@ -46,18 +47,18 @@ On **imbalanced** data (many Adelie, few Gentoo in the teaching slice), a model 
 
 Numeric example: if prevalence is 90% negative and 10% positive, an always-negative model gets 90% accuracy but 0% sensitivity for the positive class.
 
-The slides compute a **majority-class baseline** before comparing upsampling ([Part E](../slides/day-04-thursday.html#/part-e-metrics)).
+The slides compute a **majority-class baseline** before comparing upsampling on a multiclass imbalanced slice ([Part E](../slides/day-04-thursday.html#/part-e-metrics)).
 
 ---
 
 ## Class imbalance and resampling
 
 - **`step_upsample()`** duplicates minority rows **in training folds** — helps when the learner **ignores** the rare class.  
-- On **separable** data (bill space already splits species), upsampling may **not** improve CV metrics — duplicating easy points adds noise.  
-- Always report **sensitivity** and **PR-AUC** for rare events, not accuracy alone.
-- Fold-level intuition: a training fold with 72 Adelie / 8 Gentoo becomes roughly balanced after upsampling, while the assessment fold remains untouched for honest scoring.
+- In multiclass settings, upsampling is judged by **minority-class recall** and **macro metrics**, not only accuracy.
+- Upsampling duplicates minority rows **inside training folds only**; assessment folds stay untouched for honest scoring.
+- It can improve underrepresented-class detection at the cost of extra confusion between majority classes.
 
-Lab: [Day 4 Block D — Imbalance](../exercises/mlss2026-lab-exercises.qmd) (microbiome `Late`).
+Lab: [Day 4 Block D — Imbalance](../exercises/mlss2026-lab-exercises.qmd) (microbiome `Late`). Minimal notebook: [multiclass upsampling](../notebooks/penguins-multiclass-upsampling.Rmd).
 
 ---
 
@@ -99,12 +100,182 @@ Threshold example: at threshold 0.2 you might get recall 0.90 but precision 0.18
 
 ---
 
-## SHAP (pointer)
+## SHAP: Shapley values on penguins (sex) {#shap-shapley-values-on-penguins-sex}
 
-- **SHAP** attributes a **single prediction** to features relative to a baseline.  
-- **TreeSHAP** for forests/boosting; **KernelSHAP** for other engines.  
-- **Guardrail:** association \(\neq\) intervention. See [Module 06 limits](../curriculum-outline.qmd) and course humility prompts.
-- Local-example framing: for one prediction, SHAP might attribute +0.30 log-odds to bill length, +0.15 to flipper size, and -0.10 to island relative to baseline.
+**SHAP** = **SHapley additive explanations**. This section mirrors [Day 4 Part F SHAP slides](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition). We use a **non-trivial** task: predict **`sex`** from morphometrics and island/year while **omitting `species`** ([sex notebook](../notebooks/penguins-sex-classification.Rmd), [data card](../data/cards/palmer-penguins.qmd)).
+
+### 1. What SHAP means (game theory intuition)
+
+**Coalition story (no formulas required in class):**
+
+1. Fix one penguin and a fitted model.
+2. Imagine each **feature** is a player who can join a **team** (coalition).
+3. For each coalition, the model predicts using only those features; others are integrated over the data (background).
+4. The **Shapley value** is the fair average of a player's **marginal contributions** as players join in every possible order.
+
+**Additivity (check on one bird):**
+
+| Piece | Meaning |
+|-------|---------|
+| \(\phi_0\) | **Baseline** — average model output over background penguins |
+| \(\phi_j\) | SHAP value for feature \(j\) on this row |
+| Sum | \(\phi_0 + \sum_j \phi_j \approx \hat{p}(\text{male})\) for that row |
+
+**Toy numeric row (illustration only):**
+
+| Feature | SHAP \(\phi\) |
+|---------|----------------|
+| Baseline \(\phi_0\) | 0.42 |
+| body_mass_g | +0.18 |
+| bill_depth_mm | +0.09 |
+| island_Dream | −0.05 |
+| … | … |
+| **Sum** | **0.71 = model P(male)** |
+
+**VIP vs SHAP:** VIP = **global** split usage; SHAP = **local** decomposition for **one** penguin.
+
+### 2. How to calculate and plot (R)
+
+**Packages:** [`shapviz`](https://cran.r-project.org/package=shapviz), [`kernelshap`](https://cran.r-project.org/package=kernelshap) (plus course **`tidymodels`** stack). Install:
+
+```r
+install.packages(c("shapviz", "kernelshap"))
+```
+
+Helpers live in [`R/slide-viz-helpers.R`](../R/slide-viz-helpers.R). The slides source them automatically; in your own project:
+
+```r
+source("R/slide-viz-helpers.R")  # adjust path
+```
+
+```{r}
+#| label: m06-shap-setup
+#| include: false
+#| message: false
+#| warning: false
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(shapviz)
+  library(kernelshap)
+})
+source("../R/slide-viz-helpers.R")
+pg_sex_m06 <- prep_penguins_sex()
+sex_shap_m06 <- fit_sex_shap_bundle(
+  pg_sex_m06,
+  trees = 300,
+  n_sample = 80,
+  n_bg = 35,
+  seed = 11
+)
+```
+
+**Pipeline (same logic as slides):**
+
+```{r}
+#| label: m06-shap-code
+#| echo: true
+#| eval: false
+pg_sex <- prep_penguins_sex()
+
+rec_sex <- recipe(sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm +
+                    body_mass_g + island + year, data = pg_sex) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+rf_sex_spec <- rand_forest(trees = 300, mtry = 3, min_n = 2) |>
+  set_engine("ranger", probability = TRUE) |>
+  set_mode("classification")
+
+fit_sex <- fit(
+  workflow() |> add_recipe(rec_sex) |> add_model(rf_sex_spec),
+  pg_sex
+)
+
+rec_prepped <- prep(extract_recipe(fit_sex, estimated = TRUE), training = pg_sex)
+X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
+
+rf_engine <- extract_fit_parsnip(fit_sex)$fit
+pred_fun <- function(object, X_new) {
+  as.numeric(predict(object, data = X_new)$predictions[, "male"])
+}
+X_shap <- dplyr::slice_sample(X_model, n = 80)
+bg_X <- dplyr::slice_sample(X_model, n = 35)
+ks <- kernelshap(rf_engine, X = X_shap, pred_fun = pred_fun, bg_X = bg_X)
+shp <- shapviz(ks, X_pred = X_shap)
+```
+
+**`bake()`** supplies the encoded predictor matrix the forest was trained on. **`kernelshap()`** compares each row to a background sample; **`shapviz()`** draws the plots. (Same steps as Tuesday's **`prep` / `bake`** demo — see [Day 2 pipeline](../slides/day-02-tuesday.html#/prep-and-bake---learn-rules-then-apply).)
+
+For ROC on imbalanced Gentoo, always set **`event_level = "second"`** when using `.pred_Gentoo` — otherwise the curve can look **flipped** (AUC near 0). The slides use `plot_roc_gentoo()` from [`slide-viz-helpers.R`](../R/slide-viz-helpers.R).
+
+**Beeswarm (global):**
+
+```{r}
+#| label: m06-shap-beeswarm
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| eval: true
+plot_shap_beeswarm(sex_shap_m06$shp)
+```
+
+**Waterfall (local) — male vs female in the SHAP sample:**
+
+```{r}
+#| label: m06-shap-waterfall-male
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+#| eval: true
+plot_shap_waterfall(
+  sex_shap_m06$shp,
+  row_id = sex_shap_m06$male_row,
+  title = "Waterfall: one male penguin"
+)
+```
+
+```{r}
+#| label: m06-shap-waterfall-female
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+#| eval: true
+plot_shap_waterfall(
+  sex_shap_m06$shp,
+  row_id = sex_shap_m06$female_row,
+  title = "Waterfall: one female penguin"
+)
+```
+
+**VIP vs SHAP on the same sex model (module only):**
+
+```{r}
+#| label: m06-shap-vip-compare
+#| echo: false
+#| fig-width: 9
+#| fig-height: 5
+#| eval: true
+plot_sex_rf_vip(sex_shap_m06$fit)
+```
+
+### 3. How to interpret results
+
+**Say**
+
+- "For **this** bird, the model leaned **male** partly because of **body mass** and **bill depth** in the encoded feature space."
+- "The beeswarm shows **which features matter in this RF** across the sample we explained."
+- "SHAP is a property of **this fitted model** on **observational** data."
+
+**Do not say**
+
+- "Bill length **causes** male penguins."
+- "If we shortened flippers, sex would change" (intervention claim).
+- "SHAP shows the model is **fair** by island" (needs subgroup evaluation).
+
+**Assessment prompt (from [curriculum outline](../curriculum-outline.qmd)):** *What would you **not** claim from this SHAP summary?*
+
+**Honest limits:** we fit on all rows for teaching plots; in a study you would compute SHAP on **training** rows only and hold out test data for performance. See [Palmer Penguins data card](../data/cards/palmer-penguins.qmd) for observational caveats.
 
 ---
 
@@ -112,5 +283,5 @@ Threshold example: at threshold 0.2 you might get recall 0.90 but precision 0.18
 
 - **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
 - **Metric choice in tuning:** [Module 07](module-07-penguins-choose-metrics.qmd)
-- **Notebook:** [penguins-species-multiclass.Rmd](../notebooks/penguins-species-multiclass.Rmd)
+- **Notebook:** [penguins-sex-classification.Rmd](../notebooks/penguins-sex-classification.qmd)
 - **Curriculum:** [outline](../curriculum-outline.qmd)

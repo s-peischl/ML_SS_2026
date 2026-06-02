@@ -1,0 +1,78 @@
+---
+title: "Data card — synthetic gene x trait"
+format:
+  html:
+    toc: true
+---
+
+## How to load
+
+Generated in R (same logic as the notebook). Minimal version:
+
+```r
+set.seed(420)
+n <- 150
+p <- 10
+gene_names <- c("GeneA", "GeneB", "GeneC", "GeneD", "GeneE",
+                "GeneF", "GeneG", "GeneH", "GeneI", "GeneJ")
+gene_data <- matrix(rnorm(n * p), nrow = n)
+colnames(gene_data) <- gene_names
+trait <- -0.5 * gene_data[, "GeneA"] + 0.8 * gene_data[, "GeneB"] + rnorm(n, sd = 0.3)
+gene_data[, "GeneC"] <- gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneD"] <- -0.3 * gene_data[, "GeneB"] + rnorm(n, sd = 0.2)
+gene_data[, "GeneJ"] <- 0.7 * gene_data[, "GeneA"] + rnorm(n, sd = 0.2)
+data_trait <- as.data.frame(cbind(gene_data, trait))
+```
+
+## Where we use this
+
+- [linear-regression-lasso.Rmd](../../notebooks/linear-regression-lasso.Rmd) — LASSO, AIC stepwise, train/test
+- [Day 1 slides](../../slides/day-01-monday.qmd) — linear models, regularization, correlation heatmap
+- [Day 2 slides](../../slides/day-02-tuesday.qmd) — regression trees on GeneA x GeneB slice
+
+## Caveats
+
+- **Fully simulated** — no human or animal measurements.
+- **Ground truth known** — GeneA and GeneB are causal for `trait`; GeneC, GeneD, GeneJ are correlated noise; others are irrelevant.
+
+---
+
+# Data card
+
+## 1. Source
+
+**Simulated in R** (`set.seed(420)`). Script matches [linear-regression-lasso.Rmd](../../notebooks/linear-regression-lasso.Rmd). No external file download.
+
+## 2. Outcome
+
+- **`trait`**: continuous (arbitrary units), numeric.
+
+## 3. Predictors
+
+Ten gene expression columns **`GeneA`**–**`GeneJ`**, standard normal before correlations are imposed:
+
+| Gene | Role in data-generating process |
+|------|----------------------------------|
+| GeneA, GeneB | **Causal** for trait |
+| GeneC | Correlated with GeneA (not causal) |
+| GeneD | Correlated with GeneB (not causal) |
+| GeneJ | Strongly correlated with GeneA (not causal) |
+| GeneE–GeneI | Mostly noise; some pairwise correlation among E–H |
+
+Models may standardize predictors (LASSO, slides).
+
+## 4. Sample size
+
+**n = 150**. No missing values in the simulation.
+
+## 5. Leakage risks
+
+- Reporting **in-sample R²** or RMSE on the same rows used to fit or tune (LASSO λ, AIC) **overstates** performance.
+- **Train/test split** and **CV inside training** (Day 2 refactor lab) are the fix.
+- **Correlated noise genes** can enter OLS or trees without causal meaning — discuss interpretation.
+
+## 6. Subgroups
+
+Not applicable in simulation. In real omics you would record batch, sex, and site.
+
+{{< include _footer.qmd >}}

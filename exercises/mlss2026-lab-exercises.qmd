@@ -36,6 +36,8 @@ Try each block yourself first. When you are stuck, open the matching **solution*
 
 ## Data card (start Day 1, revise all week)
 
+**Instructor reference cards:** [Data catalog](../data/index.qmd) (Old Faithful, Hald, gene simulations, Palmer Penguins, microbiome).
+
 One page, plain language:
 
 1. **Source** — where did rows come from? (simulation script / public dataset URL)
@@ -187,6 +189,8 @@ One page, plain language:
 ---
 
 ## Microbiome dataset (Schloss mouse 16S)
+
+**Data card:** [Mouse 16S microbiome](../data/cards/microbiome-mouse-16s.qmd)
 
 **Source:** [Quadram institute — ML with microbiome](https://github.com/quadram-institute-bioscience/datasciencegroup/tree/main/4_machine_learning) (Python workshop; we use **R + tidymodels**).
 
@@ -452,14 +456,15 @@ Day 4 **lecture demos** use Palmer Penguins. This afternoon you reuse **Tuesday�
 | | |
 |---|---|
 | **Time** | 15 min |
-| **Goal** | Complete model card; VIP humility. |
+| **Goal** | Complete model card; VIP and SHAP humility. |
 
 **Tasks**
 
 1. Finish model card (grouped CV, chosen metric for imbalance, engine choice).
 2. Answer: *What would you not claim from a VIP plot on OTUs or PCA scores?* ([Module 06](../modules/module-06-evaluation-and-interpretability.qmd))
+3. *(Optional)* Skim [SHAP on penguin sex](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) and write one sentence you would **not** say about a SHAP beeswarm.
 
-**Lecture tie-in** — Day 4 Part F (VIP).
+**Lecture tie-in** — Day 4 Part F (VIP + SHAP).
 
 ---
 
@@ -471,6 +476,7 @@ Day 4 **lecture demos** use Palmer Penguins. This afternoon you reuse **Tuesday�
 |-----|----------|
 | 1 | `glmnet`, `MASS`, `rpart`, `rpart.plot`, `ggplot2`, `dplyr` |
 | 2+ | `tidymodels`, `ranger`, `xgboost`, `themis`, `readr` |
+| 4 (SHAP) | `shapviz`, `kernelshap` (see [Module 06 SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex)) |
 | 4 | above + `vip`, `nnet` |
 
 Install from R: `install.packages(c("tidymodels", "glmnet", "ranger", "xgboost", "themis", "vip", "readr"))`

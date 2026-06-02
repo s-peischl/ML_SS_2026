@@ -1,21 +1,26 @@
-/* Hub + site-wide polish (pairs with Zephyr theme) */
+/* Hub layout polish — uses Bootstrap Lux tokens from quarto theme: lux */
 
 :root {
-  --hub-ink: #1e293b;
-  --hub-muted: #64748b;
-  --hub-warm: #0d9488;
-  --hub-warm-deep: #0f766e;
-  --hub-wash: #f0fdfa;
-  --hub-cream: #fffbeb;
-  --hub-card-border: #e2e8f0;
+  --hub-ink: var(--bs-gray-900, #1a1a1a);
+  --hub-muted: var(--bs-body-color, #55595c);
+  --hub-accent: var(--bs-primary, #1a1a1a);
+  --hub-accent-muted: var(--bs-gray-700, #55595c);
+  --hub-surface: var(--bs-secondary-bg, #f7f7f9);
+  --hub-surface-alt: var(--bs-gray-100, #f8f9fa);
+  --hub-card-border: var(--bs-border-color, #dee2e6);
   --hub-radius: 16px;
-  --hub-shadow: 0 12px 40px rgba(15, 118, 110, 0.07);
-  --hub-shadow-hover: 0 16px 48px rgba(15, 118, 110, 0.12);
+  --hub-shadow: 0 12px 40px rgba(var(--bs-primary-rgb, 26, 26, 26), 0.06);
+  --hub-shadow-hover: 0 16px 48px rgba(var(--bs-primary-rgb, 26, 26, 26), 0.1);
 }
 
 /* Slightly calmer page background */
 body.quarto-light #quarto-content {
-  background: linear-gradient(180deg, #fafaf9 0%, #f8fafc 40%, #ffffff 100%);
+  background: linear-gradient(
+    180deg,
+    var(--bs-body-bg, #fff) 0%,
+    var(--hub-surface) 40%,
+    var(--bs-body-bg, #fff) 100%
+  );
 }
 
 #quarto-content main {
@@ -27,8 +32,13 @@ body.quarto-light #quarto-content {
 .hub-hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(125deg, var(--hub-wash) 0%, #ffffff 45%, var(--hub-cream) 100%);
-  border: 1px solid rgba(13, 148, 136, 0.18);
+  background: linear-gradient(
+    125deg,
+    var(--hub-surface) 0%,
+    var(--bs-body-bg, #fff) 55%,
+    var(--hub-surface-alt) 100%
+  );
+  border: 1px solid var(--hub-card-border);
   border-radius: var(--hub-radius);
   padding: 2rem 2rem 1.75rem;
   margin-bottom: 1.75rem;
@@ -43,7 +53,7 @@ body.quarto-light #quarto-content {
   bottom: 0;
   width: 5px;
   border-radius: var(--hub-radius) 0 0 var(--hub-radius);
-  background: linear-gradient(180deg, var(--hub-warm) 0%, #34d399 100%);
+  background: var(--hub-accent);
 }
 
 .hub-hero > * {
@@ -63,8 +73,8 @@ body.quarto-light #quarto-content {
 
 .hub-hero .hub-tagline {
   font-size: 1.15rem;
-  color: var(--hub-warm-deep);
-  font-weight: 500;
+  color: var(--hub-accent-muted);
+  font-weight: 600;
   margin: 0 0 0.75rem;
 }
 
@@ -92,7 +102,7 @@ body.quarto-light #quarto-content {
   border: 1px solid var(--hub-card-border);
   border-radius: var(--hub-radius);
   padding: 1.35rem 1.4rem 1.4rem;
-  background: #fff;
+  background: var(--bs-body-bg, #fff);
   box-shadow: var(--hub-shadow);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -104,7 +114,7 @@ body.quarto-light #quarto-content {
 
 .hub-card h3 {
   margin-top: 0;
-  color: var(--hub-warm-deep);
+  color: var(--hub-ink);
   font-size: 1.12rem;
   font-weight: 650;
 }
@@ -121,6 +131,7 @@ body.quarto-light #quarto-content {
 
 .hub-card a {
   font-weight: 550;
+  color: var(--bs-link-color, var(--hub-accent));
 }
 
 .hub-muted {
@@ -135,9 +146,9 @@ body.quarto-light #quarto-content {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--hub-warm-deep);
-  background: var(--hub-wash);
-  border: 1px solid rgba(13, 148, 136, 0.25);
+  color: var(--hub-accent-muted);
+  background: var(--hub-surface);
+  border: 1px solid var(--hub-card-border);
   border-radius: 999px;
   padding: 0.25rem 0.75rem;
   margin-bottom: 0.6rem;
@@ -169,36 +180,41 @@ body.quarto-light #quarto-content {
 }
 
 .hub-week li strong {
-  color: var(--hub-warm-deep);
+  color: var(--hub-ink);
 }
 
 /* --- Links --- */
 #quarto-content main a {
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
+  color: var(--bs-link-color, var(--hub-accent));
 }
 
 #quarto-content main a:hover {
-  color: var(--hub-warm-deep);
+  color: var(--bs-link-hover-color, var(--hub-accent));
 }
 
-/* Callouts on hub feel a bit softer */
+/* Callouts on hub */
 .callout.callout-style-default {
   border-radius: 12px;
 }
 
-/* “Start here” — welcoming, not alarm-yellow */
+/* “Start here” — Lux neutrals, not green tip wash */
 .hub-start.callout-tip {
-  border-color: rgba(13, 148, 136, 0.35);
-  background: linear-gradient(135deg, #ecfdf5 0%, #f8fafc 100%);
+  border-color: var(--hub-card-border);
+  background: linear-gradient(
+    135deg,
+    var(--hub-surface) 0%,
+    var(--bs-body-bg, #fff) 100%
+  );
 }
 
 .hub-start.callout-tip .callout-header {
-  color: var(--hub-warm-deep);
+  color: var(--hub-ink);
 }
 
 .hub-start.callout-tip .callout-body {
-  color: var(--hub-ink);
+  color: var(--hub-muted);
 }
 
 /* Slightly roomier lists on the hub */

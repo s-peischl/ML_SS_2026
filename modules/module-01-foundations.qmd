@@ -26,7 +26,7 @@ title: "Module 01: Foundations and Generalization"
 ## Key messages
 
 - **Simple baselines** (linear models, clear splits) anchor everything that comes later.
-- Two data tracks: **simulated genes** (known truth) and **[Palmer Penguins](../dataset-penguins.qmd)** (one real table all week).
+- Two data tracks: **simulated genes** (known truth) and **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** (one real table all week). Full list: [Data catalog](../data/index.qmd).
 
 ---
 
@@ -81,7 +81,7 @@ Document on one page:
 4. **Leakage risks** — repeated measures, future information, imputation before split.  
 5. **Subgroup fields** — species, island, sex (penguins) or batch (omics).
 
-The [curriculum outline](../curriculum-outline.qmd) asks students to draft this Monday and finish the **model card** Thursday.
+The [curriculum outline](../curriculum-outline.qmd) asks students to draft this Monday and finish the **model card** Thursday. Instructor reference cards: [Data catalog](../data/index.qmd).
 
 ---
 
@@ -91,4 +91,4 @@ The [curriculum outline](../curriculum-outline.qmd) asks students to draft this 
 - **Gene labs:** [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd), [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 - **Penguin notebooks:** [Notebook index](../notebooks/index.qmd)
 - **Regularization (next):** [Module 02](module-02-regularization.qmd)
-- **Data:** [Palmer Penguins](../dataset-penguins.qmd)
+- **Data:** [Catalog](../data/index.qmd) · [Palmer Penguins](../data/cards/palmer-penguins.qmd) · [Gene simulations](../data/cards/gene-trait-simulation.qmd)

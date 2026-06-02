@@ -4,13 +4,14 @@ Add **`step_impute_*()`** before `step_zv()` / dummies / normalize — never `dr
 
 ## Artificial missing data: bill length
 
-We set **~15%** of `bill_length_mm` (and a few `sex`) to **NA** to practice imputation — not a real sensor failure pattern.
+We set **~15%** of `bill_length_mm` (and a few `sex`) to **NA** (**missing** values — “not available”) to practice imputation — not a real sensor failure pattern.
 
 ```{r}
 #| label: day04-na-scatter
-#| echo: true
-#| fig-width: 8
-#| fig-height: 4.5
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
 plot_na_highlight(
   peng_na, "bill_length_mm", "bill_depth_mm",
   title = "Missing bill length (red ×)"
@@ -32,6 +33,9 @@ Dropping loses penguins and can **bias** who remains — never drop on the **ful
 
 ## Right fix: impute inside the recipe
 
+- **`step_impute_median()`** for numeric **`bill_length_mm`**; **`step_impute_mode()`** for categorical **`sex`**.
+- Then the usual **`step_zv` → `step_dummy` → `step_normalize`** chain from Part A.
+
 ```{r}
 #| label: day04-impute-recipe
 #| echo: true
@@ -43,32 +47,57 @@ rec_impute <- recipe(y ~ ., data = peng_na) |>
   step_normalize(all_numeric_predictors())
 ```
 
-## Before vs after imputation (plots)
+## Before imputation
+
+Rows with **missing bill length** sit in the **left margin** (pink band) — we do **not** know their x-position yet.
 
 ```{r}
-#| label: day04-impute-before-after
-#| echo: true
-#| fig-width: 10
-#| fig-height: 4.5
+#| label: day04-impute-prep-plots
+#| echo: false
+#| results: hide
 prep_impute <- prep(rec_impute, peng_na)
-peng_baked <- bake(prep_impute, peng_na)
+rec_impute_fill <- recipe(y ~ ., data = peng_na) |>
+  step_impute_median(bill_length_mm) |>
+  step_impute_mode(sex)
+peng_filled <- bake(prep(rec_impute_fill, peng_na), peng_na)
+peng_na_plot <- peng_na |>
+  mutate(bill_length_true = bill_length_true)
+```
 
-p_before <- plot_na_highlight(
-  peng_na, "bill_length_mm", "bill_depth_mm",
-  title = "Before imputation"
+```{r}
+#| label: day04-impute-before
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+print(
+  plot_na_highlight(
+    peng_na, "bill_length_mm", "bill_depth_mm",
+    title = "Before imputation — missing bill length"
+  )
 )
-p_after <- ggplot(peng_baked, aes(bill_length_mm, bill_depth_mm, color = y)) +
-  geom_point(size = 2.4) +
-  scale_color_manual(values = c(Adelie = "black", Gentoo = "gray40")) +
-  theme_minimal() +
-  labs(title = "After median/mode imputation", x = "bill_length_mm", y = "bill_depth_mm")
+```
 
-if (requireNamespace("patchwork", quietly = TRUE)) {
-  print(p_before + p_after + patchwork::plot_layout(ncol = 2))
-} else {
-  print(p_before)
-  print(p_after)
-}
+## After imputation
+
+**Open circles** = true bill length (simulation only). **Gold** = median imputed value for the **same** penguin. **Orange arrows** connect true → imputed. Gray points are other birds (observed bill length).
+
+```{r}
+#| label: day04-impute-after
+#| echo: false
+#| fig-width: 9
+#| fig-height: 6
+#| out-width: 100%
+print(
+  plot_imputed_highlight(
+    peng_na_plot,
+    peng_filled,
+    "bill_length_mm",
+    "bill_depth_mm",
+    true_xvar = "bill_length_true",
+    title = "After median imputation — bill length filled in"
+  )
+)
 ```
 
 ```{r}

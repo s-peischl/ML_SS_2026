@@ -22,7 +22,7 @@ theme_set(theme_classic())
 
 # Overview
 
-This notebook uses **[Palmer Penguins](../dataset-penguins.qmd)** as a **continuous outcome** example: we predict **`body_mass_g`** from bill and flipper measurements (and simple factors).
+This notebook uses **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** as a **continuous outcome** example: we predict **`body_mass_g`** from bill and flipper measurements (and simple factors).
 
 It complements the **synthetic gene** linear / LASSO notebook (`linear-regression-lasso.Rmd`), where we know the ground truth. Here we work with **real measurements** and the usual messiness (correlation, nonlinear hints, missing values). Concepts for shrinkage sit in [Module 02](../modules/module-02-regularization.qmd); this file is the **long lab** to run in the IDE.
 

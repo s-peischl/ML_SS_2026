@@ -10,6 +10,8 @@ Put **PNG**, **SVG**, or **PDF** files here when you do **not** generate the plo
 |--------|---------|
 | [`slides/`](slides/) | Images for one deck (e.g. RStudio screenshot for Monday) |
 | [`shared/`](shared/) | Logos, diagrams reused on hub pages, modules, or several decks |
+| [`shared/penguins/`](shared/penguins/) | Palmer penguins artwork (`lter_penguins.png`, Allison Horst) — **Day 2 & 4 slides only** |
+| [`shared/old_faithful.jpg`](shared/old_faithful.jpg) | Old Faithful geyser photo — **Day 1** ggplot demo |
 
 ## Path cheat sheet (Quarto)
 

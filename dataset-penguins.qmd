@@ -1,70 +1,14 @@
 ---
-title: "Palmer Penguins — our real-data running example"
+title: "Palmer Penguins (moved)"
 format:
   html:
-    toc: true
+    toc: false
 ---
 
-This page describes the **Palmer Penguins** dataset, which we use **all week** for plots, regression (predicting a number), and classification (predicting a category). **Day 2 (Tuesday) slides** walk through a full **prediction workflow in R** using the same penguin table (the code uses the `tidymodels` family of packages — you do not need to have seen them before Monday’s `lm` / `glm` work).
+::: {.callout-important}
+This page has moved. The full **Palmer Penguins** data card (including course teaching slices) lives in the [Data catalog](data/index.qmd):
 
-::: {.callout-note appearance="simple"}
-## Synthetic gene notebooks (unchanged)
-
-For teaching **LASSO, ridge, and AIC**, we keep **simulated gene** notebooks where **we wrote the rules ourselves**, so we know which coefficients *should* matter — they are not replaced by penguins:
-
-- [linear-regression-lasso.Rmd](notebooks/linear-regression-lasso.Rmd)  
-- [logistic-regression-gene-disease.Rmd](notebooks/logistic-regression-gene-disease.Rmd)  
-
-Palmer Penguins examples live in **additional** notebooks (linked below).
+**[Open Palmer Penguins data card](data/cards/palmer-penguins.qmd)**
 :::
 
-## What it is
-
-The **Palmer Archipelago** penguins dataset (Horst *et al.*, 2020) bundles size measurements for three penguin species. In R you can load it after installing the **`palmerpenguins`** add-on package.
-
-```r
-library(palmerpenguins)
-data(penguins, package = "palmerpenguins")
-```
-
-## Variables (344 rows)
-
-| Variable | Meaning |
-|----------|---------|
-| `species` | Adelie, Chinstrap, or Gentoo |
-| `island` | Torgersen, Biscoe, or Dream |
-| `bill_length_mm`, `bill_depth_mm` | Bill size (mm) |
-| `flipper_length_mm` | Flipper length (mm) |
-| `body_mass_g` | Body mass (g) |
-| `sex` | female / male (some `NA`) |
-| `year` | Study year (2007, 2008, 2009) |
-
-## Why we use it in this course
-
-- **Plots read well in class** (colour by `species`, pairs of measurements).
-- **Same table everywhere** — Day 1 exploratory plots, Day 2’s full **fit–check–tune** example in R, Day 4’s discussion of scores and explanations.
-- You can practice **regression** (for example predicting **body mass**), **two-group classification** (one species pair, or **sex**), and **three-species** classification on one familiar dataset.
-
-## Student notebooks vs `tidymodels` modules (Palmer Penguins)
-
-- **Notebooks** (`.Rmd` in [`notebooks/`](notebooks/index.qmd)): long **IDE labs** — **`lm` / `glm` / `rpart` / `glmnet`** for models; **`tidymodels`** (`rsample`, `recipes`, `yardstick`) for splits, scaling, and confusion tables.
-- **Modules** [04 — train/test](modules/module-04-pipeline.qmd#train-test-last-fit) and [04 — Day 2 pipeline](modules/module-04-pipeline.qmd#canonical-pipeline-tuesday) (shared include with slides), [07](modules/module-07-penguins-choose-metrics.qmd), [08](modules/module-08-penguins-compare-models.qmd): **`tidymodels`** walk-throughs on the **same Adelie vs Gentoo** task as the slides.
-
-### Student notebooks (Palmer Penguins only)
-
-- [penguins-body-mass.Rmd](notebooks/penguins-body-mass.Rmd) — explore the data, then predict **body mass** from bill and flipper measurements (with shrinkage methods you can compare to `lm`).  
-- [penguins-classification.Rmd](notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**: logistic regression and a classification tree, confusion table, simple 2D “who would we call Gentoo?” picture.  
-- [penguins-sex-classification.Rmd](notebooks/penguins-sex-classification.Rmd) — predict **female vs male** from size measures ( **`species` is left out on purpose** so the task is not trivial — discuss why in class).  
-- [penguins-species-multiclass.Rmd](notebooks/penguins-species-multiclass.Rmd) — **all three species**: multinomial logistic model and a tree, test-set confusion tables.
-
-## Caveats (say these out loud)
-
-- **Small sample** (~344 rows after dropping missing values) — use for pedagogy, not for “big data” claims.
-- **Observational** — strong predictions do **not** prove causal mechanisms in biology.
-- **Missing sex** — many analyses simply **drop rows with incomplete sex**; in more advanced work you would **fill in or model missingness** inside the same workflow you use to fit the predictor (so you do not sneak information from the test fold into the training fold).
-- **Leakage awareness** — if the prediction task is trivial given the inputs (e.g. near-perfect separation), use it to discuss **evaluation** and **honest splits**, not to oversell accuracy.
-
-## Citation
-
-Horst AM, Hill AP, Gorman KB (2020). *palmerpenguins: Palmer Archipelago (Antarctica) penguin data.* R package version 0.1.1.  
-DOI: [10.5281/zenodo.3960218](https://doi.org/10.5281/zenodo.3960218).
+All dataset documentation is now in **[Datasets and data cards](data/index.qmd)**.

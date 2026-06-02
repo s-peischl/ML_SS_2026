@@ -1,0 +1,123 @@
+---
+title: "Data card — Palmer Penguins"
+format:
+  html:
+    toc: true
+---
+
+The **Palmer Archipelago** penguins dataset (Horst *et al.*, 2020) is our **real-data running example** all week: plots, regression, classification, `tidymodels` pipelines, and Day 4 metrics. **Day 2 (Tuesday) slides** walk through a full prediction workflow on a course slice of this table.
+
+::: {.callout-note appearance="simple"}
+## Synthetic gene notebooks (unchanged)
+
+For **LASSO, ridge, and AIC**, we keep **simulated gene** notebooks where we wrote the rules ourselves:
+
+- [linear-regression-lasso.Rmd](../../notebooks/linear-regression-lasso.Rmd)  
+- [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd)  
+
+See [gene trait](gene-trait-simulation.qmd) and [gene disease](gene-disease-simulation.qmd) data cards.
+:::
+
+## How to load
+
+```r
+library(palmerpenguins)
+data(penguins, package = "palmerpenguins")
+```
+
+## Variables (344 rows in package)
+
+| Variable | Meaning |
+|----------|---------|
+| `species` | Adelie, Chinstrap, or Gentoo |
+| `island` | Torgersen, Biscoe, or Dream |
+| `bill_length_mm`, `bill_depth_mm` | Bill size (mm) |
+| `flipper_length_mm` | Flipper length (mm) |
+| `body_mass_g` | Body mass (g) |
+| `sex` | female / male (some `NA`) |
+| `year` | Study year (2007, 2008, 2009) |
+
+## Why we use it in this course
+
+- **Plots read well in class** (colour by `species`, pairs of measurements).
+- **Same table everywhere** — Day 1 EDA, Day 2 fit-check-tune, Day 4 metrics and importance.
+- Practice **regression** (body mass), **binary** (species pair or sex), and **multiclass** (three species).
+
+## Student notebooks vs `tidymodels` modules
+
+- **Notebooks** ([`notebooks/`](../../notebooks/index.qmd)): long IDE labs — `lm` / `glm` / `rpart` / `glmnet`; `tidymodels` for splits and metrics.
+- **Modules** [04 train/test](../../modules/module-04-pipeline.qmd#train-test-last-fit), [04 pipeline](../../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [07](../../modules/module-07-penguins-choose-metrics.qmd), [08](../../modules/module-08-penguins-compare-models.qmd): same Adelie vs Gentoo task as slides.
+
+### Student notebooks (Palmer Penguins)
+
+- [penguins-body-mass.Rmd](../../notebooks/penguins-body-mass.Rmd) — predict **body mass**  
+- [penguins-classification.Rmd](../../notebooks/penguins-classification.Rmd) — **Adelie vs Gentoo**  
+- [penguins-sex-classification.Rmd](../../notebooks/penguins-sex-classification.Rmd) — **sex** (`species` omitted on purpose)  
+- [penguins-species-multiclass.Rmd](../../notebooks/penguins-species-multiclass.Rmd) — **three species**
+
+## Caveats (say these out loud)
+
+- **Small sample** (~344 rows; fewer after `drop_na()`) — pedagogy, not big data.
+- **Observational** — predictions do **not** prove causal biology.
+- **Missing sex** — many analyses drop incomplete rows; Day 4 practices **imputation inside recipes** on an artificial NA slice (see below).
+- **Leakage awareness** — near-perfect separation is a chance to discuss **honest splits**, not to oversell accuracy.
+
+## Citation
+
+Horst AM, Hill AP, Gorman KB (2020). *palmerpenguins: Palmer Archipelago (Antarctica) penguin data.* R package version 0.1.1.  
+DOI: [10.5281/zenodo.3960218](https://doi.org/10.5281/zenodo.3960218).
+
+---
+
+# Data card (raw `penguins` table)
+
+## 1. Source
+
+**Palmer Archipelago (Antarctica) penguin data** via R package **`palmerpenguins`** (Horst *et al.*, 2020). Field measurements compiled for teaching and research; not simulated.
+
+## 2. Outcome
+
+Depends on notebook or slide block:
+
+| Task | Outcome |
+|------|---------|
+| Body mass regression | `body_mass_g` (numeric) |
+| Adelie vs Gentoo | `species` (two levels) |
+| Sex classification | `sex` (female / male) |
+| Three species | `species` (three levels) |
+
+## 3. Predictors
+
+Morphometrics (`bill_*`, `flipper_length_mm`, `body_mass_g`), `island`, `sex`, `year`. Which columns enter the model is **task-specific** (e.g. sex task may omit `species`).
+
+## 4. Sample size
+
+**344** rows in `penguins`; **333** after `drop_na()` on all variables. **`sex`** is the main source of missingness in the raw table.
+
+## 5. Leakage risks
+
+- **Imputing or scaling on the full table** before splitting leaks test information into training (Day 2 `recipe` + CV fixes this).
+- **Dropping NA on the full table** before split can bias which penguins remain (Day 4 imputation block).
+- **Tuning on the same rows** you report as final test performance.
+
+## 6. Subgroups
+
+**`species`**, **`island`**, **`sex`**, **`year`** — use for fairness-style checks (e.g. accuracy by island) when discussing limits of a model.
+
+---
+
+## Course teaching slices (pedagogical derivatives)
+
+These are **not** separate field datasets. Instructors build them from `penguins` in slides (`_includes/day04-penguins-setup.qmd`) to stress imbalance, missing data, and PCA. **Document them on your data card** when you use them.
+
+| Object | What it is | Typical *n* / notes |
+|--------|------------|---------------------|
+| **`peng_cls` / `peng_bal`** | Adelie + Gentoo only; outcome `y`; predictors bill length/depth, island, sex, year; **no** flipper or body mass; `drop_na()` | ~219 rows |
+| **`peng_imb`** | Binary teaching slice (Adelie/Gentoo) with **downsampled Gentoo** for rare-event metric intuition | ~209 Adelie, ~10 Gentoo |
+| **`peng_imb3`** | Multiclass teaching slice with **rare Chinstrap** (deterministic retention of 15 rows closest to Adelie cloud) for upsampling demos | ~146 Adelie, ~119 Gentoo, ~15 Chinstrap |
+| **`peng_na`** | Copy of balanced slice with **injected NA** on `bill_length_mm` (~22 rows) and `sex` (~5 rows), `set.seed(4)` | For imputation demos only |
+| **`peng_pca`** | Adelie + Gentoo with **flipper and body mass kept** for PCA recipe step | ~219 after `drop_na()` |
+
+**Leakage note for slices:** artificial NA and imbalance are **for teaching**. In a model card, state that prevalence and missingness on `peng_imb` / `peng_imb3` / `peng_na` do **not** match the wild population.
+
+{{< include _footer.qmd >}}

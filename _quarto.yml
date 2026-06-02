@@ -1,8 +1,11 @@
 project:
   type: website
   output-dir: _site
+  pre-render:
+    - scripts/render-slides.sh
   render:
     - "**/*.qmd"
+    - "!slides/**"
     - "notebooks/*.Rmd"
     - "exercises/mlss2026-lab-exercises.qmd"
     - "exercises/index.qmd"
@@ -16,13 +19,13 @@ website:
         text: Home
       - href: curriculum-outline.qmd
         text: Curriculum
-      - href: dataset-penguins.qmd
+      - href: data/index.qmd
         text: Data
-      - href: slides/day-01-monday.qmd
+      - href: slides/day-01-monday.html
         text: Day 1 (Monday)
-      - href: slides/day-02-tuesday.qmd
+      - href: slides/day-02-tuesday.html
         text: Day 2 (Tuesday)
-      - href: slides/day-04-thursday.qmd
+      - href: slides/day-04-thursday.html
         text: Day 4 (Thursday)
       - href: exercises/index.qmd
         text: Lab exercises
@@ -44,10 +47,12 @@ website:
             href: notebooks/penguins-sex-classification.Rmd
           - text: Penguins — three species
             href: notebooks/penguins-species-multiclass.Rmd
+          - text: Penguins — multiclass upsampling
+            href: notebooks/penguins-multiclass-upsampling.Rmd
 
 format:
   html:
-    theme: solar
+    theme: lux
     toc: true
     css: assets/css/hub.css
 
