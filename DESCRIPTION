@@ -31,4 +31,6 @@ Imports:
     tidyverse,
     ranger,
     xgboost,
-    themis
+    themis,
+    shapviz,
+    kernelshap
