@@ -302,6 +302,18 @@ metrics_day2
 
 Search **`tree_depth`** and **`min_n`** on held-out folds, then finalize.
 
+## `fit()` vs `fit_resamples()` vs `tune_grid()`
+
+| Function | Data splits | Parameter combinations |
+|----------|-------------|------------------------|
+| **`fit()`** | 1 training set | 1 |
+| **`fit_resamples()`** | Many folds/resamples | 1 |
+| **`tune_grid()`** | Many folds/resamples | Many |
+
+- Use **`fit()`** when hyperparameters are already chosen.
+- Use **`fit_resamples()`** to estimate CV performance for one fixed workflow.
+- Use **`tune_grid()`** when you need to search over multiple hyperparameter values.
+
 ## Step 5 — Search hyperparameters on folds
 
 - **`folds <- vfold_cv(..., strata = y)`** — each fold keeps both species represented.
