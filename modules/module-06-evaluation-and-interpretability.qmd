@@ -283,5 +283,5 @@ plot_sex_rf_vip(sex_shap_m06$fit)
 
 - **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.qmd)
 - **Metric choice in tuning:** [Module 07](module-07-penguins-choose-metrics.qmd)
-- **Notebook:** [penguins-sex-classification.Rmd](../notebooks/penguins-sex-classification.qmd)
+- **Notebook:** [penguins-sex-classification.Rmd](../notebooks/penguins-sex-classification.Rmd)
 - **Curriculum:** [outline](../curriculum-outline.qmd)
