@@ -1,5 +1,11 @@
 # Figure credits (external media)
 
+## 01_residuals.png
+
+- **File:** `01_residuals.png`
+- **Source:** Generated for this teaching hub (R script in repo maintenance)
+- **Use:** OLS residual illustration on Day 1 slides
+
 ## LOOCV.gif
 
 - **File:** `LOOCV.gif`

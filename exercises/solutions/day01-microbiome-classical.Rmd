@@ -48,6 +48,8 @@ ggplot(mic, aes(lib_size, fill = Label)) +
 
 ## 1.3 PCA
 
+We have far more OTUs than stable degrees of freedom for a plain `glm` on every column. **PCA** reduces the table to a few orthogonal scores that capture most of the variance; tasks **1.4–1.5** fit logistic regression in that low-dimensional space.
+
 ```{r pca, fig.width=7, fig.height=5}
 pc <- prcomp(log_otu, center = TRUE, scale. = TRUE)
 pc_df <- as.data.frame(pc$x[, 1:2]) |>
@@ -75,6 +77,8 @@ m_fwd <- stepAIC(m_null, scope = list(lower = m_null, upper = m_glm), direction 
 m_bwd <- stepAIC(m_glm, direction = "backward", trace = 0)
 list(forward = formula(m_fwd), backward = formula(m_bwd))
 ```
+
+**Lasso** (below) works on **all** OTUs at once: the L1 penalty handles **p > n** by driving most coefficients to zero, so a separate PCA step is not required.
 
 ```{r label-lasso}
 x_lasso <- scale(log_otu)

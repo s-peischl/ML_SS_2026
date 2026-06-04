@@ -37,6 +37,12 @@ More detail: [microbiome data card](../data/cards/microbiome-mouse-16s.qmd).
 
 Morning lecture uses **gene simulations**; the afternoon applies the same **classical** tools (PCA, logistic regression, AIC, lasso) to microbiome data. You will model **`Label`** (Early vs Late) and then **`Sex`** (`F` vs `M`).
 
+::: {.callout-note}
+## Two ways to cope with many OTUs
+
+With **p ≫ n**, a plain logistic regression on every OTU column is not stable (too many parameters, collinearity). **PCA** first compresses the OTU matrix into a few uncorrelated scores, then you fit **`glm`** on those scores — classic **dimensionality reduction** before a linear classifier. **Lasso** takes a different route: it keeps all OTUs in the model but penalizes large coefficients so only a **sparse** subset stays nonzero; it is built for high-dimensional predictors and does **not** require PCA. Today you try **both** and compare them in **1.8**.
+:::
+
 ### 1.1 Load and prepare the data
 
 Merge the metadata and OTU table on `sample_id`, transpose counts to a sample × OTU matrix, and drop low-prevalence OTUs. Print table dimensions and `table()` of `Label`, `Sex`, and how many unique mice (`Individual`) you have.
@@ -51,13 +57,13 @@ Apply **log1p** to the OTU matrix so large abundances do not dominate distances 
 
 ### 1.3 Explore with PCA
 
-Run **`prcomp`** on scaled log1p OTUs and plot **PC1 vs PC2**, coloured by your outcome (`Label` first). This is a quick “does anything separate in 2D?” check before fitting models. Full PCA-in-recipe theory comes on [Day 4](../slides/day-04-thursday.html#part-c-pca).
+Run **`prcomp`** on scaled log1p OTUs and plot **PC1 vs PC2**, coloured by your outcome (`Label` first). PCA rotates the data into orthogonal directions of **maximum variance**; the first few PCs summarise most of the abundance table in far fewer numbers. That is why we use them next: logistic regression needs a **small, well-conditioned** predictor set, and PCs are a standard way to get one from hundreds of correlated OTUs. Full PCA-in-recipe theory comes on [Day 4](../slides/day-04-thursday.html#part-c-pca).
 
 *Do after:* [Part D — Gene × disease](../slides/day-01-monday.html#part-d-gene-disease).
 
 ### 1.4 Logistic regression on PCs — Early vs Late
 
-Fit **`glm(Label ~ PC1 + …, family = binomial)`** using a small number of principal components (e.g. five) as predictors. Interpret coefficients as log-odds shifts along each PC axis.
+Fit **`glm(Label ~ PC1 + …, family = binomial)`** using a small number of principal components (e.g. five) as predictors — **not** the raw OTUs. You are modelling Early vs Late in a reduced space where each PC is a weighted combination of many taxa. Interpret coefficients as log-odds shifts along each PC axis (less direct than an OTU name, but statistically well posed).
 
 *Do after:* [Part D — Logistic regression](../slides/day-01-monday.html#part-d-gene-disease).
 
@@ -81,7 +87,7 @@ Repeat **1.4–1.6** with **`Sex`** (`F` vs `M`) as the outcome, using only rows
 
 ### 1.8 Compare approaches
 
-Build a small summary table: outcome (`Label` / `Sex`), method (GLM on PCs, stepAIC, lasso), number of predictors used, and one **in-sample** accuracy (same data used to fit — matches Monday’s gene demos).
+Build a small summary table: outcome (`Label` / `Sex`), method (GLM on PCs, stepAIC, lasso), number of predictors used, and one **in-sample** accuracy (same data used to fit — matches Monday’s gene demos). In one sentence, state the trade-off you see: PCA+glm uses fewer **constructed** predictors; lasso keeps interpretable **OTU** names but needs penalisation to handle the wide matrix.
 
 *Do after:* [Part E — Wrap-up](../slides/day-01-monday.html).
 

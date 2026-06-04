@@ -92,6 +92,7 @@ suppressPackageStartupMessages({
   library(rpart)
   library(rpart.plot)
   library(patchwork)
+  library(gridGraphics)
   library(tibble)
 })
 source("../R/slide-viz-helpers.R")
