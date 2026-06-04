@@ -183,6 +183,18 @@ body.quarto-light #quarto-content {
   color: var(--hub-ink);
 }
 
+.hub-week h3 {
+  color: var(--hub-ink);
+  font-weight: 650;
+  font-size: 1.05rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.hub-week h3:first-of-type {
+  margin-top: 0.75rem;
+}
+
 /* --- Links --- */
 #quarto-content main a {
   text-decoration-thickness: 1px;

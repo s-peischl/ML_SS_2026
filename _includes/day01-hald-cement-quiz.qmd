@@ -74,15 +74,7 @@ knitr::kable(compare_tbl, digits = 6,
 ```
 
 - **Simple** fits: **x1**, **x2**, **x4** significant; **x3** borderline  
-- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline) — joint inference breaks down when columns overlap
-
-```{r}
-#| label: day01-hald-full-summary
-#| echo: false
-tidy(full_fit) |>
-  mutate(across(c(estimate, std.error, statistic, p.value), \(x) round(x, 4))) |>
-  knitr::kable(caption = "Four-predictor model (scaled predictors)")
-```
+- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline) — joint inference breaks down when columns overlap (see **full_estimate** / **full_p** in the table above)
 
 <!-- ## Two predictors — `y ~ x1 + x2` -->
 

@@ -1,0 +1,39 @@
+---
+title: "Solution 1A — Example data card (gene simulation)"
+format: html
+---
+
+# Data card — synthetic gene × trait / disease (example answer)
+
+Full instructor cards: [gene × trait](../../data/cards/gene-trait-simulation.qmd) · [gene × disease](../../data/cards/gene-disease-simulation.qmd) · [Data catalog](../../data/index.qmd)
+
+## 1. Source
+
+Rows are **simulated** in R (`set.seed(420)` for trait; `set.seed(123)` for disease). No human or animal measurements. Ground truth: **GeneA** and **GeneB** affect continuous **trait**; **Gene1**, **Gene3**, **Gene4** (and Gene1×Gene3 interaction) affect binary **disease_presence**.
+
+## 2. Outcome
+
+- **Trait:** continuous (arbitrary units).
+- **Disease:** factor `Absent` / `Present`.
+
+## 3. Predictors
+
+Ten gene expression columns (`GeneA`–`GeneJ` or `Gene1`–`Gene10`); numeric, standardized in some models.
+
+## 4. Sample size
+
+Trait: *n* ≈ 150; disease: *n* = 200. No missing values in simulation.
+
+## 5. Leakage risks
+
+- Fitting and evaluating on the **same rows** (in-sample R² / accuracy) overstates performance.
+- Choosing lasso λ or AIC on the **same data** used for final coefficients.
+- **Day 2 fix:** hold-out test set; cross-validation inside training; for microbiome, **group by mouse Individual**.
+
+## 6. Subgroups
+
+Not applicable in simulation; in real data we would record batch, sex, and site.
+
+---
+
+*Students should write in their own words; this is one acceptable instructor example.*

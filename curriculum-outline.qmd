@@ -6,7 +6,7 @@ title: "Curriculum Outline"
 
 **Teaching decks on this site:** Day 1 (Monday), Day 2 (Tuesday), and Day 4 (Thursday). **Day 3 (Wednesday)** is a mini symposium and social event — no lecture deck here.
 
-This outline links to **[afternoon lab exercises](exercises/mlss2026-lab-exercises.qmd)** (with [solutions](exercises/index.qmd)) while weaving a few ideas through the week: **two parallel examples** (simulated **genes** where we know the truth + **Palmer Penguins** as one real table), **what a wrong prediction costs** (thresholds, prevalence), **calibration**, **“correlation is not causation”** when reading importance plots, short **data and model summaries**, **reproducibility**, **fairness-style subgroup checks**, and assignments that reward **honest wording** (especially around SHAP).
+This outline links to **[afternoon lab exercises](exercises/index.qmd)** (numbered tasks and one solution notebook per teaching day) while weaving a few ideas through the week: **two parallel examples** (simulated **genes** where we know the truth + **Palmer Penguins** as one real table), **what a wrong prediction costs** (thresholds, prevalence), **calibration**, **“correlation is not causation”** when reading importance plots, short **data and model summaries**, **reproducibility**, **fairness-style subgroup checks**, and assignments that reward **honest wording** (especially around SHAP).
 
 ## Integrated design principles (built into the week)
 

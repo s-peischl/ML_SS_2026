@@ -8,7 +8,7 @@ format:
     scrollable: true
     slide-level: 2
     html-math-method: katex
-    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a>'
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a> · <a href="?print-pdf" style="text-decoration:underline;">Print PDF</a>'
     output-file: day-02-tuesday.html
     embed-resources: true
 ---
@@ -71,12 +71,45 @@ Today we will implement this splitting logic using the `tidymodels` framework, k
 - **Regression:** 
 `rpart(trait ~ GeneA + GeneB, data = ...)`  -  numeric $y$ uses **`method = "anova"`**; each leaf predicts a **mean** trait
 
-### Tuning parameters: 
-- **`cp`:** 
-complexity penalty  -  larger `cp` → simpler tree (see trait block after disease)
-- **`minsplit`:** 
-The minimum number of data points that must be in a node before rpart will even try to split it further.
-- **`maxdepth`:** The maximum number of levels (layers) the decision tree is allowed to grow from top to bottom.
+### Tuning parameters (`rpart.control()`)
+
+Set in **`control = rpart.control(cp = ..., minsplit = ..., maxdepth = ...)`**  -  next slide shows the effect of each knob.
+
+## `rpart.control()`: cp, minsplit, maxdepth {#rpart-control-params}
+
+| `rpart.control()` | What it does | Turn it up → |
+|---|---|---|
+| **`cp`** | Complexity penalty (pruning) | **Simpler** tree (fewer splits) |
+| **`minsplit`** | Minimum cases in a node before trying another split | **Fewer** split attempts (coarser tree) |
+| **`maxdepth`** | Maximum depth from root to leaf | **Shallower** tree |
+
+**tidymodels names (this afternoon):** `cost_complexity` ≈ `cp`, `min_n` ≈ `minsplit`, `tree_depth` ≈ `maxdepth`.
+
+```{r}
+#| label: day02-rpart-params-prep
+#| include: false
+suppressPackageStartupMessages({
+  library(rpart)
+  library(rpart.plot)
+  library(patchwork)
+  library(tibble)
+})
+source("../R/slide-viz-helpers.R")
+```
+
+```{r}
+#| label: day02-rpart-params-fig
+#| echo: false
+#| fig-width: 10
+#| fig-height: 7.2
+#| out-width: 100%
+plot_rpart_params_comparison()
+```
+
+- Same toy data in every panel  -  only one control changes per row.
+- **`cp`:** pruning / cost-complexity trade-off (also tuned via **`$cptable`** later).
+- **`minsplit`:** stops splitting when nodes are too small (stability on small $n$).
+- **`maxdepth`:** hard cap on how many questions the tree can ask in a row.
 
 # Part B  -  Gene simulations
 
@@ -1087,6 +1120,7 @@ flowchart LR
 ```
 
 - **Recipe steps run inside each CV fold**  -  never scale or encode on the full table before splitting (avoids leakage).
+- **`recipe` / `spec` / `workflow` are blueprints**; only **`fit()`**, **`fit_resamples()`**, and **`tune_grid()`** touch rows.
 - **Today's score:** **accuracy** only; Thursday adds metrics for imbalanced data.
 
 ## Five steps  -  what each one does
@@ -1097,16 +1131,16 @@ flowchart LR
 4. **Metrics**  -  define how to judge predictions (**`accuracy`** today).
 5. **Resample and tune**  -  search hyperparameters on **`vfold_cv`** folds, pick the best, then **`fit`** for plots and interpretation.
 
-## Packages in the pipeline
+## Packages in the pipeline (Tuesday focus)
 
-| Package | Job |
-|---------|-----|
-| **`rsample`** | Training vs assessment rows (`initial_split`, `vfold_cv`) |
+| Package | Job today |
+|---------|-----------|
 | **`recipes`** | Preprocessing checklist (dummy, scale, ...) |
-| **`parsnip`** | Model **blueprint** (`decision_tree`, `set_engine("rpart")`) |
+| **`parsnip`** | Model blueprint (`decision_tree`, `set_engine("rpart")`) |
 | **`workflows`** | Glue recipe + model |
+| **`rsample`** | Folds (`vfold_cv`)  -  used in Step 5 |
 | **`tune`** | Search `tree_depth` and `min_n` |
-| **`yardstick`** | Scores  -  **accuracy only** today; more metrics Thursday |
+| **`yardstick`** | **`accuracy`** scoring |
 
 # Step 1  -  Preprocessing (`recipe`)
 
@@ -1116,7 +1150,34 @@ Turn raw columns into a model-ready table  -  **in order**, and **only on traini
 
 - A **recipe** is a **checklist** of transforms applied **before** the model sees the data.
 - Steps run **top to bottom**; order matters (e.g. dummy-code before scaling).
-- **`prep()`** learns parameters on training data; **`bake()`** applies them  -  a **`workflow()`** does both automatically inside CV.
+- **`prep()`** learns parameters on **training rows**; **`bake()`** applies those rules to new rows **without re-learning**.
+- A **`workflow()`** runs **`prep` + `bake` + `fit`** in the right order inside each CV fold.
+
+## Recipe pipeline (visual)
+
+```{r}
+#| label: day02-recipe-pipeline-fig
+#| echo: false
+#| fig-width: 9
+#| fig-height: 2.8
+pipeline_df <- tibble(
+  step = c("Raw columns", "step_zv()", "step_dummy()", "step_normalize()", "Model-ready table"),
+  x = 1:5,
+  y = 1
+)
+ggplot(pipeline_df, aes(x, y, label = step)) +
+  geom_point(size = 5, color = "#1565C0") +
+  geom_text(vjust = -1.2, size = 3.2) +
+  geom_segment(
+    data = data.frame(x = 1:4, xend = 2:5, y = 1, yend = 1),
+    aes(x = x, xend = xend, y = y, yend = yend),
+    inherit.aes = FALSE,
+    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
+    color = "gray50"
+  ) +
+  theme_void(base_size = 13) +
+  labs(title = "Recipe steps run in order (inside each CV fold)")
+```
 
 ## Start the recipe
 
@@ -1207,7 +1268,7 @@ dplyr::glimpse(bake_train)
 ::: {.callout-note}
 ## Afternoon lab (microbiome)
 
-Same pattern on OTU counts  -  add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`.
+Same pattern on OTU counts  -  add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`. Tasks: [Lab exercises](../exercises/index.qmd).
 :::
 
 # Step 2  -  Model blueprint (`spec`)
@@ -1299,6 +1360,12 @@ wf
 
 ## Step 3  -  One-shot fit (intuition)
 
+::: {.callout-warning}
+## For visualization only
+
+**`fit(wf, data = peng_bal)`** on **all rows** helps us **see** a boundary. For honest reporting, keep a locked test set (or use CV metrics from Step 5).
+:::
+
 - **`fit(wf, data = peng_bal)`** on **all rows** is a quick way to **see** a decision boundary  -  not our final honest evaluation.
 - We use a **fixed** demo spec (`tree_spec_demo`) so the plot is stable before tuning.
 - After tuning (Step 5), we refit on all rows for teaching plots; in a project, keep a locked **test** set.
@@ -1355,7 +1422,7 @@ Decide **how** to score predictions **before** you tune.
 
 ## Step 4  -  Choose a metric before tuning
 
-- Today wqe use **`accuracy`**  -  fraction of correct class labels; fine when classes are balanced and errors cost the same.
+- Today we use **`accuracy`**  -  fraction of correct class labels; fine when classes are balanced and errors cost the same.
 - **Thursday:** we will add sensitivity, ROC-AUC, PR-AUC when the positive class is rare  -  accuracy can mislead.
 - **`metric_set(accuracy)`** bundles scorers for **`tune_grid()`** and **`fit_resamples()`**.
 
@@ -1383,6 +1450,8 @@ Search **`tree_depth`** and **`min_n`** on held-out folds, then finalize.
 - Use **`fit()`** when hyperparameters are already chosen.
 - Use **`fit_resamples()`** to estimate CV performance for one fixed workflow.
 - Use **`tune_grid()`** when you need to search over multiple hyperparameter values.
+
+**In this deck:** `fit_demo` (one fit for plotting), `rs_tree` (CV with fixed tuned params), `tune_res` (CV + hyperparameter search).
 
 ## Step 5  -  Search hyperparameters on folds
 

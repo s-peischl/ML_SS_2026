@@ -41,6 +41,8 @@ website:
             href: notebooks/logistic-regression-gene-disease.Rmd
           - text: Penguins — body mass (regression)
             href: notebooks/penguins-body-mass.Rmd
+          - text: Penguins — canonical pipeline
+            href: notebooks/penguins-canonical-pipeline.Rmd
           - text: Penguins — classification
             href: notebooks/penguins-classification.Rmd
           - text: Penguins — sex (binary)

@@ -212,7 +212,7 @@ plot_mlp_schematic <- function() {
     ggplot2::geom_point(
       data = nodes,
       ggplot2::aes(x, y, fill = layer),
-      size = 9,
+      size = 8.2,
       shape = 21,
       color = "gray25",
       stroke = 0.8
@@ -226,7 +226,7 @@ plot_mlp_schematic <- function() {
     ggplot2::annotate(
       "text",
       x = c(1, 2, 3),
-      y = 5.6,
+      y = 5.4,
       label = c("Bill / island / sex", "Hidden layer", "P(Gentoo)"),
       size = 4,
       fontface = "italic"
@@ -238,137 +238,112 @@ plot_mlp_schematic <- function() {
         Output = "#F48FB1"
       )
     ) +
-    ggplot2::coord_fixed() +
+    ggplot2::coord_fixed(
+      xlim = c(0.72, 3.28),
+      ylim = c(0.6, 5.85),
+      clip = "off"
+    ) +
     ggplot2::theme_void() +
-    ggplot2::theme(legend.position = "none") +
+    ggplot2::theme(
+      legend.position = "none",
+      plot.margin = ggplot2::margin(t = 14, r = 8, b = 6, l = 8)
+    ) +
     ggplot2::labs(title = "Small MLP (one hidden layer)  -  schematic")
 }
 
-# --- Cross-validation schematics (Day 1 slides) ---
+# --- rpart control parameters (Day 2 slides) ---
 
-plot_cv_loo_schematic <- function(
-    n = 12L,
-    highlight_ids = c(1L, 6L, 12L),
-    title = "Leave-one-out CV: three example rounds"
-) {
-  highlight_ids <- as.integer(highlight_ids)
-  highlight_ids <- highlight_ids[highlight_ids >= 1L & highlight_ids <= n]
-  if (length(highlight_ids) < 1L) {
-    highlight_ids <- c(1L, max(1L, n %/% 2L), n)
+plot_rpart_params_comparison <- function(seed = 42L) {
+  set.seed(seed)
+  n <- 80L
+  demo <- tibble::tibble(
+    x1 = c(
+      stats::rnorm(n / 2, 0.35, 0.12),
+      stats::rnorm(n / 2, 0.65, 0.12)
+    ),
+    x2 = c(
+      stats::rnorm(n / 2, 0.65, 0.12),
+      stats::rnorm(n / 2, 0.35, 0.12)
+    ),
+    y = factor(rep(c("A", "B"), each = n / 2))
+  )
+
+  rpart_n_splits <- function(model) {
+    sum(model$frame$var != "<leaf>")
   }
 
-  rounds <- lapply(seq_along(highlight_ids), function(j) {
-    hid <- highlight_ids[[j]]
-    tibble::tibble(
-      id = seq_len(n),
-      round = sprintf("Round %d: hold out row %d", j, hid),
-      role = dplyr::if_else(id == hid, "Held out (test)", "Training")
+  fit_demo <- function(control) {
+    rpart::rpart(
+      y ~ x1 + x2,
+      data = demo,
+      method = "class",
+      control = control
     )
+  }
+
+  wrap_tree <- function(model, subtitle) {
+    nsp <- rpart_n_splits(model)
+    main_title <- paste0(
+      subtitle, "\n(", nsp, " split", ifelse(nsp == 1L, "", "s"), ")"
+    )
+    tree_model <- model
+    patchwork::wrap_elements(
+      full = ~{
+        graphics::par(mar = c(0.5, 0.5, 2.4, 0.5))
+        rpart.plot::rpart.plot(
+          tree_model,
+          type = 2,
+          extra = 102,
+          fallen.leaves = TRUE,
+          main = main_title,
+          cex = 0.72
+        )
+      }
+    )
+  }
+
+  rows <- list(
+    list(
+      tag = "cp",
+      left = "Higher cp",
+      right = "Lower cp",
+      left_ctl = rpart::rpart.control(cp = 0.06, minsplit = 8, maxdepth = 30),
+      right_ctl = rpart::rpart.control(cp = 0.0005, minsplit = 8, maxdepth = 30)
+    ),
+    list(
+      tag = "minsplit",
+      left = "Larger minsplit",
+      right = "Smaller minsplit",
+      left_ctl = rpart::rpart.control(cp = 0.01, minsplit = 35, maxdepth = 30),
+      right_ctl = rpart::rpart.control(cp = 0.01, minsplit = 4, maxdepth = 30)
+    ),
+    list(
+      tag = "maxdepth",
+      left = "maxdepth = 2",
+      right = "maxdepth = 6",
+      left_ctl = rpart::rpart.control(cp = 0.001, minsplit = 5, maxdepth = 2),
+      right_ctl = rpart::rpart.control(cp = 0.001, minsplit = 5, maxdepth = 6)
+    )
+  )
+
+  row_plots <- lapply(rows, function(row) {
+    m_left <- fit_demo(row$left_ctl)
+    m_right <- fit_demo(row$right_ctl)
+    wrap_tree(m_left, row$left) + wrap_tree(m_right, row$right)
   })
-  dat <- dplyr::bind_rows(rounds) |>
-    dplyr::mutate(
-      x = id,
-      y = 1,
-      round = factor(round, levels = unique(round))
-    )
 
-  ggplot2::ggplot(dat, ggplot2::aes(x, y, color = role, shape = role)) +
-    ggplot2::geom_point(size = 5.5) +
-    ggplot2::facet_wrap(~round, ncol = length(highlight_ids)) +
-    ggplot2::scale_color_manual(
-      values = c(Training = "#4C78A8", `Held out (test)` = "#E45756")
-    ) +
-    ggplot2::scale_shape_manual(values = c(Training = 16, `Held out (test)` = 17)) +
-    ggplot2::coord_cartesian(xlim = c(0.5, n + 0.5), ylim = c(0.85, 1.15)) +
-    ggplot2::theme_void(base_size = 13) +
-    ggplot2::theme(
-      legend.position = "bottom",
-      strip.text = ggplot2::element_text(face = "bold", size = 10),
-      panel.spacing = ggplot2::unit(1.1, "lines"),
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5, size = 13)
-    ) +
-    ggplot2::labs(title = title, x = NULL, y = NULL, color = NULL, shape = NULL)
-}
-
-plot_cv_kfold_assignment <- function(
-    n = 20L,
-    k = 5L,
-    seed = 1L,
-    title = NULL
-) {
-  if (is.null(title)) {
-    title <- sprintf("%d-fold CV: each row belongs to one fold", k)
-  }
-  set.seed(seed)
-  fold <- sample(rep(seq_len(k), length.out = n))
-  dat <- tibble::tibble(
-    id = seq_len(n),
-    fold = factor(fold, levels = seq_len(k)),
-    x = id,
-    y = 1
-  )
-
-  ggplot2::ggplot(dat, ggplot2::aes(x, y, fill = fold)) +
-    ggplot2::geom_tile(width = 0.92, height = 0.55, color = "white", linewidth = 0.6) +
-    ggplot2::geom_text(ggplot2::aes(label = id), size = 3.1, color = "gray15") +
-    ggplot2::scale_fill_brewer(palette = "Set2") +
-    ggplot2::coord_cartesian(xlim = c(0.5, n + 0.5), ylim = c(0.7, 1.3)) +
-    ggplot2::theme_void(base_size = 13) +
-    ggplot2::theme(
-      legend.position = "bottom",
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5, size = 13)
-    ) +
-    ggplot2::labs(title = title, fill = "Fold")
-}
-
-plot_cv_kfold_holdout <- function(
-    n = 20L,
-    k = 5L,
-    val_fold = 3L,
-    seed = 1L,
-    title = NULL
-) {
-  if (is.null(title)) {
-    title <- sprintf(
-      "One round of %d-fold CV: fold %d is the test set",
-      k,
-      val_fold
-    )
-  }
-  set.seed(seed)
-  fold <- sample(rep(seq_len(k), length.out = n))
-  dat <- tibble::tibble(
-    id = seq_len(n),
-    x = id,
-    y = 1,
-    role = dplyr::if_else(
-      fold == val_fold,
-      sprintf("Fold %d (test)", val_fold),
-      "Training"
-    )
-  )
-
-  ggplot2::ggplot(dat, ggplot2::aes(x, y, color = role, shape = role)) +
-    ggplot2::geom_point(size = 5.5) +
-    ggplot2::scale_color_manual(
-      values = stats::setNames(
-        c("#4C78A8", "#E45756"),
-        c("Training", sprintf("Fold %d (test)", val_fold))
+  patchwork::wrap_plots(row_plots, ncol = 1) +
+    patchwork::plot_annotation(
+      title = "rpart.control(): same demo data, one knob changed per row",
+      subtitle = paste(
+        "cp = complexity penalty (pruning); minsplit = minimum cases to attempt a split;",
+        "maxdepth = maximum tree depth"
+      ),
+      theme = ggplot2::theme(
+        plot.title = ggplot2::element_text(face = "bold", size = 13),
+        plot.subtitle = ggplot2::element_text(size = 9.5, color = "gray30")
       )
-    ) +
-    ggplot2::scale_shape_manual(
-      values = stats::setNames(
-        c(16, 17),
-        c("Training", sprintf("Fold %d (test)", val_fold))
-      )
-    ) +
-    ggplot2::coord_cartesian(xlim = c(0.5, n + 0.5), ylim = c(0.85, 1.15)) +
-    ggplot2::theme_void(base_size = 13) +
-    ggplot2::theme(
-      legend.position = "bottom",
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0.5, size = 13)
-    ) +
-    ggplot2::labs(title = title, x = NULL, y = NULL, color = NULL, shape = NULL)
+    )
 }
 
 # --- ROC / PR (Gentoo as positive class; y levels Adelie then Gentoo) ---
@@ -690,6 +665,31 @@ metrics_summary_table_multiclass <- function(fit_res, label) {
     dplyr::select(.metric, mean, std_err) |>
     dplyr::mutate(model = label) |>
     dplyr::relocate(model)
+}
+
+plot_multiclass_recall_compare <- function(
+    pred_no,
+    pred_up,
+    truth_col = "y3",
+    highlight_class = "Chinstrap"
+) {
+  bind_rows(
+    multiclass_recall_table(pred_no, truth_col = truth_col) |> mutate(model = "No upsample"),
+    multiclass_recall_table(pred_up, truth_col = truth_col) |> mutate(model = "Upsample")
+  ) |>
+    mutate(recall = round(recall, 3)) |>
+    ggplot(aes(truth, recall, fill = model)) +
+    geom_col(position = position_dodge(width = 0.75), width = 0.7) +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "gray45") +
+    scale_fill_manual(values = c("No upsample" = "#4C78A8", "Upsample" = "#E45756")) +
+    theme_minimal(base_size = 13) +
+    labs(
+      title = "Holdout per-class recall",
+      subtitle = paste("Highlight:", highlight_class),
+      x = "Species",
+      y = "Recall",
+      fill = NULL
+    )
 }
 
 compare_metrics_tbl_multiclass <- function(...) {

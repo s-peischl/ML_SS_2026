@@ -6,9 +6,9 @@
 
 ## The CV loop (in words)
 
-1. Split rows into a **training** block and a **validation** block (one row, one fold, or more).
-2. **Fit** the model on training rows only (for lasso: at a fixed $\lambda$).
-3. **Predict** the held-out rows and record error (e.g. MSE for trait, deviance for logistic lasso).
+1. Split rows into **training** and **validation** (one row for LOO, one fold for $k$-fold).
+2. **`fit(model, train)`** on training rows only (for lasso: at a fixed $\lambda$).
+3. **`predict(model, validation)`** on held-out rows; **score** error (MSE or deviance).
 4. **Repeat** for each holdout split; **average** errors across rounds.
 5. Compare averages across a **grid** of $\lambda$ values; pick the winner (or use the **1-SE rule** in `cv.glmnet`).
 
@@ -19,15 +19,13 @@
 - **$n$ rounds** for $n$ rows: each round holds out **exactly one** row as validation, trains on the other $n - 1$.
 - **Pros:** uses almost all data each round; standard for `cv.glmnet(..., nfold = n)`.
 - **Cons:** $n$ fits per $\lambda$ — slow when $n$ is large.
+- **Red** = training rows; **light blue** = held-out row (**fit** → **predict** → **score**); rotate through all $n$ rounds, then **average** errors.
 
-```{r}
-#| label: day01-cv-loo-fig
-#| echo: false
-#| fig-height: 3.2
-#| fig-width: 10
-#| out-width: 100%
-plot_cv_loo_schematic()
-```
+## LOO-CV animation
+
+![](../assets/figures/LOOCV.gif){width=70% fig-align="center"}
+
+*Animation: [LOOCV.gif](https://commons.wikimedia.org/wiki/File:LOOCV.gif) by MBanuelos22, Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).*
 
 ## $k$-fold CV {#k-fold-cv}
 
@@ -35,24 +33,13 @@ plot_cv_loo_schematic()
 - **Pros:** only $k$ fits per $\lambda$ — faster than LOO for large $n$.
 - **Cons:** slightly more variable than LOO because each fit sees fewer rows.
 - **Tuesday:** `vfold_cv()` in **tidymodels** automates this for trees and other models.
+- Each column below is one CV round: **fit** on training folds (dark), **predict** held-out fold (light), **score** error, then **average** across rounds.
 
-```{r}
-#| label: day01-cv-kfold-assign-fig
-#| echo: false
-#| fig-height: 3.4
-#| fig-width: 9
-#| out-width: 92%
-plot_cv_kfold_assignment()
-```
+## $k$-fold CV schematic
 
-```{r}
-#| label: day01-cv-kfold-holdout-fig
-#| echo: false
-#| fig-height: 3
-#| fig-width: 9
-#| out-width: 92%
-plot_cv_kfold_holdout()
-```
+![](../assets/figures/k-fold-cross-validation-en.svg){width=98% fig-align="center"}
+
+*Figure: [K-fold cross validation EN.svg](https://commons.wikimedia.org/wiki/File:K-fold_cross_validation_EN.svg) by Gufosowa, Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).*
 
 ## Lasso: pick $\lambda$ with LOO-CV {#lasso-cv}
 

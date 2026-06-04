@@ -5,9 +5,25 @@ format:
     toc: true
 ---
 
+## About the experiment
+
+This teaching dataset comes from a classic **murine gut microbiome** study used in the [Schloss lab MiSeq SOP](https://mothur.org/wiki/miseq_sop/) and repackaged for machine learning by the [Quadram Institute](https://github.com/quadram-institute-bioscience/datasciencegroup/tree/main/4_machine_learning). The underlying experiment is **observational and longitudinal**, not a randomized trial: lab mice were sampled repeatedly after weaning to see how the **fecal bacterial community** changes over time.
+
+**Biological setup (Schloss cohort).** Researchers collected **fresh feces** from mice on many days after weaning (the full published study follows animals for up to a year). The scientific motivation is to understand **normal variation** in the gut microbiome and whether community composition is **stable** or **shifts** between life stages — for example, comparing an **early** post-weaning period (rapid growth) with a **later** period when weight and microbiota are more stable. Our CSVs are a **subset** of that larger resource, chosen so a classroom can download tables quickly and still face a realistic **p ≫ n** prediction problem.
+
+**What was measured.** For each fecal sample, DNA was amplified with primers targeting the **V4 region of the 16S rRNA gene** and sequenced on an **Illumina MiSeq** (paired-end reads). Bioinformatic processing (in the original work, typically with **mothur**) turns millions of short reads into a **feature table**: each column is an **OTU** (operational taxonomic unit — a cluster of similar 16S sequences treated as one bacterial lineage), and each cell is the **number of reads** assigned to that OTU in that sample. Optional [taxonomy](https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/taxonomy.csv) maps OTU IDs to names (genus, family, etc.).
+
+**What you hold in R.** After loading, each **row** is one sample (one mouse on one `Day`), and predictors are **sparse count data** (many zeros, few very abundant OTUs). The main classification label in the tutorial is **`Label`**: **`Early`** vs **`Late`**, a coarse time grouping (early post-weaning days vs later days — in this subset, `Early` samples are mostly `Day` ≤ ~65, `Late` samples mostly `Day` ≥ ~125). You can also model **`Sex`** (`F` / `M`). The same mouse reappears under **`Individual`** across days, so samples are **not independent**.
+
+**How these CSVs were produced.** The Quadram workshop distributes **already aggregated** tables (`metadata.csv`, `otutab_raw.csv`) derived from the Schloss/MiSeq pipeline, so you do **not** re-run mothur in our labs. You **join** metadata to the OTU matrix, **transpose** so samples are rows, optionally **filter** rare OTUs, and **log1p**-transform counts before PCA or modeling — the same statistical habits as for gene counts, but with ecology-flavoured column names.
+
+**Citation.** If you use this data in a report, cite the Schloss MiSeq SOP / Kozich et al. 2013 AEM paper (see the [mothur wiki](https://mothur.org/wiki/miseq_sop/)) and note that you accessed the Quadram GitHub mirror on the date you downloaded it.
+
+---
+
 ## How to load
 
-Public CSVs from the Quadram Institute workshop (see URLs below). Join metadata and OTU table on sample ID; transpose to **samples x OTUs**. Details in [Day 2 lab Block A](../../exercises/mlss2026-lab-exercises.qmd#day-2--block-a-import--eda).
+Public CSVs from the Quadram Institute workshop (see URLs below). Join metadata and OTU table on sample ID; transpose to **samples x OTUs**. Task details on the [lab exercises page](../../exercises/index.qmd).
 
 | File | URL |
 |------|-----|
@@ -19,18 +35,18 @@ Public CSVs from the Quadram Institute workshop (see URLs below). Join metadata 
 
 ## Where we use this
 
-- [Lab handbook](../../exercises/mlss2026-lab-exercises.qmd) — Day 2 Blocks A-D, Day 4 imbalance / imputation / metrics blocks
-- Solutions: [EDA](../../exercises/solutions/day02-microbiome-eda.Rmd), [baseline workflow](../../exercises/solutions/day02-microbiome-baseline-workflow.Rmd), [tune CV](../../exercises/solutions/day02-microbiome-tune-cv.Rmd), Day 4 microbiome solutions
+- [Lab exercises](../../exercises/index.qmd) — Day 1 (classical), Day 2 (tidymodels), Day 4 (models + VIP/SHAP)
+- Solutions: [Day 1](../../exercises/solutions/day01-microbiome-classical.Rmd), [Day 2](../../exercises/solutions/day02-microbiome-pipeline.Rmd), [Day 4](../../exercises/solutions/day04-microbiome-advanced.Rmd)
 
 ## Caveats
 
 ::: {.callout-important}
 ## Leakage warning
 
-Samples are **repeated measures** per mouse (`Individual`). **Do not** use a random row split as your final answer.
+Samples are **repeated measures** per mouse (`Individual`). **Do not** treat a random row split as your final answer without discussing it.
 
-- **Research-grade (default):** `group_vfold_cv` with `group = Individual`, or hold out whole mice.
-- **Intro track:** one row per `Individual` (e.g. last timepoint only) — **document the simplification** on your data card.
+- **Research-grade (Day 4 solution):** `group_vfold_cv` with `group = Individual`.
+- **Day 2 intro track:** `initial_split` on rows — instructor explains why this can inflate scores.
 :::
 
 ---
@@ -39,11 +55,12 @@ Samples are **repeated measures** per mouse (`Individual`). **Do not** use a ran
 
 ## 1. Source
 
-**Schloss mouse 16S** data distributed for the Quadram datasciencegroup machine-learning tutorial. Downloaded from GitHub raw CSV URLs (see table above). Not collected for this summer school; we reuse it for **high-dimensional count** workflows.
+**Schloss mouse 16S** — longitudinal fecal microbiome cohort processed from Illumina MiSeq amplicon data ([mothur MiSeq SOP](https://mothur.org/wiki/miseq_sop/)). We use the **Quadram datasciencegroup** mirror (CSV feature table + metadata) for teaching. Not collected for this summer school; reused to practise **high-dimensional count** classification and interpretation.
 
 ## 2. Outcome
 
 - **`Label`**: factor **`Early`** vs **`Late`** (community shift over time in the experiment).
+- **`Sex`**: `F` / `M` (Day 1 afternoon also models this outcome).
 
 ## 3. Predictors
 
@@ -52,17 +69,17 @@ Samples are **repeated measures** per mouse (`Individual`). **Do not** use a ran
 
 ## 4. Sample size
 
-Roughly **~282** samples after aligning metadata and OTU table (exact *n* depends on filtering). **p >> n**. Library sizes and sparsity vary; EDA block explores this.
+Roughly **282** samples and **~13** mice (`Individual`) after joining metadata and OTU table (exact OTU count depends on prevalence filtering; default loader keeps OTUs in ≥ 10% of samples → on the order of **300+** columns). **p >> n**. Library sizes and sparsity vary; explore in Day 1 tasks.
 
 ## 5. Leakage risks
 
 - **Random row CV** when the same **mouse (`Individual`)** appears in train and test **inflates** performance.
 - **Normalizing or filtering OTUs on the full table** before splitting leaks.
-- **Intro track:** collapsing to one row per mouse simplifies analysis but changes the scientific question — state that explicitly.
+- Document any simplification (e.g. one row per mouse) on your write-up.
 
 ## 6. Subgroups
 
 - **`Individual`** (mouse ID) — primary grouping for honest resampling.
-- Any experimental batch or time fields in metadata — check during EDA for stratification or subgroup metrics.
+- **`Sex`**, **`Day`** — secondary stratification or second outcome (Day 1).
 
 {{< include _footer.qmd >}}

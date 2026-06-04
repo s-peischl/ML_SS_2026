@@ -1,0 +1,157 @@
+---
+title: "Solution — Day 1 microbiome (classical)"
+format:
+  html:
+    toc: true
+    code-tools: true
+---
+
+Tasks **1.1–1.8** on the [lab exercises page](../index.qmd). Classical R only (no `tidymodels`).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(ggplot2)
+  library(MASS)
+  library(glmnet)
+})
+theme_set(theme_minimal())
+source("_load_microbiome.R")
+```
+
+## 1.1 Load and filter
+
+```{r load}
+mic <- load_microbiome(prev = 0.10)
+otu_cols <- mic_otu_cols(mic)
+dim(mic)
+table(mic$Label)
+table(mic$Sex, useNA = "ifany")
+length(unique(mic$Individual))
+```
+
+## 1.2 log1p transform
+
+```{r log1p}
+otu_mat <- as.matrix(mic[, otu_cols])
+log_otu <- log1p(otu_mat)
+mic$lib_size <- rowSums(otu_mat)
+```
+
+```{r lib-size, fig.width=7, fig.height=4}
+ggplot(mic, aes(lib_size, fill = Label)) +
+  geom_histogram(bins = 30, alpha = 0.5, position = "identity") +
+  scale_x_log10() +
+  labs(title = "Library size after prevalence filter", x = "Total counts")
+```
+
+## 1.3 PCA
+
+```{r pca, fig.width=7, fig.height=5}
+pc <- prcomp(log_otu, center = TRUE, scale. = TRUE)
+pc_df <- as.data.frame(pc$x[, 1:2]) |>
+  mutate(sample_id = mic$sample_id, Label = mic$Label, Sex = mic$Sex)
+ggplot(pc_df, aes(PC1, PC2, color = Label, shape = Sex)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "PCA of log1p OTU abundances")
+```
+
+## 1.4–1.6 Label (Early vs Late)
+
+```{r label-pcs}
+n_pc <- 5
+pc_scores <- as.data.frame(pc$x[, seq_len(n_pc), drop = FALSE])
+colnames(pc_scores) <- paste0("PC", seq_len(n_pc))
+dat_label <- cbind(Label = mic$Label, pc_scores)
+
+m_glm <- glm(Label ~ ., data = dat_label, family = binomial)
+summary(m_glm)$coefficients
+```
+
+```{r label-aic}
+m_null <- glm(Label ~ 1, data = dat_label, family = binomial)
+m_fwd <- stepAIC(m_null, scope = list(lower = m_null, upper = m_glm), direction = "forward", trace = 0)
+m_bwd <- stepAIC(m_glm, direction = "backward", trace = 0)
+list(forward = formula(m_fwd), backward = formula(m_bwd))
+```
+
+```{r label-lasso}
+x_lasso <- scale(log_otu)
+y_lasso <- ifelse(mic$Label == "Late", 1, 0)
+set.seed(7)
+cv_fit <- cv.glmnet(x_lasso, y_lasso, family = "binomial", alpha = 1, nfolds = 5)
+coef(cv_fit, s = "lambda.min")
+```
+
+```{r label-metrics}
+pred_glm <- predict(m_glm, type = "response")
+pred_glm_cls <- factor(ifelse(pred_glm > 0.5, "Late", "Early"), levels = levels(mic$Label))
+acc_glm <- mean(pred_glm_cls == mic$Label)
+pred_lasso <- predict(cv_fit, newx = x_lasso, s = "lambda.min", type = "response")
+pred_lasso_cls <- factor(ifelse(pred_lasso > 0.5, "Late", "Early"), levels = levels(mic$Label))
+acc_lasso <- mean(pred_lasso_cls == mic$Label)
+n_coef_lasso <- sum(coef(cv_fit, s = "lambda.min") != 0) - 1
+c(accuracy_glm_pcs = acc_glm, accuracy_lasso = acc_lasso, n_nonzero_lasso = n_coef_lasso)
+```
+
+## 1.7 Sex (Female vs Male)
+
+```{r sex-filter}
+mic_sex <- mic |> filter(Sex %in% c("F", "M"))
+otu_sex <- log1p(as.matrix(mic_sex[, otu_cols]))
+zv_sex <- apply(otu_sex, 2, sd) > 1e-10
+otu_sex <- otu_sex[, zv_sex, drop = FALSE]
+pc_sex <- prcomp(otu_sex, center = TRUE, scale. = TRUE)
+pc_s <- as.data.frame(pc_sex$x[, seq_len(n_pc), drop = FALSE])
+colnames(pc_s) <- paste0("PC", seq_len(n_pc))
+dat_sex <- cbind(Sex = factor(mic_sex$Sex, levels = c("F", "M")), pc_s)
+
+m_sex <- glm(Sex ~ ., data = dat_sex, family = binomial)
+m_sex_null <- glm(Sex ~ 1, data = dat_sex, family = binomial)
+m_sex_fwd <- stepAIC(m_sex_null, scope = list(lower = m_sex_null, upper = m_sex), direction = "forward", trace = 0)
+x_sex <- scale(otu_sex)
+y_sex <- ifelse(mic_sex$Sex == "M", 1, 0)
+set.seed(7)
+cv_sex <- cv.glmnet(x_sex, y_sex, family = "binomial", alpha = 1, nfolds = 5)
+```
+
+```{r sex-metrics}
+pred_sex_glm <- factor(ifelse(predict(m_sex, type = "response") > 0.5, "M", "F"), levels = c("F", "M"))
+acc_sex_glm <- mean(pred_sex_glm == mic_sex$Sex)
+pred_sex_lasso <- ifelse(predict(cv_sex, newx = x_sex, s = "lambda.min", type = "response") > 0.5, "M", "F")
+acc_sex_lasso <- mean(factor(pred_sex_lasso, levels = c("F", "M")) == mic_sex$Sex)
+c(accuracy_glm_pcs = acc_sex_glm, accuracy_lasso = acc_sex_lasso)
+```
+
+## 1.8 Summary table
+
+```{r summary}
+acc_fwd <- mean(
+  factor(ifelse(predict(m_fwd, dat_label, type = "response") > 0.5, "Late", "Early"), levels = levels(mic$Label)) == mic$Label
+)
+acc_sex_fwd <- mean(
+  factor(ifelse(predict(m_sex_fwd, dat_sex, type = "response") > 0.5, "Male", "Female"), levels = c("Female", "Male")) == mic_sex$Sex
+)
+summary_tbl <- data.frame(
+  outcome = c("Label", "Label", "Label", "Sex", "Sex", "Sex"),
+  method = c("GLM (5 PCs)", "stepAIC forward", "Lasso (all OTUs)", "GLM (5 PCs)", "stepAIC forward", "Lasso (all OTUs)"),
+  n_predictors = c(
+    n_pc,
+    length(coef(m_fwd)) - 1,
+    n_coef_lasso,
+    n_pc,
+    length(coef(m_sex_fwd)) - 1,
+    sum(coef(cv_sex, s = "lambda.min") != 0) - 1
+  ),
+  train_accuracy = c(acc_glm, acc_fwd, acc_lasso, acc_sex_glm, acc_sex_fwd, acc_sex_lasso),
+  row.names = NULL
+)
+knitr::kable(summary_tbl, digits = 3)
+```
+
+**Note:** In-sample accuracy only — same data used to fit and score (matches Monday gene demos).
+
+```{r session, echo=FALSE}
+sessionInfo()
+```

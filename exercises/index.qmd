@@ -7,50 +7,172 @@ format:
 
 # Afternoon practicals
 
-Each teaching day has about **4 hours** of hands-on work (blocks A–F on Day 4). Tasks are in the **[lab exercises handbook](mlss2026-lab-exercises.qmd)**. **Solutions are linked below** — there is no graded submission on this site; try each block yourself first, then compare when you are stuck.
+One **mouse 16S microbiome** dataset all week. Work through the numbered tasks below after the matching **morning lecture** section (links go to slide decks). Try each day yourself first, then open the **solution** when you are stuck — there is no graded submission on this site.
 
-**Also on this site:** [Home](../index.qmd) · [Curriculum](../curriculum-outline.qmd) · [Day 1 slides](../slides/day-01-monday.html) · [Day 2](../slides/day-02-tuesday.html) · [Day 4](../slides/day-04-thursday.html)
-
----
-
-## Handbook
-
-| | |
-|---|---|
-| **Full task list** | [mlss2026-lab-exercises.qmd](mlss2026-lab-exercises.qmd) (all blocks, data URLs, templates) |
+**Also on this site:** [Home](../index.qmd) · [Curriculum](../curriculum-outline.qmd) · [Day 1 slides](../slides/day-01-monday.html) · [Day 2](../slides/day-02-tuesday.html) · [Day 4](../slides/day-04-thursday.html) · [Microbiome data card](../data/cards/microbiome-mouse-16s.qmd)
 
 ---
 
-## Solutions by day
+## The data — Schloss mouse 16S
 
-Open the **HTML** page to read rendered output in the browser, or download the **source** (`.Rmd` / `.qmd`) to run in RStudio.
+These afternoon labs use a public **16S rRNA** cohort from the [Quadram machine-learning tutorial](https://github.com/quadram-institute-bioscience/datasciencegroup/blob/main/4_machine_learning/README.md). Each **row** is a fecal sample from one mouse at one time point; each **column** (after you join files) is either sample metadata or the count of one **OTU** (operational taxonomic unit — a coarse bacterial “species” bucket).
 
-### Day 1 (Monday)
+| File | What it contains |
+|------|------------------|
+| [metadata.csv](https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/metadata.csv) | `sample_id`, **`Label`** (Early / Late community stage), **`Sex`** (`F` / `M`), **`Individual`** (mouse ID), **`Day`** |
+| [otutab_raw.csv](https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/otutab_raw.csv) | Raw OTU counts — transpose so **samples are rows** and **OTUs are columns** |
+| [taxonomy.csv](https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s/taxonomy.csv) | Optional names for OTU columns |
 
-| Block | Topic | Solution (HTML) | Source |
-|-------|--------|-----------------|--------|
-| A | Data card | [View](solutions/day01-data-card-example.html) | [`.qmd`](solutions/day01-data-card-example.qmd) |
-| B | Regression ladder | [View](solutions/day01-regression-complexity-ladder.html) | [`.Rmd`](solutions/day01-regression-complexity-ladder.Rmd) |
-| C | Classification ladder | [View](solutions/day01-classification-complexity-ladder.html) | [`.Rmd`](solutions/day01-classification-complexity-ladder.Rmd) |
-| D | Manual k-fold CV | [View](solutions/day01-manual-kfold-cv.html) | [`.Rmd`](solutions/day01-manual-kfold-cv.Rmd) |
+**Why this dataset for ML practice:** you have **hundreds of samples** but **thousands of sparse, correlated predictors** (counts), much like gene expression. The main scientific question in the tutorial is whether the community looks **Early** or **Late**; you can also ask whether **`Sex`** separates samples. Counts are **right-skewed**, so we almost always apply **log1p** before PCA or modeling. After joining tables, drop OTUs that are too rare (e.g. present in &lt; 10% of samples) so the matrix is not mostly zeros.
 
-### Day 2 (Tuesday)
+**Repeated measures:** the same **`Individual`** (mouse) appears on multiple days. That matters for validation — a random row split can put the same mouse in train and test and **inflate** performance. Day 2 uses a simple train/test split for teaching; Day 4 uses grouped cross-validation. Your instructor will say when each is acceptable.
 
-| Block | Topic | Solution (HTML) | Source |
-|-------|--------|-----------------|--------|
-| A | Microbiome EDA | [View](solutions/day02-microbiome-eda.html) | [`.Rmd`](solutions/day02-microbiome-eda.Rmd) |
-| B | Baseline workflow | [View](solutions/day02-microbiome-baseline-workflow.html) | [`.Rmd`](solutions/day02-microbiome-baseline-workflow.Rmd) |
-| C | Group CV + tuning | [View](solutions/day02-microbiome-tune-cv.html) | [`.Rmd`](solutions/day02-microbiome-tune-cv.Rmd) |
-| D | Refactor Day 1 | [View](solutions/day02-refactor-day1-with-tidymodels.html) | [`.Rmd`](solutions/day02-refactor-day1-with-tidymodels.Rmd) |
+More detail: [microbiome data card](../data/cards/microbiome-mouse-16s.qmd).
 
-### Day 4 (Thursday)
+---
 
-| Block | Topic | Solution (HTML) | Source |
-|-------|--------|-----------------|--------|
-| A | Missing data | [View](solutions/day04-microbiome-imputation.html) | [`.Rmd`](solutions/day04-microbiome-imputation.Rmd) |
-| B | Imbalance | [View](solutions/day04-microbiome-imbalance.html) | [`.Rmd`](solutions/day04-microbiome-imbalance.Rmd) |
-| C | PCA in recipe | [View](solutions/day04-microbiome-pca.html) | [`.Rmd`](solutions/day04-microbiome-pca.Rmd) |
-| D | Model shoot-out | [View](solutions/day04-microbiome-model-compare.html) | [`.Rmd`](solutions/day04-microbiome-model-compare.Rmd) |
-| E | Metrics / `select_best` | [View](solutions/day04-microbiome-metrics-select-best.html) | [`.Rmd`](solutions/day04-microbiome-metrics-select-best.Rmd) |
+## Day 1 (Monday afternoon) — classical R
 
-Day 2 and Day 4 microbiome solutions download data from GitHub when you knit them locally ([`solutions/README.md`](solutions/README.md) for package list and `set.seed` notes).
+**Slides:** [Day 1 (Monday)](../slides/day-01-monday.html) · **Solution:** [HTML](solutions/day01-microbiome-classical.html) · [Download `.Rmd`](solutions/day01-microbiome-classical.Rmd)
+
+Morning lecture uses **gene simulations**; the afternoon applies the same **classical** tools (PCA, logistic regression, AIC, lasso) to microbiome data. You will model **`Label`** (Early vs Late) and then **`Sex`** (`F` vs `M`).
+
+### 1.1 Load and prepare the data
+
+Merge the metadata and OTU table on `sample_id`, transpose counts to a sample × OTU matrix, and drop low-prevalence OTUs. Print table dimensions and `table()` of `Label`, `Sex`, and how many unique mice (`Individual`) you have.
+
+*Do after:* [Part A — Setup](../slides/day-01-monday.html) (*Load data: built-in table*).
+
+### 1.2 Transform counts
+
+Apply **log1p** to the OTU matrix so large abundances do not dominate distances and regression. Optionally plot **library size** (row sums of raw counts) by `Label` to see whether sequencing depth differs between groups.
+
+*Do after:* [Part C — Gene × trait](../slides/day-01-monday.html#part-c-gene-trait) (many correlated predictors).
+
+### 1.3 Explore with PCA
+
+Run **`prcomp`** on scaled log1p OTUs and plot **PC1 vs PC2**, coloured by your outcome (`Label` first). This is a quick “does anything separate in 2D?” check before fitting models. Full PCA-in-recipe theory comes on [Day 4](../slides/day-04-thursday.html#part-c-pca).
+
+*Do after:* [Part D — Gene × disease](../slides/day-01-monday.html#part-d-gene-disease).
+
+### 1.4 Logistic regression on PCs — Early vs Late
+
+Fit **`glm(Label ~ PC1 + …, family = binomial)`** using a small number of principal components (e.g. five) as predictors. Interpret coefficients as log-odds shifts along each PC axis.
+
+*Do after:* [Part D — Logistic regression](../slides/day-01-monday.html#part-d-gene-disease).
+
+### 1.5 Stepwise AIC — Early vs Late
+
+Starting from the PC logistic model, run **`MASS::stepAIC`** forward and/or backward to see which PCs the AIC criterion keeps. Compare the chosen formula to the full PC model.
+
+*Do after:* [Part D — AIC: backward and forward selection](../slides/day-01-monday.html#part-d-gene-disease).
+
+### 1.6 Lasso — Early vs Late
+
+Fit **`glmnet`** with `family = "binomial"` on **all** log1p OTUs (high-dimensional). Use cross-validated λ (`cv.glmnet`) and note how many OTUs get non-zero coefficients. Compare this sparse solution to the AIC model from **1.5**.
+
+*Do after:* [Part D — Lasso for classification](../slides/day-01-monday.html#part-d-gene-disease); [Cross-validation](../slides/day-01-monday.html#cross-validation) if using `cv.glmnet`.
+
+### 1.7 Repeat for Sex
+
+Repeat **1.4–1.6** with **`Sex`** (`F` vs `M`) as the outcome, using only rows with known sex. Drop any OTU columns with zero variance in this subset before PCA.
+
+*Do after:* same Part D sections as **1.4–1.6**.
+
+### 1.8 Compare approaches
+
+Build a small summary table: outcome (`Label` / `Sex`), method (GLM on PCs, stepAIC, lasso), number of predictors used, and one **in-sample** accuracy (same data used to fit — matches Monday’s gene demos).
+
+*Do after:* [Part E — Wrap-up](../slides/day-01-monday.html).
+
+---
+
+## Day 2 (Tuesday afternoon) — tidymodels pipeline
+
+**Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.html#part-c-pipeline) · **Solution:** [HTML](solutions/day02-microbiome-pipeline.html) · [Download `.Rmd`](solutions/day02-microbiome-pipeline.Rmd)
+
+Today you rebuild the analysis as a **`recipe` → `workflow` → fit** pipeline, as on Palmer Penguins in the morning. **Outcome:** **`Label`** (Early vs Late) only.
+
+### 2.1 Build the recipe
+
+Define a **`recipe`** that applies **log1p** to OTU columns, drops zero-variance predictors (`step_zv`), and normalizes numeric predictors (`step_normalize`). The recipe is a reusable preprocessing blueprint — nothing is fitted yet.
+
+*Do after:* [Step 1 — Preprocessing](../slides/day-02-tuesday.html#prep-and-bake) · *Afternoon lab (microbiome)* callout.
+
+### 2.2 Choose the tree model
+
+Declare a **`decision_tree`** spec with **`set_engine("rpart")`** and classification mode. This is the same tree family you used on gene simulations in Part B.
+
+*Do after:* [Step 2 — Classification tree with `rpart`](../slides/day-02-tuesday.html#part-c-pipeline).
+
+### 2.3 Workflow and train/test tree
+
+Combine recipe and tree in a **`workflow()`**, split with **`initial_split`** (e.g. 75% train / 25% test, stratified on `Label`), fit on the training set, and predict the **held-out test** set.
+
+*Do after:* [Step 3 — One-shot fit](../slides/day-02-tuesday.html#part-c-pipeline).
+
+### 2.4 Add logistic regression
+
+Build a second workflow with the **same recipe** but a **`logistic_reg`** spec (`glm` engine). Fit and predict on the **same** train/test split so the comparison is fair.
+
+*Do after:* [Logistic boundary on penguins](../slides/day-02-tuesday.html#part-c-pipeline).
+
+### 2.5 Compare models on the test set
+
+Collect **accuracy** (and optionally ROC AUC) for tree vs logistic on the **test** rows only. Briefly note whether the tree beats logistic and remind yourself that mice can appear in both splits.
+
+*Do after:* [Step 4 — `metric_set`](../slides/day-02-tuesday.html#part-c-pipeline).
+
+*Stretch (not required):* grouped CV and tuning — [Step 5](../slides/day-02-tuesday.html#part-c-pipeline).
+
+---
+
+## Day 4 (Thursday afternoon) — models and interpretation
+
+**Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html) · **Solution:** [HTML](solutions/day04-microbiome-advanced.html) · [Download `.Rmd`](solutions/day04-microbiome-advanced.Rmd)
+
+You compare several **`parsnip`** learners on the same microbiome recipe, then interpret one **random forest** with VIP and SHAP.
+
+### 4.1 Shared recipe
+
+Reuse the Day 2-style recipe (log1p, `step_zv`, `step_normalize`) with metadata columns in an **id** role so they are not used as predictors. You will swap only the model **`spec`** underneath.
+
+*Do after:* [Part B — Same recipe, swap the `spec`](../slides/day-04-thursday.html#part-b-models).
+
+### 4.2 Model shoot-out
+
+Fit **random forest** (bagging), **XGBoost** (boosting), and a small **MLP** with **`fit_resamples`** and **`group_vfold_cv(group = Individual)`** so the same mouse does not leak across folds. Plot mean **ROC AUC** (or accuracy) by model.
+
+*Do after:* [Part B — Cross-validated accuracy (bar chart)](../slides/day-04-thursday.html#part-b-models).
+
+### 4.3 Variable importance (VIP)
+
+Fit a random forest on all data (or training folds) with **`importance`** enabled for `ranger`, then plot **VIP** for the top OTUs. Read this as “which features the forest used most often in splits,” not as causal biology.
+
+*Do after:* [Part F — Variable importance](../slides/day-04-thursday.html#part-f-vip).
+
+### 4.4 SHAP values
+
+On a **top-10 VIP** forest only (kernel SHAP on all ~300+ OTUs can run for hours), compute **kernel SHAP** on about a dozen samples and draw a **beeswarm** plot. SHAP explains how each OTU pushes **this** sample’s predicted probability toward Early or Late.
+
+*Do after:* [Part F — SHAP](../slides/day-04-thursday.html#part-f-vip) (after VIP).
+
+### 4.5 Wrap up honestly
+
+Show your metrics comparison figure again and write **one sentence you would not say** about VIP or SHAP on this dataset (e.g. claiming causation or fairness from a single plot).
+
+*Do after:* [Part G — Wrap-up](../slides/day-04-thursday.html).
+
+Imputation, upsampling, and PCA-in-recipe remain **lecture topics** on Thursday slides; they are not required in this simplified lab.
+
+---
+
+## Wednesday
+
+No afternoon lab block (symposium).
+
+---
+
+## Older block solutions
+
+Previous A–F block notebooks are in [`solutions/_archive/`](solutions/_archive/) for reference.

@@ -1,0 +1,59 @@
+---
+title: "Solution 4E — select_best under different metrics (imbalanced microbiome)"
+format:
+  html:
+    toc: true
+    code-tools: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages(library(tidymodels))
+library(dplyr)
+source("_load_microbiome.R")
+```
+
+```{r imb-data}
+set.seed(4)
+mic <- load_microbiome()
+otu_cols <- mic_otu_cols(mic)
+
+mic_imb <- mic |>
+  group_by(Label) |>
+  filter(Label == "Early" | (Label == "Late" & row_number() <= max(1L, round(0.10 * sum(Label == "Late"))))) |>
+  ungroup()
+
+rec <- recipe(Label ~ ., data = mic_imb) |>
+  update_role(sample_id, Individual, Sex, Day, new_role = "id") |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+spec <- boost_tree(trees = tune(), tree_depth = tune(), learn_rate = 0.08) |>
+  set_engine("xgboost") |> set_mode("classification")
+
+wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+folds <- mic_group_folds(mic_imb, v = 5)
+grid <- expand.grid(trees = c(50, 100), tree_depth = c(2, 4))
+metrics_multi <- metric_set(accuracy, pr_auc, mn_log_loss, f_meas)
+```
+
+```{r tune}
+set.seed(8)
+tune_res <- tune_grid(wf, resamples = folds, grid = grid, metrics = metrics_multi)
+
+best_acc <- select_best(tune_res, metric = "accuracy")
+best_pr <- select_best(tune_res, metric = "pr_auc")
+
+bind_rows(
+  best_acc |> mutate(selected_by = "accuracy"),
+  best_pr |> mutate(selected_by = "pr_auc")
+) |>
+  select(selected_by, trees, tree_depth)
+```
+
+**Reporting:** For screening a rare `Late` community state, report **PR-AUC** and sensitivity; for a methods comparison where classes are balanced by design, accuracy may suffice — but never hide poor rare-class performance behind a high accuracy headline.
+
+```{r session, echo=FALSE}
+sessionInfo()
+```

@@ -8,7 +8,7 @@ format:
     scrollable: true
     slide-level: 2
     html-math-method: katex
-    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a>'
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a> · <a href="?print-pdf" style="text-decoration:underline;">Print PDF</a>'
     output-file: day-04-thursday.html
     embed-resources: true
 ---
@@ -591,7 +591,7 @@ Fixed settings here for speed  -  in projects, wrap each spec in **`tune_grid()`
 
 ## Boosting: watch the boundary sharpen
 
-We fix **`tree_depth = 2`** and **`learn_rate = 0.3`**, then increase **`trees`** from 1 to 6. Each round adds small trees that correct leftover mistakes  -  the **Gentoo probability surface** becomes more **nonlinear**.
+We fix **`tree_depth = 2`** and **`learn_rate = 0.3`**, then increase **`trees`**. Each round adds small trees that correct leftover mistakes  -  the **Gentoo probability surface** becomes more **nonlinear**. We show rounds **1, 3, and 6** (the pattern is similar in between).
 
 ```{r}
 #| label: day04-boost-spec-show
@@ -606,7 +606,7 @@ boost_tree(trees = 6, tree_depth = 2, learn_rate = 0.3) |>
 #| label: day04-boost-boundary-prep
 #| echo: false
 #| results: hide
-boost_trees <- 1:6
+boost_trees <- c(1, 3, 6)
 for (i in boost_trees) {
   spec_i <- boost_tree(
     trees = i,
@@ -640,22 +640,6 @@ print(
 
 One shallow tree: rough split  -  mostly **underfits** the Gentoo cloud.
 
-## Boosting round 2
-
-```{r}
-#| label: day04-boost-step-2
-#| echo: false
-#| fig-width: 9
-#| fig-height: 6
-#| out-width: 100%
-print(
-  plot_prob_boundary(
-    get("boost_fit_2"), peng_cls,
-    title = "XGBoost after 2 trees"
-  )
-)
-```
-
 ## Boosting round 3
 
 ```{r}
@@ -667,39 +651,7 @@ print(
 print(
   plot_prob_boundary(
     get("boost_fit_3"), peng_cls,
-    title = "XGBoost after 3 trees"
-  )
-)
-```
-
-## Boosting round 4
-
-```{r}
-#| label: day04-boost-step-4
-#| echo: false
-#| fig-width: 9
-#| fig-height: 6
-#| out-width: 100%
-print(
-  plot_prob_boundary(
-    get("boost_fit_4"), peng_cls,
-    title = "XGBoost after 4 trees"
-  )
-)
-```
-
-## Boosting round 5
-
-```{r}
-#| label: day04-boost-step-5
-#| echo: false
-#| fig-width: 9
-#| fig-height: 6
-#| out-width: 100%
-print(
-  plot_prob_boundary(
-    get("boost_fit_5"), peng_cls,
-    title = "XGBoost after 5 trees"
+    title = "XGBoost after 3 trees (middle stage)"
   )
 )
 ```
@@ -881,6 +833,15 @@ print(
 ```
 
 Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).
+
+## Bridge: from model choice to feature engineering
+
+Same workflow, new questions:
+
+- **Part B:** which **model family** fits best?
+- **Part C:** can **PCA inside the recipe** help?
+- **Part D:** how do we handle **missing values** in the recipe?
+- **Parts E–F:** which **metrics** and **interpretation** tools matter when classes are imbalanced?
 
 # Part C  -  Dimension reduction (accuracy only) {#part-c-pca}
 
@@ -1073,6 +1034,10 @@ bind_rows(
 - **Tradeoff:** components are **not** "bill mm" anymore  -  **VIP** on PCA columns is harder to explain biologically.
 - **Leakage check:** always fit PCA **inside** `workflow()` + resampling, never on the full table before splitting.
 
+## Bridge: from PCA to missing data
+
+Same workflow, new recipe stress: we now handle **missing values** with imputation steps **inside** cross-validation.
+
 # Part D  -  Missing data (accuracy only) {#part-d-impute}
 
 ## Extension: imputation inside the recipe (`peng_na`)
@@ -1215,6 +1180,11 @@ Continue: [Module 06  -  Metrics & SHAP](../modules/module-06-evaluation-and-int
 
 # Part E  -  Imbalance, metrics, and confusion matrices {#part-e-metrics}
 
+## Bridge: from binary metrics to multiclass imbalance
+
+We move from Adelie vs Gentoo to **three species**, with a deliberately rare **Chinstrap** class.
+Accuracy alone is no longer enough — we add **macro recall/F1** and **per-class recall**.
+
 ## Multiclass imbalance (`peng_imb3`)
 
 We now use **three-species classification** (Adelie, Gentoo, Chinstrap).
@@ -1335,22 +1305,21 @@ pred_imb3_up |>
 ```{r}
 #| label: day04-imb3-recall-compare
 #| echo: false
-#| message: false
-bind_rows(
-  multiclass_recall_table(pred_imb3, truth_col = "y3") |> mutate(model = "No upsample"),
-  multiclass_recall_table(pred_imb3_up, truth_col = "y3") |> mutate(model = "Upsample")
-) |>
-  mutate(recall = round(recall, 3)) |>
-  select(model, truth, recall) |>
-  tidyr::pivot_wider(names_from = model, values_from = recall) |>
-  knitr::kable(caption = "Holdout per-class recall: focus on minority Chinstrap")
+#| fig-width: 9
+#| fig-height: 5
+#| out-width: 100%
+plot_multiclass_recall_compare(pred_imb3, pred_imb3_up, highlight_class = "Chinstrap")
 ```
 
-- **Rows = true species**, **columns = predicted species** in the confusion matrix.
+- In the confusion matrix: **rows = true species**, **columns = predicted species**.
 - Upsampling is not a free lunch, but it often improves **minority-class recall** on this engineered imbalance.
 - Use macro/per-class metrics when one class is underrepresented.
 
 # Part F  -  Variable importance {#part-f-vip}
+
+## Bridge: from metrics to interpretation
+
+After choosing metrics for imbalance, we ask a different question: **which predictors drove the fitted model?** (VIP and SHAP in the next section.)
 
 ## Data the forest sees (bill plane)
 

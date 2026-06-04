@@ -58,7 +58,7 @@ The slides compute a **majority-class baseline** before comparing upsampling on 
 - Upsampling duplicates minority rows **inside training folds only**; assessment folds stay untouched for honest scoring.
 - It can improve underrepresented-class detection at the cost of extra confusion between majority classes.
 
-Lab: [Day 4 Block D — Imbalance](../exercises/mlss2026-lab-exercises.qmd) (microbiome `Late`). Minimal notebook: [multiclass upsampling](../notebooks/penguins-multiclass-upsampling.Rmd).
+Lab: [Day 4 exercises](../exercises/index.qmd) (microbiome; imbalance covered on slides). Minimal notebook: [multiclass upsampling](../notebooks/penguins-multiclass-upsampling.Rmd).
 
 ---
 

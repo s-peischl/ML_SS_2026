@@ -51,6 +51,8 @@ Class slides
 - **[Day 4 (Thursday)](slides/day-04-thursday.html)** — forests, boosting, neural nets, PCA/imputation in recipes, variable importance, and evaluation.  
 
 Each deck links back here from the **footer** if you get lost.
+
+**Printable PDF:** open a deck, click **Print PDF** in the footer (or add `?print-pdf` to the URL), then **Save as PDF** in Chrome (Landscape, no margins, background graphics on). See [README — Printable slides](README.md#printable-slides-pdf).
 :::
 
 ::: {.hub-card}
@@ -74,7 +76,7 @@ Lab exercises
 ### Afternoon practicals (with solutions)
 
 - **[Lab exercises home](exercises/index.qmd)** — task handbook plus links to every **solution** notebook (HTML + source)  
-- **[Full handbook](exercises/mlss2026-lab-exercises.qmd)** — Day 1 genes, Day 2 & 4 microbiome, data/model card templates  
+- **[Lab exercises](exercises/index.qmd)** — microbiome afternoon tasks (Day 1, 2, 4) with lecture placement hints  
 - No grade on this site: try the tasks yourself first; solutions are there when you need them.
 :::
 
@@ -100,6 +102,38 @@ Think of it as one story in three chapters: **see the pattern**, **keep your wor
 - **Day 2 (Tuesday)** — decision trees (“if bill length is above this line, go left…”) and how to **fit and check models in a tidy, repeatable way** in R so Day 4 still makes sense.  
 - **Day 3 (Wednesday)** — mini symposium and social event (no lecture deck on this site).  
 - **Day 4 (Thursday)** — stronger models, what to watch when outcomes aren’t balanced, and how to discuss **why** a model leaned one way — without claiming it “knows” biology or medicine by itself.
+:::
+
+::: {.hub-week}
+## Organizers & people
+
+::: {.hub-week-intro}
+This summer school is hosted by the **[Institute of Bioinformatics (IBU)](https://www.bioinformatics.unibe.ch)** at the University of Bern. 
+:::
+
+### Host institute
+
+- **[Institute of Bioinformatics (IBU)](https://www.bioinformatics.unibe.ch)** — University of Bern
+
+### Organizers
+
+- **[David Miguel Francisco Ferreira](https://www.bioinformatics.unibe.ch/about_us/staff/dr_francisco_ferreira_david_miguel/index_eng.html)** — IBU · [david.francisco@unibe.ch](mailto:david.francisco@unibe.ch)  
+- **[Stefan Daniel](https://www.bioinformatics.unibe.ch/about_us/staff/daniel_stefan/index_eng.html)** — IBU · [stefan.daniel@unibe.ch](mailto:stefan.daniel@unibe.ch)  
+
+### Lecturers
+
+- **[Aparna Pandey](https://www.bioinformatics.unibe.ch/about_us/staff/dr_pandey_aparna/index_eng.html)** — IBU · [aparna.pandey@unibe.ch](mailto:aparna.pandey@unibe.ch)  
+- **[Stephan Peischl](https://www.bioinformatics.unibe.ch/about_us/staff/dr_peischl_stephan/index_eng.html)** — [Peischl Lab](https://peischllab.github.io), IBU · [stephan.peischl@unibe.ch](mailto:stephan.peischl@unibe.ch)  
+
+### Teaching assistants
+
+- **[Sara Krättli](https://www.bioinformatics.unibe.ch/about_us/staff/kraettli_sara/index_eng.html)** — IBU · [sara.kraettli2@unibe.ch](mailto:sara.kraettli2@unibe.ch)  
+- **[Karolina Wachala](https://www.bioinformatics.unibe.ch/about_us/staff/wachaa_karolina/index_eng.html)** — Peischl Lab, IBU · [karolina.wachala@unibe.ch](mailto:karolina.wachala@unibe.ch)  
+- **[Julio Ayala](https://www.thee.iee.unibe.ch/about_us/team/staff/ayala_julio/index_eng.html)** — Institute of Ecology and Evolution (IEE), University of Bern · [julio.ayalalopez@unibe.ch](mailto:julio.ayalalopez@unibe.ch)  
+
+### Funding
+
+- **[CUSO](https://deutsch.cuso.ch/willkommen)** — Conférence universitaire de Suisse occidentale (doctoral programme)
 :::
 
 ::: {.callout-note collapse="true" appearance="simple"}

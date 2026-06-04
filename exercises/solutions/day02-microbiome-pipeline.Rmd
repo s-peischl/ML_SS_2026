@@ -1,0 +1,100 @@
+---
+title: "Solution — Day 2 microbiome (tidymodels pipeline)"
+format:
+  html:
+    toc: true
+    code-tools: true
+---
+
+Tasks **2.1–2.5** on the [lab exercises page](../index.qmd). Outcome: **`Label`** (Early vs Late).
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(dplyr)
+  library(ggplot2)
+})
+theme_set(theme_minimal())
+source("_load_microbiome.R")
+```
+
+## 2.1 Recipe
+
+```{r data}
+set.seed(7)
+mic <- load_microbiome()
+otu_cols <- mic_otu_cols(mic)
+mic_model <- mic |> select(Label, all_of(otu_cols))
+```
+
+```{r recipe}
+rec <- recipe(Label ~ ., data = mic_model) |>
+  step_mutate(across(all_of(otu_cols), ~ log1p(.x))) |>
+  step_zv(all_predictors()) |>
+  step_normalize(all_numeric_predictors())
+rec
+```
+
+## 2.2 Tree spec
+
+```{r tree-spec}
+tree_spec <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+tree_spec
+```
+
+## 2.3 Train / test — tree
+
+```{r split}
+split <- initial_split(mic_model, prop = 0.75, strata = Label)
+wf_tree <- workflow() |> add_recipe(rec) |> add_model(tree_spec)
+metrics_cls <- metric_set(accuracy, roc_auc)
+```
+
+```{r tree-fit}
+set.seed(7)
+fit_tree <- last_fit(wf_tree, split, metrics = metrics_cls)
+collect_metrics(fit_tree)
+```
+
+## 2.4 Logistic workflow
+
+```{r glm-spec}
+log_spec <- logistic_reg() |>
+  set_engine("glm") |>
+  set_mode("classification")
+wf_log <- workflow() |> add_recipe(rec) |> add_model(log_spec)
+```
+
+```{r glm-fit}
+set.seed(7)
+fit_log <- last_fit(wf_log, split, metrics = metrics_cls)
+collect_metrics(fit_log)
+```
+
+## 2.5 Compare on test set
+
+```{r compare}
+cmp <- bind_rows(
+  collect_metrics(fit_tree) |> mutate(model = "Decision tree (rpart)"),
+  collect_metrics(fit_log) |> mutate(model = "Logistic regression")
+) |>
+  select(model, .metric, .estimate)
+knitr::kable(cmp, digits = 3)
+```
+
+```{r compare-plot, fig.width=7, fig.height=4}
+cmp |>
+  filter(.metric == "accuracy") |>
+  ggplot(aes(reorder(model, .estimate), .estimate, fill = model)) +
+  geom_col(show.legend = FALSE) +
+  labs(title = "Held-out test accuracy (75/25 split)", x = NULL, y = "Accuracy")
+```
+
+**Leakage reminder:** rows from the same `Individual` can appear in both train and test with a random split — discuss in class; research workflows use `group_vfold_cv(group = Individual)`.
+
+```{r session, echo=FALSE}
+sessionInfo()
+```

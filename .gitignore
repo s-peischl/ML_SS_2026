@@ -6,3 +6,9 @@
 
 # Local revealjs / knitr sidecar output next to slide sources
 slides/*_files/
+exercises/solutions/*_cache/
+exercises/solutions/*_files/
+exercises/solutions/*.knit.md
+
+# Exported slide PDFs (scripts/export-slides-pdf.sh)
+slides/pdf/*.pdf

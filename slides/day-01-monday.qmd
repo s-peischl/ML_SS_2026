@@ -8,7 +8,7 @@ format:
     scrollable: true
     slide-level: 2
     html-math-method: katex
-    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a>'
+    footer: '<a href="../index.html" style="text-decoration:underline;">Teaching Hub</a> · <a href="../exercises/index.html" style="text-decoration:underline;">Lab exercises</a> · <a href="?print-pdf" style="text-decoration:underline;">Print PDF</a>'
     output-file: day-01-monday.html
     embed-resources: true
 ---
@@ -200,6 +200,10 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
 
 Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
 
+## Bridge: from tooling to modeling
+
+You now have the **R/tidyverse toolkit** for loading data and plotting.
+**Part B** switches to **classical linear models**: what we estimate, how we interpret coefficients, and when plain OLS struggles.
 
 # Part B  -  Classical linear models
 
@@ -213,7 +217,7 @@ Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Re
 ## Classical vs predictive wording 
 
 - **Classical question:** Given a regression model, what do we learn about the slope $\beta_j$, and how fragile is it? 
-- Answer is usually an estimate plus a confidence intervall.
+- Answer is usually an estimate plus a confidence interval.
 - **Prediction question:** If we freeze this fitted equation, how well does it score on **new** data points? 
 - Answer is usually a model and its performance on new unseen data.
 
@@ -396,7 +400,7 @@ s3d$plane3d(mod3, lty = "solid", lwd = 2, col = "firebrick3")
 
 
 
-## The meaning of regression coefficeints $\hat{\beta}_j$ 
+## The meaning of regression coefficients $\hat{\beta}_j$ 
 
 - Each slope is **"holding other predictors constant"**  -  interpretable only in that mathematical sense, not as a controlled experiment unless design matches  
 - **Correlated predictors** inflate standard errors and swap signs of coefficients easily  -  **regularization** (lasso, later today) is one way to handle such data   
@@ -481,15 +485,7 @@ knitr::kable(compare_tbl, digits = 6,
 ```
 
 - **Simple** fits: **x1**, **x2**, **x4** significant; **x3** borderline  
-- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline)  -  joint inference breaks down when columns overlap
-
-```{r}
-#| label: day01-hald-full-summary
-#| echo: false
-tidy(full_fit) |>
-  mutate(across(c(estimate, std.error, statistic, p.value), \(x) round(x, 4))) |>
-  knitr::kable(caption = "Four-predictor model (scaled predictors)")
-```
+- **All four together:** **no** predictor significant at $\alpha = 0.05$ (x1 borderline)  -  joint inference breaks down when columns overlap (see **full_estimate** / **full_p** in the table above)
 
 <!-- ## Two predictors  -  `y ~ x1 + x2` -->
 
@@ -566,7 +562,7 @@ Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.8
 <!-- **C**  -  both significant; **x1 positive**, **x4 negative** ($\hat\beta_1 \approx 8.5$, $\hat\beta_4 \approx -10.3$). -->
 
 ## Takeaway 
-- Multiple linear regression is not the same as multiple simple lineaer regressions
+- Multiple linear regression is not the same as multiple simple linear regressions
 
 - Signs and p-values can **flip** when you add or drop correlated columns 
 
@@ -574,6 +570,9 @@ Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.8
 
 - Later today: **lasso** and **AIC** help navigate this kind of data
 
+## Bridge: from toy regression to high-dimensional genes
+
+**Part C** keeps a **continuous trait** but adds many correlated predictors — the setting where **AIC stepwise** and **lasso** matter.
 
 # Part C  -  Gene Expression (continuous response variable) {#part-c-gene-trait}
 
@@ -583,7 +582,7 @@ Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.8
 - GeneC and GeneD are noise genes that are correlated with the trait but do not contribute causally. 
 - GeneJ is in strongly correlated to GeneA but not causally linked to the trait. 
 - Other genes act as irrelevant noise variables or have correlations among themselves.
-- triat = −0.5 ∗ GeneA + 0.8 ∗ GeneB + N(0,0.3)
+- trait = −0.5 ∗ GeneA + 0.8 ∗ GeneB + N(0,0.3)
 - more details: [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
 
 
@@ -594,7 +593,7 @@ Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.8
 
 ## Pairwise Plots
 
-Distribtuion of explanatory variables (gene expression levels) and response variable (quantitative trait)
+Distribution of explanatory variables (gene expression levels) and response variable (quantitative trait)
 
 ![](../assets/figures/01_trait_corr.png){#fig-my-image width=60% fig-align="center"}
 
@@ -922,6 +921,11 @@ ggplot(eff_plot, aes(x = estimate, y = term, color = model)) +
 ```
 
 
+## Bridge: from AIC to lasso
+
+**AIC** searches over discrete subsets of predictors.
+**Lasso** keeps one smooth penalty knob ($\lambda$) and often sets many coefficients to exactly zero.
+
 ## Lasso as an alternative to discrete search {#lasso-regression}
 
 - **Idea:** penalize large coefficients: lasso adds $\lambda \sum_j |\beta_j|$ penalty to OLS  
@@ -1110,29 +1114,17 @@ We can predict binary outcomes using logistic regression
 - Model **log-odds** as linear in predictors: $\log\!\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 x_1 + \cdots$  
 - Gives probabilities in $(0, 1)$
 - Classify with a **threshold** probability (often 0.5)  
-- Same modeling workflow as in qualtiative trait notebook: **null → full → AIC → lasso** on all samples  
+- Same modeling workflow as in the qualitative-trait notebook: **null → full → AIC → lasso** on all samples  
 
-Same workflow as before, see notebooks:
+Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 
-[logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)  
-[Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)
+## Full logistic model: what it misses
 
-## Logistic regression 
+- Cannot capture the **Gene1 × Gene3** interaction (misses Gene1's role)
+- Picks some signal genes but also a noise gene (Gene8)
 
-- Cannot handle the interaction between Gene 1 and Gene 3 (misses Gene 1)
-
-- Finds 2 causal genes (Gene 3 and 4), but also a "noise Gene" (Gene 8)
-
-![](../assets/figures/01_log_disease.png){#fig-my-image width=60% fig-align="center"}
-
-
-## Logistic regression 
-
-- Cannot handle the interaction between Gene 1 and Gene 3 (misses Gene 1)
-
-- Finds 2 causal genes (Gene 3 and 4), but also a "noise Gene" (Gene 8)
-
-![](../assets/figures/01_log_disease_2.png){#fig-my-image width=60% fig-align="center"}
+![](../assets/figures/01_log_disease.png){width=48% fig-align="center"}
+![](../assets/figures/01_log_disease_2.png){width=48% fig-align="center"}
 
 ## Null model (intercept only)
 

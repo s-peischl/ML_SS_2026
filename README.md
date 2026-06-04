@@ -27,6 +27,35 @@ quarto render
 
 Output is `_site/`. We **do not** set `site-url` in `_quarto.yml` so internal links stay **relative** (works for local preview and GitHub Pages under `/ML_SS_2026/`).
 
+## Printable slides (PDF)
+
+Reveal.js decks support **print layout** (one slide per page). No separate LaTeX build is required.
+
+### In the browser (recommended)
+
+1. Render or preview: `quarto preview` (or open `_site/slides/day-01-monday.html` via a local server).
+2. Open a deck in **print mode**, e.g.  
+   `slides/day-01-monday.html?print-pdf`  
+   (or click **Print PDF** in the slide footer).
+3. **Ctrl/Cmd+P** → **Save as PDF**  
+   - Layout: **Landscape**  
+   - Margins: **None**  
+   - **Background graphics**: enabled  
+
+Works best in **Chrome** or **Chromium**.
+
+### Command line (optional)
+
+```bash
+chmod +x scripts/export-slides-pdf.sh
+./scripts/export-slides-pdf.sh          # all day decks
+./scripts/export-slides-pdf.sh day-02-tuesday
+```
+
+Without [decktape](https://github.com/astefanutti/decktape) (`npm install -g decktape`), the script prints the browser URLs above. With decktape, PDFs are written to `slides/pdf/`.
+
+Print options for all decks live in `slides/_metadata.yml` (`pdf-max-pages-per-slide`, slide numbers in print view).
+
 ## GitHub Actions
 
 - Workflow: `.github/workflows/publish.yml`

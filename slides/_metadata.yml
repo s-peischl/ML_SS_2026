@@ -1,0 +1,6 @@
+# Applied when rendering slides/*.qmd (see scripts/render-slides.sh)
+format:
+  revealjs:
+    # Print / Save as PDF (Chrome: open deck with ?print-pdf, then Ctrl/Cmd+P)
+    show-slide-number: print
+    pdf-max-pages-per-slide: 2

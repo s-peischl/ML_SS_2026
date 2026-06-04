@@ -1,0 +1,145 @@
+---
+title: "Palmer Penguins — canonical pipeline (three models, three metrics)"
+author: "ML Summer School"
+format:
+  html:
+    toc: true
+    code-tools: true
+engine: knitr
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+suppressPackageStartupMessages({
+  library(tidymodels)
+  library(palmerpenguins)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(purrr)
+})
+```
+
+# Overview
+
+Minimal **canonical `tidymodels` pipeline** on Palmer Penguins (**Adelie vs Gentoo**):
+
+1. **Recipe** → preprocess inside resampling  
+2. **Three model specs** → same folds, fair comparison  
+3. **`fit_resamples()`** → **accuracy**, **kappa**, **ROC AUC**  
+4. **One summary figure** (mean ± SE across folds)
+
+Companion: [Module 04 — canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [Module 07](../modules/module-07-penguins-choose-metrics.qmd), [Module 08](../modules/module-08-penguins-compare-models.qmd).
+
+## Data, recipe, and folds
+
+```{r}
+peng <- penguins |>
+  filter(species %in% c("Adelie", "Gentoo")) |>
+  mutate(
+    y = factor(species, levels = c("Adelie", "Gentoo")),
+    year = as.numeric(year)
+  ) |>
+  select(-species, -flipper_length_mm, -body_mass_g) |>
+  drop_na()
+
+rec <- recipe(y ~ ., data = peng) |>
+  step_zv(all_predictors()) |>
+  step_dummy(all_nominal_predictors()) |>
+  step_normalize(all_numeric_predictors())
+
+folds <- vfold_cv(peng, v = 5, strata = y)
+metrics <- metric_set(accuracy, kap, roc_auc)
+```
+
+## Three models (fixed settings)
+
+```{r}
+tree_spec <- decision_tree(tree_depth = 4, min_n = 10) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+
+glm_spec <- logistic_reg() |>
+  set_engine("glm") |>
+  set_mode("classification")
+
+rf_spec <- rand_forest(mtry = 4, trees = 300, min_n = 2) |>
+  set_engine("ranger") |>
+  set_mode("classification")
+
+workflows <- list(
+  decision_tree = workflow() |> add_recipe(rec) |> add_model(tree_spec),
+  logistic_glm = workflow() |> add_recipe(rec) |> add_model(glm_spec),
+  random_forest = workflow() |> add_recipe(rec) |> add_model(rf_spec)
+)
+```
+
+## Cross-validation (`fit_resamples`)
+
+```{r}
+set.seed(7)
+cv_results <- workflows |>
+  imap(\(wf, name) fit_resamples(wf, folds, metrics = metrics)) |>
+  set_names(names(workflows))
+```
+
+## Metrics table
+
+```{r}
+cmp <- imap_dfr(
+  cv_results,
+  \(rs, name) collect_metrics(rs) |> mutate(model = name)
+)
+
+cmp |>
+  select(model, .metric, mean, std_err) |>
+  mutate(
+    mean = round(mean, 3),
+    std_err = round(std_err, 3)
+  ) |>
+  arrange(.metric, desc(mean)) |>
+  knitr::kable(col.names = c("Model", "Metric", "Mean", "Std err"))
+```
+
+## Performance summary (final figure)
+
+Same recipe and folds for every model — differences reflect **model family** only.
+
+```{r fig.width=9, fig.height=4.5}
+plot_df <- cmp |>
+  mutate(
+    model = recode(
+      model,
+      decision_tree = "Decision tree",
+      logistic_glm = "Logistic regression",
+      random_forest = "Random forest"
+    ),
+    metric = recode(
+      .metric,
+      accuracy = "Accuracy",
+      kap = "Kappa",
+      roc_auc = "ROC AUC"
+    )
+  )
+
+ggplot(plot_df, aes(model, mean, fill = model)) +
+  geom_col(show.legend = FALSE, width = 0.72) +
+  geom_errorbar(
+    aes(ymin = mean - std_err, ymax = mean + std_err),
+    width = 0.18,
+    linewidth = 0.5
+  ) +
+  facet_wrap(~metric, scales = "free_y", ncol = 3) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Model comparison (5-fold CV, same recipe)",
+    subtitle = "Bars = mean across folds; error bars = standard error",
+    x = NULL,
+    y = "Score (higher is better)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(strip.text = element_text(face = "bold"))
+```
+
+**Takeaway:** pick the **metric** that matches your goal (e.g. ROC AUC for ranking, kappa when classes are imbalanced), then compare models on that score — small gaps within the error bars are often noise on this \(n\).

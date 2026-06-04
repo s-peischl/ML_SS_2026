@@ -36,3 +36,9 @@
   margin-top: 2.2em;
   color: #163d73;
 }
+
+/* Print / PDF export (?print-pdf) — slightly smaller code so blocks fit one page */
+.reveal.print-pdf pre code {
+  font-size: 0.68em;
+  line-height: 1.22;
+}

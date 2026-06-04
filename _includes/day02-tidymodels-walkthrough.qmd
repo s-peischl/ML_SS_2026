@@ -46,6 +46,7 @@ flowchart LR
 ```
 
 - **Recipe steps run inside each CV fold** — never scale or encode on the full table before splitting (avoids leakage).
+- **`recipe` / `spec` / `workflow` are blueprints**; only **`fit()`**, **`fit_resamples()`**, and **`tune_grid()`** touch rows.
 - **Today’s score:** **accuracy** only; Thursday adds metrics for imbalanced data.
 
 ## Five steps — what each one does
@@ -313,6 +314,8 @@ Search **`tree_depth`** and **`min_n`** on held-out folds, then finalize.
 - Use **`fit()`** when hyperparameters are already chosen.
 - Use **`fit_resamples()`** to estimate CV performance for one fixed workflow.
 - Use **`tune_grid()`** when you need to search over multiple hyperparameter values.
+
+**In this walkthrough:** `fit_demo` (plot), `rs_tree` (CV, fixed params), `tune_res` (CV + search).
 
 ## Step 5 — Search hyperparameters on folds
 

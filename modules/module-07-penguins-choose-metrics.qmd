@@ -5,7 +5,7 @@ title: "Module 07: Pick the score you care about (accuracy, kappa, ROC AUC)"
 ::: {.callout-important}
 ## Extension lab — not the Tuesday lecture default
 
-**Day 2 slides** tune the classification tree on **cross-validated accuracy** only ([Part C](../slides/day-02-tuesday.html#/part-c-pipeline)). Use **this module** for the **afternoon lab** and **Day 4** when you compare `select_best(metric = "accuracy")` vs `"roc_auc"` vs `"kappa"` on imbalanced or multi-metric problems ([Part E](../slides/day-04-thursday.html#/part-e-metrics), [lab Block E](../exercises/mlss2026-lab-exercises.qmd)).
+**Day 2 slides** tune the classification tree on **cross-validated accuracy** only ([Part C](../slides/day-02-tuesday.html#/part-c-pipeline)). Use **this module** for the **afternoon lab** and **Day 4** when you compare `select_best(metric = "accuracy")` vs `"roc_auc"` vs `"kappa"` on imbalanced or multi-metric problems ([Part E](../slides/day-04-thursday.html#/part-e-metrics), [Day 4 lab](../exercises/index.qmd)).
 :::
 
 ## Learning objectives

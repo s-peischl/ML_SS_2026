@@ -5,7 +5,7 @@ format:
     toc: true
 ---
 
-Each dataset used in the course has a **data card**: the same six sections students draft in the [lab handbook](../exercises/mlss2026-lab-exercises.qmd#data-card-start-day-1-revise-all-week) (source, outcome, predictors, sample size, leakage risks, subgroups). Use these pages as instructor references or starting points for your own one-pager.
+Each dataset used in the course has a **data card**: the same six sections students draft in the [microbiome data card](cards/microbiome-mouse-16s.qmd) (source, outcome, predictors, sample size, leakage risks, subgroups). Use these pages as instructor references or starting points for your own one-pager.
 
 ::: {.callout-note appearance="simple"}
 ## Adding a dataset later
