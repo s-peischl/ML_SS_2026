@@ -1,8 +1,8 @@
 # Figure credits (external media)
 
-## 01_residuals.png
+## 01_Residuals.png
 
-- **File:** `01_residuals.png`
+- **File:** `01_Residuals.png`
 - **Source:** Generated for this teaching hub (R script in repo maintenance)
 - **Use:** OLS residual illustration on Day 1 slides
 

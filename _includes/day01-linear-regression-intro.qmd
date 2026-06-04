@@ -76,7 +76,7 @@ mod_toy <- lm(y.obs ~ x.obs, data = df.obs)
 
 Fitting is done by minimizing sum of squared residuals (oridnary least squares, OLS).
 
-![](../assets/figures/01_residuals.png){#fig-my-image width=80% fig-align="center"}
+![](../assets/figures/01_Residuals.png){#fig-my-image width=80% fig-align="center"}
 
 ## Q–Q plot of residuals
 
