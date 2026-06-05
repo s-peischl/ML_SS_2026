@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Explore with PCA** — `prcomp` on scaled log1p OTUs; plot PC1 vs PC2 coloured by `Label`.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Load and prepare the data** — merge metadata and OTU table on `sample_id`; transpose to samples × OTUs; prevalence filter; inspect `Label`, `Sex`, and `Individual`.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

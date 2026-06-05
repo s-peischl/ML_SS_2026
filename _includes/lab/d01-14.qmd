@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Logistic regression on PCs — Early vs Late** — `glm(Label ~ PC1 + …, family = binomial)` on a few principal components (not raw OTUs).
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

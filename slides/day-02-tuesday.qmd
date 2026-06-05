@@ -1266,11 +1266,9 @@ dplyr::glimpse(bake_train)
 - **`bake_train`**: model-ready columns the tree sees during **`fit()`**.
 - **`bake_test`**: same encoding using **training** statistics  -  that is what prevents leakage.
 
-::: {.callout-note}
-## Afternoon lab (microbiome)
+## Afternoon lab — Task 2.1
 
-Same pattern on OTU counts  -  add **`step_mutate(..., log1p(.x))`** on skewed abundances before `step_zv`. Tasks: [Lab exercises](../exercises/index.qmd).
-:::
+{{< include ../_includes/lab/d02-21.qmd >}}
 
 # Step 2  -  Model blueprint (`spec`)
 
@@ -1298,6 +1296,10 @@ tree_spec_demo
 - **`tree_depth`**, **`min_n`**  -  depth limit and minimum leaf size.
 - **`set_engine("rpart")`**  -  same engine as the gene trees this morning.
 - **`set_mode("classification")`**  -  factor outcome **`y`**.
+
+## Afternoon lab — Task 2.2
+
+{{< include ../_includes/lab/d02-22.qmd >}}
 
 ## Tuning knobs (`tune()`)
 
@@ -1392,6 +1394,10 @@ fit_demo <- fit(wf_demo, data = peng_bal)
 print(plot_prob_boundary(fit_demo, peng_bal, title = "Fitted tree  -  P(Gentoo)"))
 ```
 
+## Afternoon lab — Task 2.3
+
+{{< include ../_includes/lab/d02-23.qmd >}}
+
 ## Logistic boundary on penguins (same bill plane)
 
 A **smooth** linear boundary from **`logistic_reg()`**  -  contrast with the **rectangular** tree regions above.
@@ -1417,6 +1423,10 @@ print(
 )
 ```
 
+## Afternoon lab — Task 2.4
+
+{{< include ../_includes/lab/d02-24.qmd >}}
+
 # Step 4  -  Metrics 
 
 Decide **how** to score predictions **before** you tune.
@@ -1435,6 +1445,10 @@ Decide **how** to score predictions **before** you tune.
 #| message: false
 metrics_day2
 ```
+
+## Afternoon lab — Task 2.5
+
+{{< include ../_includes/lab/d02-25.qmd >}}
 
 # Step 5  -  Cross-validation and tuning
 

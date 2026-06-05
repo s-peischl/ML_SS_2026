@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Lasso — Early vs Late** — `glmnet` (binomial) on **all** log1p OTUs; compare sparse OTUs to the AIC model (**no PCA needed** for lasso).
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Wrap up honestly** — metrics comparison figure + **one sentence you would not claim** from VIP/SHAP on this dataset.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)

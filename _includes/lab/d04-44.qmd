@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**SHAP values** — kernel SHAP on a **top-10 VIP** forest only; beeswarm for a dozen microbiome samples.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)

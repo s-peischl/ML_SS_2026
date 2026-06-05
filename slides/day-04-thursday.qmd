@@ -501,6 +501,10 @@ print(
 )
 ```
 
+## Afternoon lab — Task 4.1
+
+{{< include ../_includes/lab/d04-41.qmd >}}
+
 ## Bagging: random forests
 
 - **Many trees** on **bootstrap** samples of rows; each split sees only a **random subset** of predictors → lower variance than one deep tree.
@@ -586,6 +590,10 @@ cmp_ens |>
     y = "Mean accuracy"
   )
 ```
+
+## Afternoon lab — Task 4.2
+
+{{< include ../_includes/lab/d04-42.qmd >}}
 
 Fixed settings here for speed  -  in projects, wrap each spec in **`tune_grid()`** like [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).
 
@@ -1370,6 +1378,10 @@ rf_fit |>
   )
 ```
 
+## Afternoon lab — Task 4.3
+
+{{< include ../_includes/lab/d04-43.qmd >}}
+
 ## Permutation importance (pointer)
 
 - **Permutation importance**: shuffle one column, watch metric drop  -  model-agnostic; see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
@@ -1377,6 +1389,10 @@ rf_fit |>
 {{< include ../_includes/day04-shap-sex.qmd >}}
 
 # Part G  -  Wrap-up
+
+## Afternoon lab — Task 4.5
+
+{{< include ../_includes/lab/d04-45.qmd >}}
 
 ## Nested resampling (when tuning gets serious)
 

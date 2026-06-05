@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Model shoot-out** — fit **RF**, **XGBoost**, **MLP** with `group_vfold_cv(Individual)`; compare ROC AUC (or accuracy).
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)

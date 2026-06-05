@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Add logistic regression** — second workflow with the **same recipe** and `logistic_reg` + `glm` engine; same train/test split.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)

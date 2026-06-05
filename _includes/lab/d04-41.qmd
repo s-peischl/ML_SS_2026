@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Shared recipe** — Day 2-style recipe on microbiome; metadata in **id** role; ready to swap the `spec`.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)

@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Choose the tree model** — `decision_tree()` + `set_engine("rpart")`, classification mode.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)

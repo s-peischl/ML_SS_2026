@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Build the recipe** — log1p on OTUs, `step_zv`, `step_normalize` on the microbiome table (`Label` = Early vs Late).
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)

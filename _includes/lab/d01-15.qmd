@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Stepwise AIC — Early vs Late** — `MASS::stepAIC` on the PC logistic model; compare to the full PC formula.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

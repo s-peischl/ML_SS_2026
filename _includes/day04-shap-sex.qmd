@@ -52,7 +52,17 @@ wf_sex <- workflow() |>
 fit_sex <- fit(wf_sex, pg_sex)
 ```
 
-## Apply the recipe with `bake()` (model-ready columns)
+## `bake()` — why not raw penguins?
+
+The forest was **not** trained on the original table. Inside `fit()`, the **recipe** ran first: drop empty columns, dummy-code `island`, z-score bill measurements, and so on. SHAP must perturb **those** columns — the ones `ranger` actually split on.
+
+## `bake()` — three steps (words)
+
+- **Extract recipe** — `extract_recipe(fit_sex, estimated = TRUE)` pulls out the recipe **with all learned numbers** (means, SDs, dummy levels) stored at fit time.
+- **`prep()`** — finalises the preprocessing plan on `pg_sex`; does **not** refit the forest (same idea as Tuesday).
+- **`bake()`** — applies that plan: raw rows in → **`X_model`** out (numeric predictors only, same encoding as training).
+
+## `bake()` — code
 
 ```{r}
 #| label: day04-shap-sex-bake
@@ -64,10 +74,15 @@ X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
 head(X_model, 3)
 ```
 
-- **`prep()`** learned scaling and dummy columns when we **`fit()`** the workflow.
-- **`bake()`** produces the **same encoded matrix** the forest was trained on  -  required before **SHAP** (same idea as Tuesday's `prep` / `bake` demo).
+## `bake()` — why SHAP cares
 
-## KernelSHAP on the `ranger` object
+`kernelshap()` calls the model many times with **partial rows** of numbers. If you pass raw `bill_length_mm` while the forest expects scaled bills plus `island_Torgersen`, predictions — and SHAP — are **wrong**. **`X_model`** is the spreadsheet the trees were trained on.
+
+## KernelSHAP — the problem
+
+SHAP needs: “given these feature values, what is **P(male)**?” The forest sits inside a **workflow**; we extract the bare **`ranger`** object and define prediction ourselves.
+
+## KernelSHAP — code
 
 ```{r}
 #| label: day04-shap-sex-shapviz
@@ -87,8 +102,26 @@ ks <- kernelshap(rf_engine, X = X_shap, pred_fun = pred_fun, bg_X = bg_X)
 shp_sex <- shapviz(ks, X_pred = X_shap)
 ```
 
-- **`kernelshap()`** needs numeric predictors only  -  that is why we **`bake()`** first.
-- **`shapviz()`** wraps results for **beeswarm** and **waterfall** plots.
+## KernelSHAP — `rf_engine` and `pred_fun`
+
+- **`rf_engine`** — unwrap the **`ranger`** fit from tidymodels; SHAP talks to **this** object.
+- **`pred_fun`** — bridge from baked matrix → **P(male)**; SHAP does not know about recipes or factor levels.
+
+## KernelSHAP — `X_shap` and `bg_X`
+
+- **`X_shap`** — ~80 random rows of `X_model` to **explain** (SHAP is expensive).
+- **`bg_X`** — ~35 background rows: when a feature is left out of a coalition, values are drawn from here (“typical” birds, not zeros).
+
+## KernelSHAP — `kernelshap()` and `shapviz()`
+
+- **`kernelshap(...)`** — approximate Shapley values for each row in **`X_shap`**, vs baseline **`bg_X`**.
+- **`shapviz(...)`** — format for beeswarm / waterfall plots; **`X_pred`** supplies feature values for colour.
+
+**Memory hook:** `bake()` → spreadsheet the forest saw; **`X_shap`** → birds we explain; **`bg_X`** → reference flock; **`pred_fun`** → score that spreadsheet.
+
+## Afternoon lab — Task 4.4
+
+{{< include ../_includes/lab/d04-44.qmd >}}
 
 ## SHAP beeswarm  -  global pattern
 

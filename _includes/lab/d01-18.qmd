@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Compare approaches** — summary table: method × outcome × # predictors × in-sample accuracy; one sentence on PCA+glm vs lasso.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

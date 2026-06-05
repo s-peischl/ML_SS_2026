@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Repeat for Sex** — run tasks **1.4–1.6** with outcome **`Sex`** (`F` vs `M`).
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

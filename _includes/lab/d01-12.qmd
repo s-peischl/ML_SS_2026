@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Transform counts** — apply **log1p** to the OTU matrix; optionally plot library size by `Label`.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)

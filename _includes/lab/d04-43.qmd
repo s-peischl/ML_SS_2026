@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Variable importance (VIP)** — VIP on a fitted tree-based model (e.g. random forest); top OTUs, not causal claims.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)

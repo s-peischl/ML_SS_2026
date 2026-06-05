@@ -205,6 +205,10 @@ Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Re
 You now have the **R/tidyverse toolkit** for loading data and plotting.
 **Part B** switches to **classical linear models**: what we estimate, how we interpret coefficients, and when plain OLS struggles.
 
+## Afternoon lab — Task 1.1
+
+{{< include ../_includes/lab/d01-11.qmd >}}
+
 # Part B  -  Classical linear models
 
 ## Classical statistics 
@@ -1015,8 +1019,9 @@ knitr::kable(
 )
 ```
 
+## Afternoon lab — Task 1.2
 
-
+{{< include ../_includes/lab/d01-12.qmd >}}
 
 # Part D  -  Gene × disease (binary) {#part-d-gene-disease}
 
@@ -1118,6 +1123,10 @@ We can predict binary outcomes using logistic regression
 
 Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
 
+## Afternoon lab — Task 1.3
+
+{{< include ../_includes/lab/d01-13.qmd >}}
+
 ## Full logistic model: what it misses
 
 - Cannot capture the **Gene1 × Gene3** interaction (misses Gene1's role)
@@ -1173,6 +1182,10 @@ print(plot_glm_logistic_boundary(
   title = "Logistic regression  -  linear boundary (Gene1 × Gene3)"
 ))
 ```
+
+## Afternoon lab — Task 1.4
+
+{{< include ../_includes/lab/d01-14.qmd >}}
 
 ## Null vs full: in-sample misclassification
 
@@ -1248,6 +1261,9 @@ cat("**Backward AIC formula:** `", fmt_f(formula(backward_glm)), "`\n\n", sep = 
 cat("**Forward AIC formula:** `", fmt_f(formula(forward_glm)), "`\n\n", sep = "")
 ```
 
+## Afternoon lab — Task 1.5
+
+{{< include ../_includes/lab/d01-15.qmd >}}
 
 ## Lasso for classification
 
@@ -1280,6 +1296,10 @@ lasso_log_fit <- glmnet(
 #| fig-width: 6.5
 plot(cv_lasso_log)
 ```
+
+## Afternoon lab — Task 1.6
+
+{{< include ../_includes/lab/d01-16.qmd >}}
 
 ## Summary: all approaches (in-sample, same data)
 
@@ -1338,6 +1358,9 @@ knitr::kable(
 )
 ```
 
+## Afternoon lab — Task 1.7
+
+{{< include ../_includes/lab/d01-17.qmd >}}
 
 ## Elastic net (bridge between ridge and lasso) {#elastic-net}
 
@@ -1345,6 +1368,10 @@ knitr::kable(
 - Useful when you want **some** grouping/shrinkage of correlated predictors (ridge-like) but still allow **some** exact zeros (lasso-like).  
 
 # Part E  -  Wrap-up
+
+## Afternoon lab — Task 1.8
+
+{{< include ../_includes/lab/d01-18.qmd >}}
 
 ## Student notebooks (Day 1 focus)
 Have a look at notebooks. Open one and try to render in RStudio.

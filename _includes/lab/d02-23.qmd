@@ -1,0 +1,5 @@
+::: {.callout-tip}
+**Workflow and train/test tree** — `workflow()`, `initial_split`, fit tree, predict the **held-out test** set.
+:::
+
+[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)
