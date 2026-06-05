@@ -14,6 +14,29 @@
 
 .reveal .slides section {
   text-align: left;
+  /* Room for list markers (ordered-list numbers were clipped on the left) */
+  padding-left: 0.65em;
+  padding-right: 0.35em;
+  box-sizing: border-box;
+}
+
+.reveal .slides section ol,
+.reveal .slides section ul {
+  margin-left: 1.35em;
+  padding-left: 0.45em;
+}
+
+.reveal .slides section ol {
+  list-style-position: outside;
+}
+
+.reveal .slides section li {
+  margin-bottom: 0.28em;
+}
+
+.reveal .slides section li > ol,
+.reveal .slides section li > ul {
+  margin-top: 0.2em;
 }
 
 .reveal pre code {
@@ -29,6 +52,8 @@
 .reveal section:has(> h1:only-child),
 .reveal section:has(> h1:first-child:last-child) {
   text-align: center;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .reveal section h1 {
