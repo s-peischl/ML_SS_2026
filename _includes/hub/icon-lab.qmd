@@ -1,0 +1,1 @@
+<span class="hub-inline-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 2v6.5L3.5 18A2.5 2.5 0 0 0 5.6 22h12.8a2.5 2.5 0 0 0 2.1-4L15 8.5V2H9zm2 2h2v5.8l4.8 8.2H6.2L11 9.8V4z"/></svg></span>

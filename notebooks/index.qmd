@@ -5,43 +5,43 @@ title: "Student notebooks"
 Run these documents in **RStudio** or **Positron** (or render with Quarto). The site uses **two parallel tracks**: **simulated genes** (we designed the data so we know the truth) and **Palmer Penguins** (one real dataset all week). See the **[data catalog](../data/index.qmd)** and **[Palmer Penguins data card](../data/cards/palmer-penguins.qmd)** for context.
 
 ::: {.callout-note appearance="simple"}
-## Notebooks vs modules
+## <img src="../assets/hub-icons/code.svg" class="hub-inline-icon" alt="" aria-hidden="true" /> Notebooks and the reading companion
 
-- **These `.Rmd` files** are **long labs** (**Lab_exploration**; homework when your instructor assigns them): lots of chunks, plots, and “change this and re-run.”
-- **Modules** ([`modules/`](../modules/index.qmd)) are shorter **website** pages: **concepts** (01–03, 05–06) plus **canonical `tidymodels` code** on penguins (**04** — train/test + Day 2 include — and **07–08**). Day 2 (Tuesday) slides share the **same include** as [Module 04](../modules/module-04-pipeline.qmd).
+- **These `.Rmd` files** are long labs: lots of chunks, plots, and “change this and re-run.”
+- The **[reading companion](../modules/index.qmd)** gives prose-first chapter explanations; Chapters 4, 7, and 8 include the canonical `tidymodels` pipeline path.
 
 **Notebook inventory**
 
-| Notebook | Primary role | Companion module(s) | Download |
-|----------|----------------|----------------------|----------|
-| [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) (concepts) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/linear-regression-lasso.Rmd) |
-| [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd), [Module 03](../modules/module-03-trees-and-cultures.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/logistic-regression-gene-disease.Rmd) |
-| [penguins-body-mass.Rmd](penguins-body-mass.Rmd) | Lab_exploration | [Module 02](../modules/module-02-regularization.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-body-mass.Rmd) |
-| [penguins-canonical-pipeline.Rmd](penguins-canonical-pipeline.Rmd) | Minimal lab | [04 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [07](../modules/module-07-penguins-choose-metrics.qmd), [08](../modules/module-08-penguins-compare-models.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-canonical-pipeline.Rmd) |
-| [penguins-classification.Rmd](penguins-classification.Rmd) | Lab_exploration | [Module 03](../modules/module-03-trees-and-cultures.qmd); **`tidymodels`** path: [04 train/test](../modules/module-04-pipeline.qmd#train-test-last-fit), [04 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [07](../modules/module-07-penguins-choose-metrics.qmd), [08](../modules/module-08-penguins-compare-models.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-classification.Rmd) |
-| [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) | Lab_exploration | [Module 01](../modules/module-01-foundations.qmd) (splits / leakage ideas) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-sex-classification.Rmd) |
-| [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) | Lab_exploration | [Module 06](../modules/module-06-evaluation-and-interpretability.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-species-multiclass.Rmd) |
-| [penguins-multiclass-upsampling.Rmd](penguins-multiclass-upsampling.Rmd) | Minimal lab | [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-multiclass-upsampling.Rmd) |
-| [penguins-shap.Rmd](penguins-shap.Rmd) | Lab_exploration | [Module 06 SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-shap.Rmd) |
-| [penguins-pca.Rmd](penguins-pca.Rmd) | Lab_exploration | [Day 4 PCA block](../slides/day-04-thursday.html#/part-c-recipes) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-pca.Rmd) |
+| Notebook | Companion chapter(s) | Download |
+|----------|----------------------|----------|
+| [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) | [Chapter 2](../modules/module-02-regularization.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/linear-regression-lasso.Rmd) |
+| [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) | [Chapter 1](../modules/module-01-foundations.qmd), [Chapter 3](../modules/module-03-trees-and-cultures.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/logistic-regression-gene-disease.Rmd) |
+| [penguins-body-mass.Rmd](penguins-body-mass.Rmd) | [Chapter 2](../modules/module-02-regularization.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-body-mass.Rmd) |
+| [penguins-canonical-pipeline.Rmd](penguins-canonical-pipeline.Rmd) | [Chapter 4 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [Chapter 7](../modules/module-07-penguins-choose-metrics.qmd), [Chapter 8](../modules/module-08-penguins-compare-models.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-canonical-pipeline.Rmd) |
+| [penguins-classification.Rmd](penguins-classification.Rmd) | [Chapter 3](../modules/module-03-trees-and-cultures.qmd); `tidymodels` path: [Chapter 4 train/test](../modules/module-04-pipeline.qmd#train-test-last-fit), [Chapter 4 pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday), [Chapter 7](../modules/module-07-penguins-choose-metrics.qmd), [Chapter 8](../modules/module-08-penguins-compare-models.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-classification.Rmd) |
+| [penguins-sex-classification.Rmd](penguins-sex-classification.Rmd) | [Chapter 1](../modules/module-01-foundations.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-sex-classification.Rmd) |
+| [penguins-species-multiclass.Rmd](penguins-species-multiclass.Rmd) | [Chapter 6](../modules/module-06-evaluation-and-interpretability.qmd) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-species-multiclass.Rmd) |
+| [penguins-multiclass-upsampling.Rmd](penguins-multiclass-upsampling.Rmd) | [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-multiclass-upsampling.Rmd) |
+| [penguins-shap.Rmd](penguins-shap.Rmd) | [Chapter 6 SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-shap.Rmd) |
+| [penguins-pca.Rmd](penguins-pca.Rmd) | [Day 4 PCA block](../slides/day-04-thursday.html#/part-c-recipes) | [Download](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/notebooks/penguins-pca.Rmd) |
 :::
 
 ::: {.hub-muted}
 Tip: use **Render** in the IDE, or from the project root run `quarto render notebooks/your-file.Rmd`.
 :::
 
-## Synthetic genes (we know the answers) {#synthetic-genes}
+## <img src="../assets/hub-icons/dna.svg" class="hub-inline-icon" alt="" aria-hidden="true" /> Synthetic genes (we know the answers) {#synthetic-genes}
 
 Ideal for **LASSO, ridge, AIC**, and logistic regression when we **know** which simulated features should matter.
 
 - [linear-regression-lasso.Rmd](linear-regression-lasso.Rmd) — gene–trait simulation, plots, **penalized regression** (`glmnet` package), forward/backward model choice by AIC (`MASS::stepAIC` in the code).
 - [logistic-regression-gene-disease.Rmd](logistic-regression-gene-disease.Rmd) — simulated gene expression and disease status, `glm` logistic regression, `rpart` tree, confusion table, decision-boundary plot.
 
-## Palmer Penguins (continuity) {#palmer-penguins-continuity}
+## <img src="../assets/hub-icons/penguin.svg" class="hub-inline-icon" alt="" aria-hidden="true" /> Palmer Penguins (continuity) {#palmer-penguins-continuity}
 
 Same real table as on the **[Palmer Penguins data card](../data/cards/palmer-penguins.qmd)**. **Models:** **`lm` / `glm` / `rpart` / `glmnet`**. **Splits, scaling, and metrics:** **`tidymodels`** (`rsample`, `recipes`, `yardstick`).
 
-For the **Day 2 (Tuesday) `tidymodels` pipeline** (recipe + workflow + cross-validation / tuning on the same Adelie vs Gentoo task), use **[Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit)** (starts with **train/test + `glm`**) and **[Module 04 — canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared tuned-tree walk-through with Day 2 slides), then **[Module 07](../modules/module-07-penguins-choose-metrics.qmd)** (accuracy vs kappa vs AUC while tuning) and **[Module 08](../modules/module-08-penguins-compare-models.qmd)** (RF vs XGBoost vs small neural net).
+For the **Day 2 (Tuesday) `tidymodels` pipeline** (recipe + workflow + cross-validation / tuning on the same Adelie vs Gentoo task), use **[Chapter 4](../modules/module-04-pipeline.qmd#train-test-last-fit)** (starts with **train/test + `glm`**) and **[Chapter 4 — canonical pipeline](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared tuned-tree walk-through with Day 2 slides), then **[Chapter 7](../modules/module-07-penguins-choose-metrics.qmd)** (accuracy vs kappa vs AUC while tuning) and **[Chapter 8](../modules/module-08-penguins-compare-models.qmd)** (RF vs XGBoost vs small neural net).
 
 - [penguins-body-mass.Rmd](penguins-body-mass.Rmd) — plots and correlations, then ridge/LASSO to predict **body mass** (code uses `glmnet` like the gene notebook).  
 - [penguins-canonical-pipeline.Rmd](penguins-canonical-pipeline.Rmd) — **minimal `tidymodels` pipeline**: one recipe, three models (tree / logistic / random forest), three CV metrics, one comparison figure.  

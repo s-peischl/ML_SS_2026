@@ -1,26 +1,20 @@
 ---
-title: "Module 07: Pick the score you care about (accuracy, kappa, ROC AUC)"
+title: "Chapter 7: Choosing what to optimize (accuracy, kappa, ROC AUC)"
 ---
 
 ::: {.callout-important}
-## Extension lab — not the Tuesday lecture default
+## Extension chapter — not the Tuesday lecture default
 
 **Day 2 slides** tune the classification tree on **cross-validated accuracy** only ([Part C](../slides/day-02-tuesday.html#/part-c-pipeline)). Use **this module** for the **afternoon lab** and **Day 4** when you compare `select_best(metric = "accuracy")` vs `"roc_auc"` vs `"kappa"` on imbalanced or multi-metric problems ([Part E](../slides/day-04-thursday.html#/part-e-metrics), [Day 4 lab](../exercises/index.qmd)).
 :::
 
-## Learning objectives
-
-- Run **one** tuning exercise while asking R to track **several** metrics at once (`accuracy`, Cohen’s **`kappa`**, **`roc_auc`**).
-- Use **`select_best()`** with different `metric =` arguments and see that the **best hyperparameters** need not agree across scores.
-- Say in one sentence when **accuracy** misleads, why **kappa** adjusts for “getting lucky” on skewed labels, and what **ROC AUC** measures.
-
-## Before you start
+This chapter asks a practical question: if you keep data, folds, and model family fixed, what changes when you optimize for a different metric?
 
 Build on [Module 04](module-04-pipeline.qmd#train-test-last-fit) (train/test + `glm`) and [Module 04 — canonical pipeline](module-04-pipeline.qmd#canonical-pipeline-tuesday) (recipe + tree + `tune_grid` from the shared include). Here we keep **cross-validated tuning** on the **full** `peng_cls` table — same Adelie vs Gentoo columns as **Day 2 (Tuesday)** slides (bill + island + sex + year; no flipper or body mass). Teaching default: tune on all rows; in a paper you would nest tuning inside training after a test lockbox.
 
 **Packages:** same as Module 04 (`tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`).
 
-[← Module 04 (train/test beat)](module-04-pipeline.qmd#train-test-last-fit) · [Module library](index.qmd) · [Next: compare models →](module-08-penguins-compare-models.qmd)
+[← Chapter 4 (train/test beat)](module-04-pipeline.qmd#train-test-last-fit) · [Reading companion](index.qmd) · [Next: Chapter 8 →](module-08-penguins-compare-models.qmd)
 
 ```{r}
 #| label: m07m-setup
@@ -119,9 +113,9 @@ autoplot(tune_res, metric = "roc_auc")
 
 - You can **commit to several metrics** before tuning, then **declare** which one picks hyperparameters for this exercise (or use a rule: e.g. maximize **kappa** subject to **sensitivity** ≥ some floor).
 - **ROC AUC** ranks risk; **accuracy** counts hard calls; **kappa** penalizes “always guess the common species” shortcuts.
-- [Module 08](module-08-penguins-compare-models.qmd) holds the **metric** fixed and swaps **model families**.
+- [Chapter 8](module-08-penguins-compare-models.qmd) holds the **metric** fixed and swaps **model families**.
 
-## Course links
+## Chapter links
 
-- **Concepts:** [Module 06 — Metrics & SHAP](module-06-evaluation-and-interpretability.qmd)
+- **Concepts:** [Chapter 6 — Scores that match the question](module-06-evaluation-and-interpretability.qmd)
 - **Day 4 (Thursday) slides:** [Metrics toolbox](../slides/day-04-thursday.html)

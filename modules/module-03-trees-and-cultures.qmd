@@ -1,63 +1,43 @@
 ---
-title: "Module 03: Trees and Two Cultures"
+title: "Chapter 3: Rules and trees"
 ---
 
-## Learning objectives
+Trees are often the first model students find intuitive, because they mirror everyday reasoning: "if this, then that." The model itself is a sequence of split decisions that route each row to a terminal prediction.
 
-- Contrast **data modeling** vs **algorithmic modeling** (Breiman) without “stats vs ML” slogans.
-- Explain **decision trees** as **if–then** rules and rectangular regions in predictor space.
-- Map Monday **`rpart`** controls to Tuesday **`parsnip` `decision_tree()`** knobs.
+This chapter keeps that intuition but adds discipline. A tree is still a statistical model: it can overfit, it needs honest validation, and its interpretability does not remove uncertainty.
 
-[← Module library](index.qmd) · [Next: Module 04 — Pipeline →](module-04-pipeline.qmd)
-
----
-
-## On the slides (Day 2)
-
-| Block | Topic | Slide link |
-|-------|--------|------------|
-| Part A | Two cultures, `rpart` intro | [Part A](../slides/day-02-tuesday.html#/part-a-cultures) |
-| Part B | Gene × disease steps, gene × trait `cp` | [Day 2 deck](../slides/day-02-tuesday.qmd) (includes) |
-| Part C | `recipe` → `spec` → `workflow` → tune (**trees only**) | [Part C pipeline](../slides/day-02-tuesday.html#/part-c-pipeline) |
-| Part D | Transition to Thursday | [Wrap-up](../slides/day-02-tuesday.html#/part-d-wrapup) |
-
-Canonical code: [`day02-tidymodels-walkthrough.qmd`](../_includes/day02-tidymodels-walkthrough.qmd) (also [Module 04](module-04-pipeline.qmd)).
+[← Reading companion](index.qmd) · [Back: Chapter 2](module-02-regularization.qmd) · [Next: Chapter 4 — A reproducible modeling workflow →](module-04-pipeline.qmd)
 
 ---
 
-## Two cultures (compressed)
+## Two cultures, one practical goal
 
-- **Data modeling:** write down a stochastic model, emphasize parameters and assumptions.  
-- **Algorithmic modeling:** flexible fit, judge by **prediction** on held-out data.  
-- Both need **honest splits** and clear **leakage** rules.
+Breiman's "two cultures" framing helps explain why this week uses both classic models and flexible algorithms.
+
+- The assumptions-first tradition emphasizes interpretable parameters and explicit model forms.
+- The prediction-first tradition emphasizes held-out performance and flexible function classes.
+
+In practice, both traditions need the same scientific discipline: clear outcomes, leakage control, and honest evaluation.
 
 ---
 
-## Tree mechanics
+## How a decision tree actually behaves
 
-- **Greedy binary splits** on one predictor at a time.  
-- Classification: improve **purity** (Gini); regression: reduce **within-node variance**.  
-- **Depth**, **minimum leaf size**, and **`cp`** (complexity parameter) limit how wiggly the tree is.
+A classification tree repeatedly asks split questions such as "bill length <= threshold?" and sends rows left or right. Each split tries to create purer child nodes than the parent node.
 
-Split quality can be summarized as impurity decrease:
+This gives you nonlinear boundaries and interaction effects without manually writing interaction terms. It also means that uncontrolled depth can chase noise.
 
-\[
-\Delta I = I(\text{parent}) - p_L I(L) - p_R I(R)
-\]
+## Practical tuning controls
 
-where \(p_L\) and \(p_R\) are child-node proportions.
+| Idea | `rpart` language | `tidymodels` language |
+|------|------------------|-----------------------|
+| Limit depth | `maxdepth` | `tree_depth` |
+| Require enough rows per split/leaf | `minsplit`, `minbucket` | `min_n` |
+| Penalize complexity | `cp` | tune depth and `min_n` (with `rpart` engine) |
 
-### `rpart` (Monday genes) ↔ `parsnip` (Tuesday penguins)
+---
 
-| Idea | Gene slides / `rpart` | Tuesday `decision_tree` + `rpart` engine |
-|------|----------------------|----------------------------------------|
-| Depth limit | `maxdepth` in `control` | `tree_depth` |
-| Min leaf size | `minsplit` / `minbucket` | `min_n` |
-| Pre-prune while growing | `maxdepth`, `minsplit` / `minbucket` | `tree_depth`, `min_n` |
-| Post-prune by complexity | `cp` from `$cptable` + `prune()` | usually handled by tuning pre-prune knobs |
-| Plot | `rpart.plot`, partition in Gene1×Gene3 | `rpart.plot` on fitted workflow |
-
-### Practical `rpart` workflow (`cp` in practice)
+## Minimal pruning example
 
 ```{r}
 #| echo: true
@@ -65,36 +45,23 @@ where \(p_L\) and \(p_R\) are child-node proportions.
 library(rpart)
 
 fit <- rpart(y ~ ., data = train, method = "class")
-printcp(fit)   # table with xerror and xstd
-plotcp(fit)    # visual pick of cp region
+printcp(fit)
+plotcp(fit)
 
-# choose cp near the 1-SE region (simpler tree with similar error)
 cp_star <- fit$cptable[which.min(fit$cptable[, "xerror"]), "CP"]
 fit_pruned <- prune(fit, cp = cp_star)
 ```
 
-- `printcp()` / `plotcp()` help you avoid keeping tiny splits that do not generalize.
-- After pruning, compare validation or CV performance to the unpruned fit.
+`printcp()` and `plotcp()` are practical safeguards: they help you avoid retaining tiny splits that do not survive on new data.
 
 ---
 
-## When trees shine or struggle
-
-**Shine:** nonlinear boundaries, interactions without hand-coded products, mixed numeric/categorical inputs after dummy coding.
-
-**Struggle:** very noisy tiny \(n\) without pruning; **high correlation** among splits (importance is not causal — Thursday VIP).
+::: {.callout-tip}
+Trees are readable because they are built from simple rules, but readability does not guarantee reliability. Treat tree diagrams as model summaries, then validate them with proper resampling before drawing strong conclusions.
+:::
 
 ---
 
-## After Tuesday: same pipeline, new engines
-
-Thursday keeps **`rec_base`** and **`workflow()`** but swaps **`spec`** to forests, boosting, or MLP — [Module 05](module-05-advanced-models.qmd), [Day 4 Part B](../slides/day-04-thursday.html#/part-b-models).
-
----
-
-## Course links
-
-- **Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.qmd)
-- **Notebook:** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd) (`glm` + `rpart`)
-- **Pipeline:** [Module 04](module-04-pipeline.qmd)
-- **Data:** [Palmer Penguins](../data/cards/palmer-penguins.qmd) · [Data catalog](../data/index.qmd)
+Lecture: [Day 2 (Tuesday) slides](../slides/day-02-tuesday.html#/part-a-cultures)  
+Notebook: [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)  
+Next: [Chapter 4 — A reproducible modeling workflow](module-04-pipeline.qmd)

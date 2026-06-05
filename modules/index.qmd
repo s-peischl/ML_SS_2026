@@ -1,125 +1,85 @@
+title: "Reading companion"
 ---
-title: "Module Library"
----
 
-# Reusable teaching modules
+# <img src="../assets/hub-icons/book.svg" class="hub-inline-icon" alt="" aria-hidden="true" /> Reading companion
 
-These pages **follow the same story as the slides**, but you can read them slowly on the website: good for **before class**, **catching up after a missed day**, or **review** before an exam.
+These chapters follow the same story as the lecture decks, but at a slower pace. Use them before class, after class, or when you miss a session and need the ideas explained in plain language.
 
-We use **two kinds of examples**: **simulated genes** (we wrote the rules, so we know what is true) and **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** (real measurements you can plot and argue about). See the **[data catalog](../data/index.qmd)** for a card on every dataset.
+We keep two example tracks across the week: **simulated genes** (where we know the ground truth) and **[Palmer Penguins](../data/cards/palmer-penguins.qmd)** (real measurements that are messier and more realistic). For context on every dataset, use the **[data catalog](../data/index.qmd)**.
 
-::: {.callout-tip appearance="simple"}
-## Slide quick links (rendered decks)
+If you want the overall narrative first, read the **[curriculum outline](../curriculum-outline.qmd)**. If you want the long coding versions, jump to the **[student notebooks](../notebooks/index.qmd)**.
 
-Open a section directly after `quarto render`:
-
-| Day | Deck | Example deep link |
-|-----|------|-------------------|
-| 1 | [day-01-monday.html](../slides/day-01-monday.html) | [#/elastic-net](../slides/day-01-monday.html#/elastic-net), [#/lasso-cv](../slides/day-01-monday.html#/lasso-cv) |
-| 2 | [day-02-tuesday.html](../slides/day-02-tuesday.html) | [#/part-c-pipeline](../slides/day-02-tuesday.html#/part-c-pipeline) |
-| 4 | [day-04-thursday.html](../slides/day-04-thursday.html) | [#/part-e-metrics](../slides/day-04-thursday.html#/part-e-metrics) |
-
-*Authoring:* edit [`slides/*.qmd`](../slides/day-01-monday.qmd); `{#anchor}` IDs on Part headings enable these URLs.
-:::
-
-::: {.callout-note appearance="simple"}
-## Modules vs notebooks {#modules-vs-notebooks}
-
-- **Modules** (this page, 01–08): **objectives-first** site pages — concepts, links to slides/data, and **short or canonical code** (especially **`tidymodels`** on penguins in **04** — train/test + Day 2 (Tuesday) include — and **07–08**).
-- **Notebooks** ([`notebooks/`](../notebooks/index.qmd)): **long IDE labs** — many chunks, heavy plots, **simulated genes**, and classical **`lm` / `glm` / `rpart` / `glmnet`** on penguins (knit locally or submit if the course asks).
-
-**Format inventory (site spine)**
-
-| Asset | Primary role |
-|-------|----------------|
-| [Home](../index.qmd) | Navigation |
-| [Curriculum outline](../curriculum-outline.qmd) | Concept |
-| [Day 1 (Monday) slides](../slides/day-01-monday.qmd) | Concept |
-| [Day 2 (Tuesday) slides](../slides/day-02-tuesday.qmd) | Concept + **Canonical_code** (shared pipeline with Module 04) |
-| [Day 4 (Thursday) slides](../slides/day-04-thursday.html) | Concept + code |
-| [Notebook index](../notebooks/index.qmd) | **Lab_exploration** (+ homework when assigned) |
-
-**Format inventory (modules 01–08)** — tag = main job of the page
-
-| Module | Primary role |
-|--------|----------------|
-| [01](#module-01-foundations-and-generalization)–[03](#module-03-trees-and-two-cultures) | Concept |
-| [04](#module-04-tidymodels-pipeline) | **Canonical_code** (train/test + full tuned pipeline; same include as Day 2 slides) |
-| [05](#module-05-advanced-models)–[06](#module-06-metrics-imbalance-and-shap) | Concept |
-| [07](#module-07-penguins-pick-your-metric)–[08](#module-08-penguins-compare-learners) | **Canonical_code** (metrics while tuning; compare engines) |
-:::
-
-| Module | Day focus | In plain language | Role |
-|--------|-----------|-------------------|------|
-| [01 — Foundations](#module-01-foundations-and-generalization) | Day 1 (Mon) | Train vs test, “too wiggly” models, one-page **data description** habit | Concept |
-| [02 — Regularization](#module-02-regularization) | Day 1 (Mon) | **L1/L2**, ridge, lasso, elastic net, \(\lambda\) — with slide deep-links | Concept + penalties |
-| [03 — Trees & cultures](#module-03-trees-and-two-cultures) | Day 2 (Tue) | Two ways of thinking about statistics + **decision trees** (“if–then” rules) | Concept |
-| [04 — Modeling pipeline in R](#module-04-tidymodels-pipeline) | Day 2 (Tue) | **Train/test + `glm`** first, then the **same tuned-tree code as Day 2 slides** (shared include; `tidymodels`) | Canonical_code |
-| [05 — Advanced models](#module-05-advanced-models) | Day 4 (Thu) | Stronger “black box” models (random forest, boosting, neural nets) — **same checking discipline**, bigger capacity | Concept |
-| [06 — Metrics & explanations](#module-06-metrics-imbalance-and-shap) | Day 4 (Thu) | Picking scores that match the biology/clinic question, imbalance, and reading **SHAP** plots carefully | Concept |
-| [07 — Pick your metric](#module-07-penguins-pick-your-metric) | Day 4 / lab | **Extension:** multi-metric `select_best()` (Tuesday lecture uses **accuracy** only) | Canonical_code |
-| [08 — Compare learners](#module-08-penguins-compare-learners) | Day 4 / lab | Same folds + recipe, compare **random forest**, **XGBoost**, **small MLP** (`fit_resamples`) | Canonical_code |
+| Chapter | Teaching day | What you will understand | Open |
+|--------|--------------|--------------------------|------|
+| [Chapter 1 — Learning from measurements](#chapter-01-learning-from-measurements) | Day 1 (Mon) | Why train/validation/test splits matter and how to avoid leakage | [Open](module-01-foundations.qmd) |
+| [Chapter 2 — When coefficients need restraint](#chapter-02-when-coefficients-need-restraint) | Day 1 (Mon) | Ridge, lasso, and elastic net in plain language | [Open](module-02-regularization.qmd) |
+| [Chapter 3 — Rules and trees](#chapter-03-rules-and-trees) | Day 2 (Tue) | How tree models split data and why “two cultures” helps | [Open](module-03-trees-and-cultures.qmd) |
+| [Chapter 4 — A reproducible modeling workflow](#chapter-04-a-reproducible-modeling-workflow) | Day 2 (Tue) | How `recipe`, `workflow`, `last_fit`, and tuning fit together | [Open](module-04-pipeline.qmd) |
+| [Chapter 5 — Stronger learners, same discipline](#chapter-05-stronger-learners-same-discipline) | Day 4 (Thu) | How random forests, boosting, and MLPs fit into the same pipeline | [Open](module-05-advanced-models.qmd) |
+| [Chapter 6 — Scores that match the question](#chapter-06-scores-that-match-the-question) | Day 4 (Thu) | How to choose metrics under imbalance and read SHAP cautiously | [Open](module-06-evaluation-and-interpretability.qmd) |
+| [Chapter 7 — Choosing what to optimize](#chapter-07-choosing-what-to-optimize) | Day 4 / lab | Why different tuning metrics pick different “best” settings | [Open](module-07-penguins-choose-metrics.qmd) |
+| [Chapter 8 — Comparing learners fairly](#chapter-08-comparing-learners-fairly) | Day 4 / lab | How to compare model families fairly with fixed folds and recipe | [Open](module-08-penguins-compare-models.qmd) |
 
 ---
 
-## Module 01: Foundations and Generalization {#module-01-foundations-and-generalization}
+## Chapter 1 — Learning from measurements {#chapter-01-learning-from-measurements}
 
-**Predicting an outcome from measurements**, splitting data so you are honest about performance, and the “too simple vs too wiggly” picture you see on Day 1 (Monday). Links **gene simulations** and **penguins** so the same ideas appear on two tables.
+This chapter sets up the full course: prediction as a disciplined process, not just fitting a line. You will see the same logic on simulated genes and penguins.
 
-**[Open Module 01 →](module-01-foundations.qmd)**
-
----
-
-## Module 02: Regularization {#module-02-regularization}
-
-**\(L_2\)** (ridge) vs **\(L_1\)** (lasso), **elastic net**, choosing **`lambda`**, and contrast with **AIC** — with links to [lasso](../slides/day-01-monday.html#/lasso-regression) and [elastic net](../slides/day-01-monday.html#/elastic-net) slides plus a small **`glmnet`** example.
-
-**[Open Module 02 →](module-02-regularization.qmd)**
+**[Open Chapter 1 →](module-01-foundations.qmd)**
 
 ---
 
-## Module 03: Trees and Two Cultures {#module-03-trees-and-two-cultures}
+## Chapter 2 — When coefficients need restraint {#chapter-02-when-coefficients-need-restraint}
 
-Two traditions in statistics (interpretable models vs flexible prediction), then **decision trees**: sequential splits, depth, and what a **tree diagram** means for penguins.
+This chapter explains why regularization helps when predictors are correlated or numerous, and how ridge, lasso, and elastic net differ in practice.
 
-**[Open Module 03 →](module-03-trees-and-cultures.qmd)**
-
----
-
-## Module 04: Modeling pipeline in R {#module-04-tidymodels-pipeline}
-
-**[Train/test + `glm` →](module-04-pipeline.qmd#train-test-last-fit)** then the **[same tuned-tree code as Day 2 (Tuesday) slides](module-04-pipeline.qmd#canonical-pipeline-tuesday)** (shared include so slides and this page **never drift apart**).
-
-**[Open Module 04 →](module-04-pipeline.qmd)**
+**[Open Chapter 2 →](module-02-regularization.qmd)**
 
 ---
 
-## Module 05: Advanced models {#module-05-advanced-models}
+## Chapter 3 — Rules and trees {#chapter-03-rules-and-trees}
 
-Random forests, boosting, and neural nets as **more flexible** learners. Emphasis: keep **cross-validation and metrics** strict, and **swap the type of model** in the same overall workflow you learned on Day 2 (Tuesday).
+This chapter introduces decision trees as nested if-then rules and places them in the broader “two cultures” view: assumptions-first versus prediction-first.
 
-**[Open Module 05 →](module-05-advanced-models.qmd)**
-
----
-
-## Module 06: Metrics, imbalance, and SHAP {#module-06-metrics-imbalance-and-shap}
-
-Choosing **numbers that match the decision** (miss a case vs call a false alarm), **class imbalance**, and using **SHAP** and importance plots as **descriptions** — not as proof you should intervene in a biological system.
-
-**[Open Module 06 →](module-06-evaluation-and-interpretability.qmd)**
+**[Open Chapter 3 →](module-03-trees-and-cultures.qmd)**
 
 ---
 
-## Module 07: Pick the score you care about {#module-07-penguins-pick-your-metric}
+## Chapter 4 — A reproducible modeling workflow {#chapter-04-a-reproducible-modeling-workflow}
 
-**Lab extension** (not Tuesday’s lecture default): tune one tree while tracking **accuracy**, **kappa**, and **ROC AUC** — see **`select_best()`** change when the metric changes. Pairs with [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics).
+This chapter turns modeling into a repeatable workflow: one honest train/test example first, then the same tuned tree pipeline used in Day 2 slides.
 
-**[Open Module 07 →](module-07-penguins-choose-metrics.qmd)**
+**[Open Chapter 4 →](module-04-pipeline.qmd)**
 
 ---
 
-## Module 08: Compare a few strong models {#module-08-penguins-compare-learners}
+## Chapter 5 — Stronger learners, same discipline {#chapter-05-stronger-learners-same-discipline}
 
-Hold the **recipe and folds** fixed; swap **random forest**, **XGBoost**, and a **small neural net** — fair **`fit_resamples`** comparison on the same penguin task used in Modules 04 and 07.
+This chapter explains what changes and what stays fixed when you move from single trees to random forests, boosting, and small neural nets.
 
-**[Open Module 08 →](module-08-penguins-compare-models.qmd)**
+**[Open Chapter 5 →](module-05-advanced-models.qmd)**
+
+---
+
+## Chapter 6 — Scores that match the question {#chapter-06-scores-that-match-the-question}
+
+This chapter focuses on decision-aware evaluation: choosing metrics for the question at hand, handling class imbalance, and reading SHAP with causal caution.
+
+**[Open Chapter 6 →](module-06-evaluation-and-interpretability.qmd)**
+
+---
+
+## Chapter 7 — Choosing what to optimize {#chapter-07-choosing-what-to-optimize}
+
+This extension chapter shows how metric choice changes tuning outcomes, even when you keep data, folds, and model family fixed.
+
+**[Open Chapter 7 →](module-07-penguins-choose-metrics.qmd)**
+
+---
+
+## Chapter 8 — Comparing learners fairly {#chapter-08-comparing-learners-fairly}
+
+This extension chapter compares three stronger learners fairly by holding preprocessing and folds fixed and changing only the model engine.
+
+**[Open Chapter 8 →](module-08-penguins-compare-models.qmd)**

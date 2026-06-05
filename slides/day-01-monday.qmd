@@ -18,7 +18,7 @@ format:
 
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
-- [Module Library](../modules/index.qmd)
+- [Reading companion](../modules/index.qmd)
 - [Next: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
 
 

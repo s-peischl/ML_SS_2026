@@ -1,22 +1,16 @@
 ---
-title: "Module 08: Compare a few strong models (random forest, XGBoost, small neural net)"
+title: "Chapter 8: Comparing learners fairly (random forest, XGBoost, small neural net)"
 ---
 
-## Learning objectives
+This chapter focuses on fair comparison design. We keep folds, recipe, and metrics fixed, then change only the model family.
 
-- Fit **three** different classification engines on the **same** Adelie vs Gentoo table with the **same** recipe and **same** cross-validation folds.
-- Read a compact **comparison table** of ROC AUC and accuracy (mean ± SE across folds).
-- Name one reason a **neural net** can look mediocre on **small** tabular data even when it shines elsewhere.
-
-## Before you start
-
-This is the natural follow-up to [Module 04](module-04-pipeline.qmd#canonical-pipeline-tuesday) (tuned tree) and [Module 07](module-07-penguins-choose-metrics.qmd) (which metric to optimize). The **Thursday lecture** runs the same comparison on slides with **`metric_set(accuracy)`** ([Part B](../slides/day-04-thursday.html#/part-b-models)); this page also reports **ROC AUC** for side-by-side reading.
+This is the natural follow-up to [Chapter 4](module-04-pipeline.qmd#canonical-pipeline-tuesday) (tuned tree) and [Chapter 7](module-07-penguins-choose-metrics.qmd) (which metric to optimize). The **Thursday lecture** runs the same comparison on slides with **`metric_set(accuracy)`** ([Part B](../slides/day-04-thursday.html#/part-b-models)); this page also reports **ROC AUC** for side-by-side reading.
 
 Here we **fix** reasonable hyperparameters so the page stays fast — in coursework you could wrap each in `tune_grid` like Module 04.
 
 **Packages:** `tidymodels`, `palmerpenguins`, `dplyr`, `tidyr`, `purrr`, plus **`ranger`** and **`xgboost`** for the engines used below (install from CRAN if `fit_resamples()` asks for them).
 
-[← Module 07](module-07-penguins-choose-metrics.qmd) · [Module library](index.qmd)
+[← Chapter 7](module-07-penguins-choose-metrics.qmd) · [Reading companion](index.qmd)
 
 ```{r}
 #| label: m08c-setup
@@ -136,9 +130,9 @@ If one fold is consistently harder, inspect whether it has unusual class balance
 - **Same folds + same recipe** means differences come mainly from **model family** and your chosen **settings**, not from a sneaky preprocessing shortcut.
 - On **small** datasets, simpler models sometimes **win by noise**; report **uncertainty** (`std_err` from `collect_metrics`) and avoid over-interpreting tiny AUC gaps.
 - A small MLP can underperform on tabular data because neural nets are sensitive to feature representation and tuning; with limited \(n\), tree ensembles often provide stronger bias-variance tradeoffs out of the box.
-- To go deeper on **metrics** and **explainability**, continue with [Module 06](module-06-evaluation-and-interpretability.qmd) and [Module 05](module-05-advanced-models.qmd).
+- To go deeper on **metrics** and **explainability**, continue with [Chapter 6](module-06-evaluation-and-interpretability.qmd) and [Chapter 5](module-05-advanced-models.qmd).
 
-## Course links
+## Chapter links
 
-- **Advanced models (concepts):** [Module 05](module-05-advanced-models.qmd)
+- **Advanced models (concepts):** [Chapter 5](module-05-advanced-models.qmd)
 - **Day 2 (Tuesday) / Day 4 (Thursday) slides:** [day-02](../slides/day-02-tuesday.html), [day-04](../slides/day-04-thursday.html)

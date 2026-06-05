@@ -1,81 +1,40 @@
 ---
-title: "Module 06: Metrics, Imbalance, and SHAP"
+title: "Chapter 6: Scores that match the question"
 ---
 
-## Learning objectives
+Accuracy is easy to explain, so it often becomes the default score. The problem is that defaults can hide bad behavior, especially when classes are imbalanced or the decision costs are asymmetric.
 
-- Pick **metrics** that match prevalence and error costs (not accuracy by default).
-- Read **confusion matrices**, **ROC**, and **PR** curves on imbalanced data.
-- Use **VIP** and **SHAP** as **communication** tools — not causal proof.
+This chapter reframes evaluation around the question you are answering: who is harmed by false negatives, who is harmed by false positives, and what tradeoff is acceptable in context.
 
-[← Module library](index.qmd) · [Module 07 — Metric tuning lab](module-07-penguins-choose-metrics.qmd) · [Day 4 Part E](../slides/day-04-thursday.html#/part-e-metrics)
-
----
-
-## On the slides (Day 4)
-
-| Part | Topic | Slide link |
-|------|--------|------------|
-| E (first) | Multiclass imbalance (rare Chinstrap), majority baseline | [Imbalance block](../slides/day-04-thursday.html#/part-e-metrics) |
-| E (metrics) | Macro metrics + per-class recall + confusion matrix | [Part E](../slides/day-04-thursday.html#/part-e-metrics) |
-| F | Random forest VIP | [Part F — VIP](../slides/day-04-thursday.html#/part-f-vip) |
-| F | SHAP on sex (no species) | [SHAP introduction](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition) |
-
-Tuesday lecture tunes on **accuracy only**; Thursday Part E shows why multiclass imbalance needs **macro/per-class** metrics.
+[← Reading companion](index.qmd) · [Back: Chapter 5](module-05-advanced-models.qmd) · [Next: Chapter 7](module-07-penguins-choose-metrics.qmd)
 
 ---
 
-## Metrics toolbox
+## Metrics are decision tools
 
-| Metric | Question it answers | When to use |
-|--------|---------------------|-------------|
-| **accuracy** | Overall correct? | Balanced classes, symmetric costs |
-| **sensitivity** (recall) | Of true positives, how many caught? | Screening — missing a case is costly |
-| **specificity** | Of true negatives, how many caught? | Avoid false alarms |
-| **precision** | Of predicted positives, how many correct? | Confirmation after a screen |
-| **F1** | Balance precision & recall | Single summary when both matter |
-| **ROC-AUC** | Ranking across thresholds | Separability; can look fine when positives are rare |
-| **PR-AUC** | Precision–recall area | **Rare positive** class |
+Use metrics as answers to concrete questions:
 
-In code, use **`yardstick::spec`** for specificity so R does not confuse it with a **`spec`** model object.
+- **Accuracy:** "How often am I right overall?"
+- **Sensitivity/recall:** "How often do I catch true positives?"
+- **Specificity:** "How often do I correctly dismiss negatives?"
+- **Precision:** "When I predict positive, how often am I right?"
+- **ROC-AUC:** "How well do I rank positives above negatives?"
+- **PR-AUC:** "How well do I balance precision and recall under rarity?"
 
----
-
-## Why accuracy misleads
-
-On **imbalanced** data (many Adelie, few Gentoo in the teaching slice), a model that **always predicts the majority class** can show **high accuracy** while missing **every** minority case — useless for screening.
-
-Numeric example: if prevalence is 90% negative and 10% positive, an always-negative model gets 90% accuracy but 0% sensitivity for the positive class.
-
-The slides compute a **majority-class baseline** before comparing upsampling on a multiclass imbalanced slice ([Part E](../slides/day-04-thursday.html#/part-e-metrics)).
+No metric is "best" by itself. The best metric is the one aligned with the decision cost.
 
 ---
 
-## Class imbalance and resampling
+## Why imbalance changes the story
 
-- **`step_upsample()`** duplicates minority rows **in training folds** — helps when the learner **ignores** the rare class.  
-- In multiclass settings, upsampling is judged by **minority-class recall** and **macro metrics**, not only accuracy.
-- Upsampling duplicates minority rows **inside training folds only**; assessment folds stay untouched for honest scoring.
-- It can improve underrepresented-class detection at the cost of extra confusion between majority classes.
+On imbalanced data, a majority-class classifier can look impressive under accuracy and still fail the task. That is why Day 4 compares majority baselines, per-class recall, and macro-style summaries.
 
-Lab: [Day 4 exercises](../exercises/index.qmd) (microbiome; imbalance covered on slides). Minimal notebook: [multiclass upsampling](../notebooks/penguins-multiclass-upsampling.Rmd).
-
----
-
-## Confusion matrix
-
-Rows = **true** class; columns = **predicted** class.
-
-- **False negatives** (true Gentoo, predicted Adelie) — costly in screening.  
-- **False positives** — costly if treatment is invasive.
-
-Practice reading the **minority row** on the [Day 4 slides](../slides/day-04-thursday.html#/part-e-metrics).
+When you use upsampling, do it inside training folds only. Assessment folds stay untouched so reported performance is still honest.
 
 ```{r}
 #| label: m06-conf-demo
 #| echo: true
 #| eval: false
-#| message: false
 library(yardstick)
 # After augment(fit, test_data):
 # conf_mat(truth = y, estimate = .pred_class)
@@ -83,102 +42,32 @@ library(yardstick)
 
 ---
 
-## ROC vs PR
+## VIP and interpretation discipline
 
-- **ROC:** sensitivity vs \(1 - \text{specificity}\) across thresholds — good when both classes matter.  
-- **PR:** precision vs recall — often more informative when **positives are rare**.
+Variable importance (VIP) helps summarize what a fitted model used most often. It does not establish causal effects. Correlated features can share or swap importance, and importance can shift across model fits.
 
-Threshold example: at threshold 0.2 you might get recall 0.90 but precision 0.18; ROC can still look decent while PR reveals large false-alert burden.
-
----
-
-## Variable importance (VIP)
-
-- **`vip`** on tree ensembles: how often splits use each predictor (impurity).  
-- **Correlated** predictors **share** importance — not proof that changing one mm of bill **causes** species shift.  
-- Full chapter: [Day 4 Part F](../slides/day-04-thursday.html#/part-f-vip).
+Treat importance plots as model behavior summaries, not intervention policies.
 
 ---
 
 ## SHAP: Shapley values on penguins (sex) {#shap-shapley-values-on-penguins-sex}
 
-**SHAP** = **SHapley additive explanations**. This section mirrors [Day 4 Part F SHAP slides](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition). We use a **non-trivial** task: predict **`sex`** from morphometrics and island/year while **omitting `species`** ([sex notebook](../notebooks/penguins-sex-classification.Rmd), [data card](../data/cards/palmer-penguins.qmd)).
+SHAP gives local explanations: for one row, it decomposes the model output into feature contributions relative to a baseline. In this course, we apply it to penguin sex classification while omitting species.
 
-### 1. What SHAP means (game theory intuition)
+The two key statements students should retain:
 
-**Coalition story (no formulas required in class):**
-
-1. Fix one penguin and a fitted model.
-2. Imagine each **feature** is a player who can join a **team** (coalition).
-3. For each coalition, the model predicts using only those features; others are integrated over the data (background).
-4. The **Shapley value** is the fair average of a player's **marginal contributions** as players join in every possible order.
-
-**Additivity (check on one bird):**
-
-| Piece | Meaning |
-|-------|---------|
-| \(\phi_0\) | **Baseline** — average model output over background penguins |
-| \(\phi_j\) | SHAP value for feature \(j\) on this row |
-| Sum | \(\phi_0 + \sum_j \phi_j \approx \hat{p}(\text{male})\) for that row |
-
-**Toy numeric row (illustration only):**
-
-| Feature | SHAP \(\phi\) |
-|---------|----------------|
-| Baseline \(\phi_0\) | 0.42 |
-| body_mass_g | +0.18 |
-| bill_depth_mm | +0.09 |
-| island_Dream | −0.05 |
-| … | … |
-| **Sum** | **0.71 = model P(male)** |
-
-**VIP vs SHAP:** VIP = **global** split usage; SHAP = **local** decomposition for **one** penguin.
-
-### 2. How to calculate and plot (R)
-
-**Packages:** [`shapviz`](https://cran.r-project.org/package=shapviz), [`kernelshap`](https://cran.r-project.org/package=kernelshap) (plus course **`tidymodels`** stack). Install:
-
-```r
-install.packages(c("shapviz", "kernelshap"))
-```
-
-Helpers live in [`R/slide-viz-helpers.R`](../R/slide-viz-helpers.R). The slides source them automatically; in your own project:
-
-```r
-source("R/slide-viz-helpers.R")  # adjust path
-```
-
-```{r}
-#| label: m06-shap-setup
-#| include: false
-#| message: false
-#| warning: false
-suppressPackageStartupMessages({
-  library(tidymodels)
-  library(shapviz)
-  library(kernelshap)
-})
-source("../R/slide-viz-helpers.R")
-pg_sex_m06 <- prep_penguins_sex()
-sex_shap_m06 <- fit_sex_shap_bundle(
-  pg_sex_m06,
-  trees = 300,
-  n_sample = 80,
-  n_bg = 35,
-  seed = 11
-)
-```
-
-**Pipeline (same logic as slides):**
+1. SHAP explains **this fitted model**, not biological causality.
+2. SHAP values are useful communication aids, not proof that changing a feature would change the outcome.
 
 ```{r}
 #| label: m06-shap-code
 #| echo: true
 #| eval: false
 pg_sex <- prep_penguins_sex()
-
-rec_sex <- recipe(sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm +
-                    body_mass_g + island + year, data = pg_sex) |>
+rec_sex <- recipe(
+  sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g + island + year,
+  data = pg_sex
+) |>
   step_zv(all_predictors()) |>
   step_dummy(all_nominal_predictors()) |>
   step_normalize(all_numeric_predictors())
@@ -186,102 +75,16 @@ rec_sex <- recipe(sex ~ bill_length_mm + bill_depth_mm + flipper_length_mm +
 rf_sex_spec <- rand_forest(trees = 300, mtry = 3, min_n = 2) |>
   set_engine("ranger", probability = TRUE) |>
   set_mode("classification")
-
-fit_sex <- fit(
-  workflow() |> add_recipe(rec_sex) |> add_model(rf_sex_spec),
-  pg_sex
-)
-
-rec_prepped <- prep(extract_recipe(fit_sex, estimated = TRUE), training = pg_sex)
-X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
-
-rf_engine <- extract_fit_parsnip(fit_sex)$fit
-pred_fun <- function(object, X_new) {
-  as.numeric(predict(object, data = X_new)$predictions[, "male"])
-}
-X_shap <- dplyr::slice_sample(X_model, n = 80)
-bg_X <- dplyr::slice_sample(X_model, n = 35)
-ks <- kernelshap(rf_engine, X = X_shap, pred_fun = pred_fun, bg_X = bg_X)
-shp <- shapviz(ks, X_pred = X_shap)
 ```
 
-**`bake()`** supplies the encoded predictor matrix the forest was trained on. **`kernelshap()`** compares each row to a background sample; **`shapviz()`** draws the plots. (Same steps as Tuesday's **`prep` / `bake`** demo — see [Day 2 pipeline](../slides/day-02-tuesday.html#/prep-and-bake---learn-rules-then-apply).)
+When presenting SHAP in reports, explicitly include one "do not claim" sentence. Example: "This plot does not show that bill depth causes sex; it shows how this trained model used bill depth for prediction."
 
-For ROC on imbalanced Gentoo, always set **`event_level = "second"`** when using `.pred_Gentoo` — otherwise the curve can look **flipped** (AUC near 0). The slides use `plot_roc_gentoo()` from [`slide-viz-helpers.R`](../R/slide-viz-helpers.R).
-
-**Beeswarm (global):**
-
-```{r}
-#| label: m06-shap-beeswarm
-#| echo: false
-#| fig-width: 9
-#| fig-height: 6
-#| eval: true
-plot_shap_beeswarm(sex_shap_m06$shp)
-```
-
-**Waterfall (local) — male vs female in the SHAP sample:**
-
-```{r}
-#| label: m06-shap-waterfall-male
-#| echo: false
-#| fig-width: 9
-#| fig-height: 5
-#| eval: true
-plot_shap_waterfall(
-  sex_shap_m06$shp,
-  row_id = sex_shap_m06$male_row,
-  title = "Waterfall: one male penguin"
-)
-```
-
-```{r}
-#| label: m06-shap-waterfall-female
-#| echo: false
-#| fig-width: 9
-#| fig-height: 5
-#| eval: true
-plot_shap_waterfall(
-  sex_shap_m06$shp,
-  row_id = sex_shap_m06$female_row,
-  title = "Waterfall: one female penguin"
-)
-```
-
-**VIP vs SHAP on the same sex model (module only):**
-
-```{r}
-#| label: m06-shap-vip-compare
-#| echo: false
-#| fig-width: 9
-#| fig-height: 5
-#| eval: true
-plot_sex_rf_vip(sex_shap_m06$fit)
-```
-
-### 3. How to interpret results
-
-**Say**
-
-- "For **this** bird, the model leaned **male** partly because of **body mass** and **bill depth** in the encoded feature space."
-- "The beeswarm shows **which features matter in this RF** across the sample we explained."
-- "SHAP is a property of **this fitted model** on **observational** data."
-
-**Do not say**
-
-- "Bill length **causes** male penguins."
-- "If we shortened flippers, sex would change" (intervention claim).
-- "SHAP shows the model is **fair** by island" (needs subgroup evaluation).
-
-**Assessment prompt (from [curriculum outline](../curriculum-outline.qmd)):** *What would you **not** claim from this SHAP summary?*
-
-**Honest limits:** we fit on all rows for teaching plots; in a study you would compute SHAP on **training** rows only and hold out test data for performance. See [Palmer Penguins data card](../data/cards/palmer-penguins.qmd) for observational caveats.
+::: {.callout-tip}
+Strong evaluation language is as important as strong metrics. Say what the model does, how you measured it, and what you cannot infer from those numbers or explanations.
+:::
 
 ---
 
-## Course links
-
-- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html)
-- **Metric choice in tuning:** [Module 07](module-07-penguins-choose-metrics.qmd)
-- **Notebook:** [penguins-sex-classification.Rmd](../notebooks/penguins-sex-classification.Rmd)
-- **Curriculum:** [outline](../curriculum-outline.qmd)
+Lecture: [Day 4 Part E/F](../slides/day-04-thursday.html#/part-e-metrics)  
+Notebook: [penguins-sex-classification.Rmd](../notebooks/penguins-sex-classification.Rmd)  
+Next: [Chapter 7 — Choosing what to optimize](module-07-penguins-choose-metrics.qmd)

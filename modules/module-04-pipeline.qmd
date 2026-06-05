@@ -1,29 +1,24 @@
 ---
-title: "Module 04: Modeling pipeline in R"
+title: "Chapter 4: A reproducible modeling workflow"
 ---
 
-- **Learning objective:** follow a full **classification** workflow in R on **Palmer Penguins** (Adelie vs Gentoo): clean the table, preprocess, pick a model, evaluate honestly, then (below) cross-validate and tune like Day 2 (Tuesday) slides.
-- **Key message:** keep **preprocessing, fitting, and scoring** in one reproducible object so every model you compare is treated **fairly** — same **scientific task** (Adelie vs Gentoo) as the [penguin classification notebook](../notebooks/penguins-classification.Rmd), but that notebook uses **classical `glm` / `rpart`** with **all** morphometrics; **this page** uses **bill + island + sex + year** so **tree tuning** shows a real bias–variance tradeoff (flipper and body mass make CV scores too flat). Follow-up labs: [Module 07](module-07-penguins-choose-metrics.qmd) (several metrics while tuning), [Module 08](module-08-penguins-compare-models.qmd) (compare RF / XGBoost / MLP).
+This chapter turns model building into a repeatable workflow. Instead of fitting, preprocessing, and scoring in disconnected scripts, we keep the full pipeline in one object so comparisons stay fair.
+
+The teaching task is Adelie vs Gentoo classification. We use bill measures, island, sex, and year; we leave out flipper length and body mass so tuning remains informative rather than trivially high-scoring.
 
 ## How to read this page
 
-You already know **`lm`** and **`glm`**. Here, R uses a slightly richer vocabulary: a **recipe** is “the list of preprocessing steps,” a **workflow** glues those steps to a **model specification**, and **`tune_grid`** tries several settings using **cross-validation**.
+You already know `lm` and `glm`. Here we extend that mental model:
 
-1. **First section** — one **train/test split**, **no tuning**: smallest honest **`last_fit`** story (logistic regression) on the **same `peng_cls` columns** as below.  
-2. **Second section** — the **same** Day 2 (Tuesday) walk-through as the slides: tuned **classification tree**, wider `tune_grid`, figures (shared include).
+- A **recipe** is preprocessing.
+- A **model specification** declares the learner.
+- A **workflow** binds them.
+- **`tune_grid()`** explores settings with CV.
 
-[← Module library (all modules)](index.qmd)
+1. First: one train/test split and `last_fit()` to show the smallest honest flow.  
+2. Then: the canonical Day 2 tuned tree include (shared with slides) for the full pattern.
 
----
-
-## On the slides (Day 2)
-
-| Section | Topic | Slide link |
-|---------|--------|------------|
-| Part C | Incremental `recipe` → `workflow` → **`tune_grid`** (tree, **accuracy**) | [Part C pipeline](../slides/day-02-tuesday.html#/part-c-pipeline) |
-| Source | Same code as this page (canonical include) | [`day02-tidymodels-walkthrough.qmd`](../_includes/day02-tidymodels-walkthrough.qmd) |
-
-Thursday swaps **`spec`** only — [Part B models](../slides/day-04-thursday.html#/part-b-models).
+[← Reading companion](index.qmd) · [Back: Chapter 3](module-03-trees-and-cultures.qmd) · [Next: Chapter 5](module-05-advanced-models.qmd)
 
 ---
 
@@ -96,14 +91,20 @@ collect_predictions(fit_split) |>
   conf_mat(truth = y, estimate = .pred_class)
 ```
 
-When you continue to the **canonical pipeline** below, you **redefine `peng_cls` in the include** with the same columns (the chunk is self-contained for slides) and **cross-validation + `tune_grid`** replace this single split — same vocabulary, heavier machinery. Expect **`tree_depth`** and **`min_n`** to move metrics in the tuning heatmap.
+When you continue to the canonical pipeline below, the include redefines `peng_cls` in a self-contained way (so slide chunks remain portable). The modeling grammar stays the same; only the resampling and tuning machinery becomes richer.
 
 ---
 
 ## Canonical pipeline (Day 2 slides + tuning) {#canonical-pipeline-tuesday}
 
-Read the **concept slide** before each **code chunk** in the include — chunk names match the Day 2 (Tuesday) deck. Tuning uses **`tree_depth` 1–6** and **`min_n` 2–50** (four levels each).
+The next block is the same canonical walkthrough used in the Day 2 lecture deck. Keeping one shared include means the chapter and slides do not drift apart.
 
 {{< include ../_includes/day02-penguins-setup.qmd >}}
 
 {{< include ../_includes/day02-tidymodels-walkthrough.qmd >}}
+
+---
+
+Lecture: [Day 2 (Tuesday) pipeline slides](../slides/day-02-tuesday.html#/part-c-pipeline)  
+Notebook: [penguins-canonical-pipeline.Rmd](../notebooks/penguins-canonical-pipeline.Rmd)  
+Next: [Chapter 5 — Stronger learners, same discipline](module-05-advanced-models.qmd)

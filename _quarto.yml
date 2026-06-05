@@ -30,7 +30,7 @@ website:
       - href: exercises/index.qmd
         text: Lab exercises
       - href: modules/index.qmd
-        text: Modules
+        text: Reading companion
       - text: Notebooks
         menu:
           - text: Student notebooks

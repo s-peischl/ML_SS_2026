@@ -1,83 +1,43 @@
 ---
-title: "Module 05: Advanced Models"
+title: "Chapter 5: Stronger learners, same discipline"
 ---
 
-## Learning objectives
+After Tuesday's single-tree workflow, Thursday introduces stronger learners: random forests, boosting, and small neural networks. The core teaching point is not "new model, new universe." It is "new model, same discipline."
 
-- Name **random forests**, **gradient boosting**, and **small neural nets** as standard tabular learners after a single tree.
-- **Swap `parsnip` specs** inside the Tuesday **`workflow()`** — same recipe and folds.
-- Know which **Day 4** blocks demo PCA, imputation, imbalance, and VIP.
+You still keep preprocessing, resampling, and scoring rules fixed. Only the learner specification changes.
 
-[← Module library](index.qmd) · [Module 04 — Pipeline](module-04-pipeline.qmd) · [Module 08 — Compare learners](module-08-penguins-compare-models.qmd)
-
----
-
-## On the slides (Day 4)
-
-| Part | Topic | Slide link |
-|------|--------|------------|
-| A | Recap `rec_base`, stressed scenarios | [Day 4 deck](../slides/day-04-thursday.html) |
-| B | RF, XGB, MLP, model catalog, **accuracy** compare | [Part B — Models](../slides/day-04-thursday.html#/part-b-models) |
-| C | `step_pca()` | [Part C — PCA](../slides/day-04-thursday.html#/part-c-pca) |
-| D | `step_impute_*()` | [Part D — Impute](../slides/day-04-thursday.html#/part-d-impute) |
-| E | Imbalance + metrics | [Part E — Metrics](../slides/day-04-thursday.html#/part-e-metrics) |
-| F | VIP | [Part F — VIP](../slides/day-04-thursday.html#/part-f-vip) |
-
-Lecture uses **`metrics_acc <- metric_set(accuracy)`** in Parts B–D; full metric set in Part E.
+[← Reading companion](index.qmd) · [Back: Chapter 4](module-04-pipeline.qmd) · [Next: Chapter 6](module-06-evaluation-and-interpretability.qmd)
 
 ---
 
-## Key message
+## What changes and what does not
 
-**Same preprocessing + cross-validation + score sheet**, different **fitting engine**. More flexibility demands **stricter** resampling — not skipping the “tiny \(n\) penguins” conversation.
+What stays fixed:
 
----
+- the scientific question,
+- the recipe logic,
+- the fold structure,
+- the chosen metrics.
 
-## Parsnip: type → engine → mode
+What changes:
 
-| Model type | Valid engines (examples) | Mode |
-|------------|--------------------------|------|
-| `decision_tree()` | `rpart`, `C5.0` | classification, regression |
-| `rand_forest()` | `ranger`, `randomForest` | classification, regression |
-| `boost_tree()` | `xgboost`, `lightgbm` | classification, regression |
-| `logistic_reg()` | `glm`, `glmnet` | classification |
-| `mlp()` | `nnet`, `keras` | classification, regression |
-
-Discover knobs: `extract_parameter_set_dials(spec)` · [tidymodels model list](https://www.tidymodels.org/find/parsnip/).
+- the `parsnip` specification (`rand_forest()`, `boost_tree()`, `mlp()`),
+- the tuning parameters,
+- the bias-variance behavior.
 
 ---
 
-## Model families
+## Three common families in plain language
 
-### Random forests (bagging)
+**Random forest:** average many decorrelated trees to reduce variance.  
+**Boosting:** add trees sequentially so each new tree focuses on previous errors.  
+**Small MLP:** learn layered nonlinear combinations; can work well, but usually needs more tuning care on small tabular data.
 
-Many trees on **bootstrap** samples; each split sees a **random subset** of predictors → lower variance than one tree.
-
-Example intuition: with 5 predictors, a forest might sample 2 at each split. One tree may overreact to a noisy bill measurement; averaging 400 trees makes that noise average out.
-
-### Boosting (XGBoost)
-
-Trees added **sequentially** to correct previous errors. [Boosting boundary slides](../slides/day-04-thursday.html#/part-b-models) show probability surfaces sharpening over rounds.
-
-Toy narrative: round 1 misses several borderline Gentoo points, round 2 focuses extra split capacity on those residual errors, and later rounds refine that boundary.
-
-### Neural networks (tabular)
-
-`mlp()` with `nnet` — flexible but data-hungry; compare honestly in [Module 08](module-08-penguins-compare-models.qmd).
-
-On small tabular \(n\), gains can be unstable because nets depend heavily on tuning, scaling, and feature representation; trees often match or beat them with less tuning effort.
+None of these models removes the need for honest evaluation. With small data, tiny score differences are often not meaningful without uncertainty.
 
 ---
 
-## Recipe extensions (same workflow)
-
-| Step | Purpose |
-|------|---------|
-| `step_pca()` | Compress correlated morphometrics / OTUs inside CV |
-| `step_impute_*()` | Fill missing values without dropping rows before split |
-| `step_upsample()` / `step_downsample()` | Training-time class balance — not always helpful if classes are already separable |
-
-Details: [Module 06 — Metrics](module-06-evaluation-and-interpretability.qmd).
+## Same workflow, different model spec
 
 ```{r}
 #| echo: true
@@ -87,17 +47,23 @@ rec_ext <- recipe(y ~ ., data = train) |>
   step_impute_mode(all_nominal_predictors()) |>
   step_pca(all_numeric_predictors(), num_comp = 10)
 
-wf_ext <- workflow() |>
+wf_rf <- workflow() |>
+  add_recipe(rec_ext) |>
+  add_model(rand_forest() |> set_engine("ranger") |> set_mode("classification"))
+
+wf_xgb <- workflow() |>
   add_recipe(rec_ext) |>
   add_model(boost_tree() |> set_engine("xgboost") |> set_mode("classification"))
 ```
 
 ---
 
-## Course links
+::: {.callout-tip}
+The most transferable skill is not memorizing model families. It is learning to compare models fairly: same data pipeline, same folds, same score sheet, explicit uncertainty.
+:::
 
-- **Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html)
-- **Pipeline:** [Module 04](module-04-pipeline.qmd)
-- **Compare engines:** [Module 08](module-08-penguins-compare-models.qmd)
-- **Metrics & SHAP:** [Module 06](module-06-evaluation-and-interpretability.qmd)
-- **Notebook:** [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)
+---
+
+Lecture: [Day 4 (Thursday) Part B](../slides/day-04-thursday.html#/part-b-models)  
+Notebook: [penguins-classification.Rmd](../notebooks/penguins-classification.Rmd)  
+Next: [Chapter 6 — Scores that match the question](module-06-evaluation-and-interpretability.qmd)

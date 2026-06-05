@@ -25,8 +25,8 @@ format:
 
 - [Teaching Hub](../index.qmd)
 - [Curriculum Outline](../curriculum-outline.qmd)
-- [Module 05  -  Advanced models](../modules/module-05-advanced-models.qmd)
-- [Module 08  -  Compare learners](../modules/module-08-penguins-compare-models.qmd)
+- [Chapter 5  -  Advanced models](../modules/module-05-advanced-models.qmd)
+- [Chapter 8  -  Compare learners](../modules/module-08-penguins-compare-models.qmd)
 - [Back: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
 
 ## Terms used today (abbreviations)
