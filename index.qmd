@@ -108,12 +108,12 @@ Think of it as one story in three chapters: **see the pattern**, **keep your wor
 ## Organizers & people
 
 ::: {.hub-week-intro}
-This summer school is hosted by the **[Institute of Bioinformatics (IBU)](https://www.bioinformatics.unibe.ch)** at the University of Bern. 
+This summer school is hosted by the **[Interfaculty Bioinformatics Unit (IBU)](https://www.bioinformatics.unibe.ch)** at the University of Bern. 
 :::
 
 ### Host institute
 
-- **[Institute of Bioinformatics (IBU)](https://www.bioinformatics.unibe.ch)** — University of Bern
+- **[Interfaculty Bioinformatics Unit (IBU)](https://www.bioinformatics.unibe.ch)** — University of Bern
 
 ### Organizers
 
