@@ -1,4 +1,4 @@
-**Gene × trait — regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
+**Gene × trait — regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.html)): continuous **trait** from **GeneA** and **GeneB**.
 
 ```{r}
 #| label: day02-trait-rpart-setup
@@ -122,7 +122,7 @@ for (i in seq_along(trait_cps)) {
 - Same story as **Monday**: trait = $-0.5 \times$ **GeneA** $+ 0.8 \times$ **GeneB** + noise (linear truth)
 - **`rpart(trait ~ GeneA + GeneB, ...)`** — default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
 - Contrast with disease block: **`method = "class"`** for a factor outcome
-- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
+- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.html)
 
 ## Complexity penalty `cp` (pruning)
 

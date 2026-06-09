@@ -25,8 +25,8 @@ bio_data <- data.frame(genes_data, disease_presence = factor(disease_presence))
 ## Where we use this
 
 - [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd)
-- [Day 1 slides](../../slides/day-01-monday.qmd) — logistic regression, boundaries
-- [Day 2 slides](../../slides/day-02-tuesday.qmd) — classification trees, step-by-step splits in Gene1 x Gene3 plane
+- [Day 1 slides](../../slides/day-01-monday.html) — logistic regression, boundaries
+- [Day 2 slides](../../slides/day-02-tuesday.html) — classification trees, step-by-step splits in Gene1 x Gene3 plane
 
 ## Caveats
 
@@ -39,7 +39,7 @@ bio_data <- data.frame(genes_data, disease_presence = factor(disease_presence))
 
 ## 1. Source
 
-**Simulated in R** (`set.seed(123)`). Same story as [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd) and the [Day 1 data card example](../../exercises/solutions/day01-data-card-example.qmd).
+**Simulated in R** (`set.seed(123)`). Same story as [logistic-regression-gene-disease.Rmd](../../notebooks/logistic-regression-gene-disease.Rmd) and the [Day 1 data card example (archived)](https://github.com/s-peischl/ML_SS_2026/blob/main/exercises/solutions/_archive/day01-data-card-example.qmd).
 
 ## 2. Outcome
 

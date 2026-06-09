@@ -1,6 +1,6 @@
 **Gene × disease** — describe data → null vs full `glm` → AIC forward/backward (all $n$ samples).
 
-- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)
+- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.html)
 
 ```{r}
 #| label: day01-logistic-libs

@@ -11,4 +11,4 @@ You split your data into **training** and **test** sets, then use **cross-valida
 
 - **Recipe steps** (dummy, scale, impute, PCA, upsample, …) must be fit **inside** each CV fold on training rows only  -  otherwise information leaks from held-out data.
 - **`fit_resamples()`** (next) averages CV metrics for a workflow  -  quick comparisons when specs are fixed or already tuned.
-- [Module 04](../modules/module-04-pipeline.qmd#train-test-last-fit) walks through **`last_fit()`** with a real train/test split.
+- [Chapter 4 — train/test split](../modules/module-04-pipeline.html#train-test-last-fit) walks through **`last_fit()`** with a real train/test split.

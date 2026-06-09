@@ -14,7 +14,7 @@ faithful_df <- tibble::as_tibble(datasets::faithful)
 
 ## Where we use this
 
-- [Day 1 (Monday) slides](../../slides/day-01-monday.qmd) — first ggplot demo (scatter, smooth, facets)
+- [Day 1 (Monday) slides](../../slides/day-01-monday.html) — first ggplot demo (scatter, smooth, facets)
 - Photo: [`assets/figures/shared/old_faithful.jpg`](../../assets/figures/shared/old_faithful.jpg)
 
 ## Caveats

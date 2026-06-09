@@ -16,7 +16,7 @@ hald_scaled[, c("x1", "x2", "x3", "x4")] <- scale(hald[, c("x1", "x2", "x3", "x4
 
 ## Where we use this
 
-- [Day 1 (Monday) slides](../../slides/day-01-monday.qmd) — correlated predictors, comparing one-predictor vs full `lm` models
+- [Day 1 (Monday) slides](../../slides/day-01-monday.html) — correlated predictors, comparing one-predictor vs full `lm` models
 - [Module 02 — Regularization](../../modules/module-02-regularization.qmd) (collinearity motivation)
 
 ## Caveats

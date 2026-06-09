@@ -52,11 +52,6 @@ rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_acc)
 
 # Teaching scenarios (artificial problems — document real prevalence on the data card)
 set.seed(4)
-peng_imb <- peng_bal |>
-  group_by(y) |>
-  filter(y == "Adelie" | (y == "Gentoo" & dplyr::row_number() <= 10L)) |>
-  ungroup()
-
 peng_imb3 <- prep_penguins_multiclass_imbalance(
   minority_class = "Chinstrap",
   hard_to_class = "Adelie",
@@ -80,7 +75,6 @@ peng_pca <- palmerpenguins::penguins |>
   dplyr::select(-species) |>
   tidyr::drop_na()
 
-folds_imb <- vfold_cv(peng_imb, v = 5, strata = y)
 folds_imb3 <- vfold_cv(peng_imb3, v = 5, strata = y3)
 folds_pca <- vfold_cv(peng_pca, v = 5, strata = y)
 sens_gentoo <- yardstick::metric_tweak("sens", sens, event_level = "second")

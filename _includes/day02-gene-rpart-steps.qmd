@@ -1,4 +1,4 @@
-**Gene × disease — decision trees (`rpart`)** on the same simulation as Monday ([logistic notebook](../notebooks/logistic-regression-gene-disease.Rmd)).
+**Gene × disease — decision trees (`rpart`)** on the same simulation as Monday ([logistic notebook](../notebooks/logistic-regression-gene-disease.html)).
 
 ```{r}
 #| label: day02-gene-rpart-setup

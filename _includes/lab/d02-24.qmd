@@ -2,4 +2,4 @@
 **Add logistic regression** — second workflow with the **same recipe** and `logistic_reg` + `glm` engine; same train/test split.
 :::
 
-[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)
+[Lab exercises](../exercises/index.html) · [Solution](../exercises/solutions/day02-microbiome-pipeline.html) · [Download Rmd](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day02-microbiome-pipeline.Rmd)

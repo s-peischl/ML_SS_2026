@@ -2,4 +2,4 @@
 **Build the recipe** — log1p on OTUs, `step_zv`, `step_normalize` on the microbiome table (`Label` = Early vs Late).
 :::
 
-[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day02-microbiome-pipeline.Rmd)
+[Lab exercises](../exercises/index.html) · [Solution](../exercises/solutions/day02-microbiome-pipeline.html) · [Download Rmd](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day02-microbiome-pipeline.Rmd)

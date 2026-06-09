@@ -52,7 +52,7 @@ Synthetic **gene** notebooks are there so we **know the true story behind the da
 
 Each deck links back here from the **footer** if you get lost.
 
-**Printable PDF:** open a deck, click **Print PDF** in the footer (or add `?print-pdf` to the URL), then **Save as PDF** in Chrome (Landscape, no margins, background graphics on). See [README — Printable slides](README.md#printable-slides-pdf).
+**Printable PDF:** open a deck, click **Print PDF** in the footer (or add `?print-pdf` to the URL), then **Save as PDF** in Chrome (Landscape, no margins, background graphics on).
 :::
 
 ::: {.hub-card}
@@ -134,6 +134,12 @@ This summer school is hosted by the **[Interfaculty Bioinformatics Unit (IBU)](h
 ### Funding
 
 - **[CUSO](https://deutsch.cuso.ch/willkommen)** — Conférence universitaire de Suisse occidentale (doctoral programme)
+
+::: {.hub-partners}
+<a href="https://deutsch.cuso.ch/willkommen" title="CUSO"><img src="assets/logos/cuso.png" alt="CUSO" class="hub-partner-logo--wide"></a>
+<a href="https://www.sib.swiss" title="SIB Swiss Institute of Bioinformatics"><img src="assets/logos/sib.svg" alt="SIB Swiss Institute of Bioinformatics"></a>
+<a href="https://www.unibe.ch" title="University of Bern"><img src="assets/logos/unibe.svg" alt="University of Bern"></a>
+:::
 :::
 
 ::: {.callout-note collapse="true" appearance="simple"}
@@ -146,7 +152,7 @@ This summer school is hosted by the **[Interfaculty Bioinformatics Unit (IBU)](h
 - **Site output** lives in `_site/`; GitHub Actions builds the same way for Pages.  
 - **Palmer Penguins** — [Data card](data/cards/palmer-penguins.qmd) and [full catalog](data/index.qmd); Day 2 (Tuesday) **modeling pipeline** examples use the same **Adelie vs Gentoo** setup as the penguin classification notebook (implemented with the `tidymodels` R packages).  
 
-- **Single source for the canonical penguin pipeline** — [`_includes/day02-tidymodels-walkthrough.qmd`](_includes/day02-tidymodels-walkthrough.qmd) (Day 2 slides + Chapter 4 via `tidymodels-pipeline.qmd` wrapper).
+- **Single source for the canonical penguin pipeline** — [`day02-tidymodels-walkthrough.qmd`](https://github.com/s-peischl/ML_SS_2026/blob/main/_includes/day02-tidymodels-walkthrough.qmd) (Day 2 slides + Chapter 4 via `tidymodels-pipeline.qmd` wrapper).
 - **Slide reveal mode** — edit `incremental` in [`slides/_reveal-config.yml`](slides/_reveal-config.yml) (`false` = full slide at once; `true` = step-by-step bullets), then re-render the day deck.
 - **Reading chapter (L1/L2, lasso, elastic net)** — [Chapter 2](modules/module-02-regularization.qmd).
 :::

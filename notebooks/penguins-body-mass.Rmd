@@ -1,6 +1,6 @@
 ---
 title: "Palmer Penguins — predicting body mass"
-author: "ML Summer School"
+author: "Aparna Pandey and Stephan Peischl"
 format:
   html:
     toc: true

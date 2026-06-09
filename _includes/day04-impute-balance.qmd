@@ -134,4 +134,4 @@ The workflow accepts **NA** in raw rows; each fold **learns** imputation on anal
 - **Data card:** document NA handling and class prevalence **before** modeling.
 - **Model card:** intended use, limits, monitoring — finish the draft you started Monday.
 
-Continue: [Module 06 — Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.qmd).
+Continue: [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipeline).

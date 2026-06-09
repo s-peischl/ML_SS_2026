@@ -70,4 +70,4 @@ Repeated measures per mouse; **grouped CV** is required.
 5. **Leakage risks** - repeated measures? normalization on full table? selection bias?  
 6. **Subgroups** - sex, batch, island, individual ID - for later fairness checks  
 
-Example student answer: [Day 1 gene simulation solution](../exercises/solutions/day01-data-card-example.qmd).
+Example student answer: [Day 1 gene simulation data card (archived)](https://github.com/s-peischl/ML_SS_2026/blob/main/exercises/solutions/_archive/day01-data-card-example.qmd).

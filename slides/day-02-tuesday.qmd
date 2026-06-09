@@ -23,11 +23,11 @@ format:
 
 ## Navigation
 
-- [Teaching Hub](../index.qmd)
-- [Curriculum Outline](../curriculum-outline.qmd)
-- [Chapter 3  -  Rules and trees](../modules/module-03-trees-and-cultures.qmd)
-- [Chapter 4  -  Modeling workflow](../modules/module-04-pipeline.qmd)
-- [Back: Day 1 (Monday) deck](day-01-monday.qmd)
+- [Teaching Hub](../index.html)
+- [Curriculum Outline](../curriculum-outline.html)
+- [Chapter 3  -  Rules and trees](../modules/module-03-trees-and-cultures.html)
+- [Chapter 4  -  Modeling workflow](../modules/module-04-pipeline.html)
+- [Back: Day 1 (Monday) deck](day-01-monday.html)
 - [Next: Day 4 (Thursday) deck](day-04-thursday.html)
 
 # Part A  -  Two cultures and trees {#part-a-cultures}
@@ -121,7 +121,7 @@ plot_rpart_params_comparison()
 - Visualized as a tree and in the **Gene1 × Gene3** plane (other genes kept constant at their means)
 
 
-- Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
+- Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.html)
 
 ```{r}
 #| label: day02-gene-rpart-setup
@@ -686,9 +686,9 @@ print(
 
 - Continuous **trait** from **GeneA** / **GeneB**  -  same ground truth as Monday's `lm` / lasso block
 - **`rpart(trait ~ GeneA + GeneB, cp = ...)`**  -  sweep **`cp`** from `$cptable` to show how the predicted **surface** and tree change
-- Notebook: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
+- Notebook: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.html)
 
-**Gene × trait  -  regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)): continuous **trait** from **GeneA** and **GeneB**.
+**Gene × trait  -  regression trees (`rpart`)** on the same simulation as Monday ([linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.html)): continuous **trait** from **GeneA** and **GeneB**.
 
 ```{r}
 #| label: day02-trait-rpart-setup
@@ -821,7 +821,7 @@ for (i in seq_along(trait_cps)) {
 - Same story as **Monday**: trait = $-0.5 \times$ **GeneA** $+ 0.8 \times$ **GeneB** + noise (linear truth)
 - **`rpart(trait ~ GeneA + GeneB, ...)`**  -  default **`method = "anova"`** for a numeric $y$ (splits minimize within-node variance)
 - Contrast with disease block: **`method = "class"`** for a factor outcome
-- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.Rmd)
+- Notebook loop over **`cp`** values: [linear-regression-lasso.Rmd](../notebooks/linear-regression-lasso.html)
 
 ## Complexity penalty `cp` (pruning)
 
@@ -936,7 +936,7 @@ Real data for the rest of Tuesday and again on **Thursday**: bill measurements, 
 
 - Monday compared models **on all rows**; today we **hold out** information via **cross-validation** while tuning
 - **One workflow** runs preprocessing + tree on each fold  -  same discipline as the microbiome lab this afternoon
-- Dataset: [Palmer Penguins data card](../data/cards/palmer-penguins.qmd)  -  Adelie vs Gentoo; **bill + island + sex + year**
+- Dataset: [Palmer Penguins data card](../data/cards/palmer-penguins.html)  -  Adelie vs Gentoo; **bill + island + sex + year**
 
 Short **tidyverse** refresher before the `tidymodels` pipeline (same pipe grammar as recipes and workflows).
 

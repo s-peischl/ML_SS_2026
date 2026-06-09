@@ -15,7 +15,7 @@
 
 - **`tune()`** marks hyperparameters for **`tune_grid()`**.
 - Lookup: [tidymodels — find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
-- More depth: [Module 05](../modules/module-05-advanced-models.qmd) · [Module 08](../modules/module-08-penguins-compare-models.qmd).
+- More depth: [parsnip model reference](https://www.tidymodels.org/find/parsnip/) · compare learners in **Part B** on the Day 4 deck.
 
 ## Parsnip: type → engine → mode
 

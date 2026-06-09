@@ -1,6 +1,6 @@
 ---
 title: "Palmer Penguins — multiclass imbalance and upsampling"
-author: "ML Summer School"
+author: "Aparna Pandey and Stephan Peischl"
 format:
   html:
     toc: true

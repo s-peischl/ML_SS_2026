@@ -135,6 +135,6 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
 
 ## Notebook exercise 
 
-Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
+Open any notebook from the [notebook index](../notebooks/index.html) and try **Render** in RStudio.
 
 

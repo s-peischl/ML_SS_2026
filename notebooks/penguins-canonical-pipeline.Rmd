@@ -1,6 +1,6 @@
 ---
 title: "Palmer Penguins — canonical pipeline (three models, three metrics)"
-author: "ML Summer School"
+author: "Aparna Pandey and Stephan Peischl"
 format:
   html:
     toc: true

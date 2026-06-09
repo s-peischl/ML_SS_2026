@@ -2,4 +2,4 @@
 **Compare approaches** — summary table: method × outcome × # predictors × in-sample accuracy; one sentence on PCA+glm vs lasso.
 :::
 
-[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day01-microbiome-classical.Rmd)
+[Lab exercises](../exercises/index.html) · [Solution](../exercises/solutions/day01-microbiome-classical.html) · [Download Rmd](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day01-microbiome-classical.Rmd)

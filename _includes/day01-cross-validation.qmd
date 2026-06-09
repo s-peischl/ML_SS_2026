@@ -23,7 +23,7 @@
 
 ## LOO-CV animation
 
-![](../assets/figures/LOOCV.gif){width=70% fig-align="center"}
+![](../assets/figures/LOOCV.gif){width=50% fig-align="center"}
 
 *Animation: [LOOCV.gif](https://commons.wikimedia.org/wiki/File:LOOCV.gif) by MBanuelos22, Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).*
 
@@ -45,4 +45,4 @@
 
 - Try many **$\lambda$** values; for each, `cv.glmnet` averages **LOO** prediction error.
 - **`lambda.min`**: lowest CV error; **`lambda.1se`**: simpler model within one standard error of the minimum (our default).
-- Lab [1D](../exercises/solutions/day01-manual-kfold-cv.Rmd): manual **5-fold** loop vs `cv.glmnet` — same idea, different $k$.
+- Lab **1D** (optional): manual **5-fold** loop vs `cv.glmnet` — same idea, different $k$. Archived write-up: [manual k-fold CV](https://github.com/s-peischl/ML_SS_2026/blob/main/exercises/solutions/_archive/day01-manual-kfold-cv.Rmd).

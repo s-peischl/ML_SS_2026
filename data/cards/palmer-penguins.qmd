@@ -113,11 +113,10 @@ These are **not** separate field datasets. Instructors build them from `penguins
 | Object | What it is | Typical *n* / notes |
 |--------|------------|---------------------|
 | **`peng_cls` / `peng_bal`** | Adelie + Gentoo only; outcome `y`; predictors bill length/depth, island, sex, year; **no** flipper or body mass; `drop_na()` | ~219 rows |
-| **`peng_imb`** | Binary teaching slice (Adelie/Gentoo) with **downsampled Gentoo** for rare-event metric intuition | ~209 Adelie, ~10 Gentoo |
-| **`peng_imb3`** | Multiclass teaching slice with **rare Chinstrap** (deterministic retention of 15 rows closest to Adelie cloud) for upsampling demos | ~146 Adelie, ~119 Gentoo, ~15 Chinstrap |
+| **`peng_imb3`** | **Three-species** slice with **downsampled Chinstrap** (deterministic retention of 15 rows closest to Adelie cloud) for imbalance / upsampling demos | ~146 Adelie, ~119 Gentoo, ~15 Chinstrap |
 | **`peng_na`** | Copy of balanced slice with **injected NA** on `bill_length_mm` (~22 rows) and `sex` (~5 rows), `set.seed(4)` | For imputation demos only |
 | **`peng_pca`** | Adelie + Gentoo with **flipper and body mass kept** for PCA recipe step | ~219 after `drop_na()` |
 
-**Leakage note for slices:** artificial NA and imbalance are **for teaching**. In a model card, state that prevalence and missingness on `peng_imb` / `peng_imb3` / `peng_na` do **not** match the wild population.
+**Leakage note for slices:** artificial NA and imbalance are **for teaching**. In a model card, state that prevalence and missingness on `peng_imb3` / `peng_na` do **not** match the wild population.
 
 {{< include _footer.qmd >}}

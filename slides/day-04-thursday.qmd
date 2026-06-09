@@ -23,11 +23,9 @@ format:
 
 ## Navigation
 
-- [Teaching Hub](../index.qmd)
-- [Curriculum Outline](../curriculum-outline.qmd)
-- [Chapter 5  -  Advanced models](../modules/module-05-advanced-models.qmd)
-- [Chapter 8  -  Compare learners](../modules/module-08-penguins-compare-models.qmd)
-- [Back: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
+- [Teaching Hub](../index.html)
+- [Curriculum Outline](../curriculum-outline.html)
+- [Back: Day 2 (Tuesday) deck](day-02-tuesday.html)
 
 ## Terms used today (abbreviations)
 
@@ -118,11 +116,6 @@ rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_acc)
 
 # Teaching scenarios
 set.seed(4)
-peng_imb <- peng_bal |>
-  group_by(y) |>
-  filter(y == "Adelie" | (y == "Gentoo" & dplyr::row_number() <= 10L)) |>
-  ungroup()
-
 peng_imb3 <- prep_penguins_multiclass_imbalance(
   minority_class = "Chinstrap",
   hard_to_class = "Adelie",
@@ -146,7 +139,6 @@ peng_pca <- palmerpenguins::penguins |>
   dplyr::select(-species) |>
   tidyr::drop_na()
 
-folds_imb <- vfold_cv(peng_imb, v = 5, strata = y)
 folds_imb3 <- vfold_cv(peng_imb3, v = 5, strata = y3)
 folds_pca <- vfold_cv(peng_pca, v = 5, strata = y)
 # Gentoo = positive class for sens/spec (yardstick default = first level = Adelie)
@@ -431,14 +423,14 @@ We deliberately stress the penguins in three ways:
 #| label: day04-scenarios-show
 #| echo: false
 #| message: false
-dplyr::count(peng_imb, y, name = "n")
+dplyr::count(peng_imb3, y3, name = "n")
 sum(is.na(peng_na$bill_length_mm))
 ncol(peng_pca)
 ```
 
 | Object | Stress | Recipe extension (Part C) |
 |--------|--------|---------------------------|
-| **`peng_imb`** | Rare Gentoo (~10 vs ~150 Adelie) | `step_upsample(y)`  -  when it helps |
+| **`peng_imb3`** | **Three species**; **downsampled Chinstrap** (~15 Chinstrap vs abundant Adelie & Gentoo) | `step_upsample(y3)`  -  Part E metrics |
 | **`peng_na`** | Missing bill length and some `sex` | `step_impute_*()` |
 | **`peng_pca`** | Extra size measures (correlated) | `step_pca()` |
 
@@ -466,7 +458,7 @@ ncol(peng_pca)
 - **`mtry`**: number of predictors considered at each split (RF only).
 - **`tune()`** marks hyperparameters for **`tune_grid()`**.
 - Lookup: [tidymodels  -  find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
-- More depth: [Module 05](../modules/module-05-advanced-models.qmd) · [Module 08](../modules/module-08-penguins-compare-models.qmd).
+- More depth: [parsnip model reference](https://www.tidymodels.org/find/parsnip/) · compare learners in **Part B** on this deck.
 
 ## Parsnip: type → engine → mode
 
@@ -595,7 +587,7 @@ cmp_ens |>
 
 {{< include ../_includes/lab/d04-42.qmd >}}
 
-Fixed settings here for speed  -  in projects, wrap each spec in **`tune_grid()`** like [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).
+Fixed settings here for speed  -  in projects, wrap each spec in **`tune_grid()`** like [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipeline).
 
 ## Boosting: watch the boundary sharpen
 
@@ -840,7 +832,7 @@ print(
 )
 ```
 
-Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).
+Three-way comparison: see the **cross-validated accuracy** bar chart above.
 
 ## Bridge: from model choice to feature engineering
 
@@ -1184,7 +1176,7 @@ The workflow accepts **NA** in raw rows; each fold **learns** imputation on anal
 - **Data card:** document NA handling and class prevalence **before** modeling.
 - **Model card:** intended use, limits, monitoring  -  finish the draft you started Monday.
 
-Continue: [Module 06  -  Metrics & SHAP](../modules/module-06-evaluation-and-interpretability.qmd) · [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.qmd).
+Continue: [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipeline).
 
 # Part E  -  Imbalance, metrics, and confusion matrices {#part-e-metrics}
 
@@ -1384,7 +1376,7 @@ rf_fit |>
 
 ## Permutation importance (pointer)
 
-- **Permutation importance**: shuffle one column, watch metric drop  -  model-agnostic; see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
+- **Permutation importance**: shuffle one column, watch metric drop  -  model-agnostic; see the **VIP plot** above and the [SHAP notebook](../notebooks/penguins-shap.html).
 
 {{< include ../_includes/day04-shap-sex.qmd >}}
 

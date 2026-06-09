@@ -49,7 +49,7 @@ This outline links to **[afternoon lab exercises](exercises/index.qmd)** (number
 ### Sequence
 
 1. Breiman **two cultures**; **gene `rpart`** (classification + regression)
-2. **Incremental pipeline walkthrough** on penguins ([`day02-tidymodels-walkthrough.qmd`](_includes/day02-tidymodels-walkthrough.qmd) — also Module 04)
+2. **Incremental pipeline walkthrough** on penguins ([`day02-tidymodels-walkthrough.qmd`](https://github.com/s-peischl/ML_SS_2026/blob/main/_includes/day02-tidymodels-walkthrough.qmd) — also Module 04)
 3. **`tune_grid`** for `tree_depth` and `min_n`; tuning plot, tree plot, light VIP
 4. Microbiome lab: same grammar on OTU data (grouped CV)
 

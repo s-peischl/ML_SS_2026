@@ -1,5 +1,5 @@
 
-- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.html)
 
 ```{r}
 #| label: day01-trait-libs
@@ -141,7 +141,7 @@ ggplot(coef_tbl, aes(x = estimate, y = reorder(gene, estimate))) +
   geom_vline(xintercept = 0, linetype = 2, color = "gray50") +
   geom_pointrange(aes(xmin = lo, xmax = hi), fatten = 3) +
   labs(
-    title = "OLS coefficients ± 95% CI (all predictors)",
+    title = "OLS coefficients +/- 95% CI (all predictors)",
     x = "Effect on trait (scaled gene units)", y = NULL
   ) +
   theme_minimal()
@@ -219,9 +219,9 @@ cat("**Backward AIC formula:** `", fmt_f(formula(backward_model)), "`\n\n", sep 
 cat("**Forward AIC formula:** `", fmt_f(formula(forward_model)), "`\n\n", sep = "")
 ```
 
-## AIC vs full OLS: coefficients (±2 SE)
+## AIC vs full OLS: coefficients (+/- 2 SE)
 
-Dashed lines: known effects for **GeneB** (0.8) and **GeneA** (−0.5).
+Dashed lines: known effects for **GeneB** (0.8) and **GeneA** (-0.5).
 
 ```{r}
 #| label: day01-aic-coef-compare

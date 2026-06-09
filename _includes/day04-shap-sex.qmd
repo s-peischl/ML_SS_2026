@@ -11,7 +11,7 @@ $$\phi_0 + \sum_j \phi_{i,j} \approx \hat{p}_i(\text{male})$$
 
 ## SHAP task  -  sex without `species`
 
-- **Outcome:** `sex` (female / male). **`species` is omitted** on purpose so the task is not trivial (see [sex notebook](../notebooks/penguins-sex-classification.Rmd)).
+- **Outcome:** `sex` (female / male). **`species` is omitted** on purpose so the task is not trivial (see [sex notebook](../notebooks/penguins-sex-classification.html)).
 - **Model:** same **`recipe` + random forest (`ranger`)** pattern as Tuesday; we **fit on all complete rows** here so SHAP curves are stable in class (in production, fit SHAP on training data only).
 - **Packages:** **`shapviz`** for plots; **`kernelshap`** to compute values on the fitted **`ranger`** forest.
 
@@ -181,10 +181,10 @@ plot_shap_waterfall(
 
 **Avoid**
 
-- "Bill length **causes** males"  -  observational data; morphometrics are **correlated** ([data card](../data/cards/palmer-penguins.qmd)).
+- "Bill length **causes** males"  -  observational data; morphometrics are **correlated** ([data card](../data/cards/palmer-penguins.html)).
 - "We should **intervene** on flipper length"  -  policy from association.
 - "SHAP proves **fairness** by island"  -  needs explicit subgroup metrics, not one plot.
 
 **Humility prompt (assessment):** *What would you **not** claim from this SHAP beeswarm?*
 
-Full write-up: [Module 06  -  SHAP](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex)
+Full write-up: [SHAP notebook](../notebooks/penguins-shap.html)

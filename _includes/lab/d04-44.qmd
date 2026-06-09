@@ -2,4 +2,4 @@
 **SHAP values** — kernel SHAP on a **top-10 VIP** forest only; beeswarm for a dozen microbiome samples.
 :::
 
-[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)
+[Lab exercises](../exercises/index.html) · [Solution](../exercises/solutions/day04-microbiome-advanced.html) · [Download Rmd](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day04-microbiome-advanced.Rmd)

@@ -79,4 +79,4 @@ cmp_ens |>
   )
 ```
 
-Fixed settings here for speed — in projects, wrap each spec in **`tune_grid()`** like [Module 04](../modules/module-04-pipeline.qmd#canonical-pipeline-tuesday).
+Fixed settings here for speed — in projects, wrap each spec in **`tune_grid()`** like [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipeline).

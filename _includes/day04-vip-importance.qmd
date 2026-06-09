@@ -43,6 +43,6 @@ rf_fit |>
   )
 ```
 
-**Model-agnostic alternative:** **permutation importance** (shuffle one column, watch metric drop) — see [Module 06](../modules/module-06-evaluation-and-interpretability.qmd).
+**Model-agnostic alternative:** **permutation importance** (shuffle one column, watch metric drop) — see the **VIP plot** on the Day 4 deck.
 
-**Local explanations:** [SHAP on sex (slides)](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition) · [Module 06](../modules/module-06-evaluation-and-interpretability.qmd#shap-shapley-values-on-penguins-sex) — treat as **communication**, not intervention.
+**Local explanations:** [SHAP on sex (slides)](../slides/day-04-thursday.html#/shap---what-it-means-game-theory-intuition) · [SHAP notebook](../notebooks/penguins-shap.html) — treat as **communication**, not intervention.

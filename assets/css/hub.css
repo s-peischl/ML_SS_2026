@@ -292,3 +292,40 @@ img.hub-inline-icon {
 .hub-icon-soft {
   color: var(--hub-muted);
 }
+
+/* --- Partner logos (subtle footer strip) --- */
+.hub-partners {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 1.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--hub-card-border);
+}
+
+.hub-partners a {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  opacity: 0.55;
+  filter: grayscale(100%);
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.hub-partners a:hover {
+  opacity: 0.85;
+  filter: grayscale(40%);
+}
+
+.hub-partners img {
+  display: block;
+  height: 1.65rem;
+  width: auto;
+  max-width: 7.5rem;
+  object-fit: contain;
+}
+
+.hub-partners img.hub-partner-logo--wide {
+  max-width: 5.5rem;
+}

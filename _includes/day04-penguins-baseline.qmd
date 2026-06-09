@@ -6,13 +6,13 @@ We deliberately stress the penguins in three ways — document real prevalence a
 #| label: day04-scenarios-show
 #| echo: true
 #| message: false
-dplyr::count(peng_imb, y, name = "n")
+dplyr::count(peng_imb3, y3, name = "n")
 sum(is.na(peng_na$bill_length_mm))
 ncol(peng_pca)
 ```
 
 | Object | Stress | Recipe extension (Part C) |
 |--------|--------|---------------------------|
-| **`peng_imb`** | Rare Gentoo (~10 vs ~150 Adelie) | `step_upsample(y)` — when it helps |
+| **`peng_imb3`** | **Three species**; **downsampled Chinstrap** (~15 Chinstrap vs abundant Adelie & Gentoo) | `step_upsample(y3)` — Part E metrics |
 | **`peng_na`** | Missing bill length and some `sex` | `step_impute_*()` |
 | **`peng_pca`** | Extra size measures (correlated) | `step_pca()` |

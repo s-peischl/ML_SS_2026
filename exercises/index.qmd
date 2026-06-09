@@ -33,7 +33,7 @@ More detail: [microbiome data card](../data/cards/microbiome-mouse-16s.qmd).
 
 ## Day 1 (Monday afternoon) — classical R
 
-**Slides:** [Day 1 (Monday)](../slides/day-01-monday.html) · **Solution:** [HTML](solutions/day01-microbiome-classical.html) · [Download `.Rmd`](solutions/day01-microbiome-classical.Rmd)
+**Slides:** [Day 1 (Monday)](../slides/day-01-monday.html) · **Solution:** [HTML](solutions/day01-microbiome-classical.html) · [Download `.Rmd`](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day01-microbiome-classical.Rmd)
 
 Morning lecture uses **gene simulations**; the afternoon applies the same **classical** tools (PCA, logistic regression, AIC, lasso) to microbiome data. You will model **`Label`** (Early vs Late) and then **`Sex`** (`F` vs `M`).
 
@@ -95,7 +95,7 @@ Build a small summary table: outcome (`Label` / `Sex`), method (GLM on PCs, step
 
 ## Day 2 (Tuesday afternoon) — tidymodels pipeline
 
-**Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.html#part-c-pipeline) · **Solution:** [HTML](solutions/day02-microbiome-pipeline.html) · [Download `.Rmd`](solutions/day02-microbiome-pipeline.Rmd)
+**Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.html#part-c-pipeline) · **Solution:** [HTML](solutions/day02-microbiome-pipeline.html) · [Download `.Rmd`](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day02-microbiome-pipeline.Rmd)
 
 Today you rebuild the analysis as a **`recipe` → `workflow` → fit** pipeline, as on Palmer Penguins in the morning. **Outcome:** **`Label`** (Early vs Late) only.
 
@@ -135,7 +135,7 @@ Collect **accuracy** (and optionally ROC AUC) for tree vs logistic on the **test
 
 ## Day 4 (Thursday afternoon) — models and interpretation
 
-**Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html) · **Solution:** [HTML](solutions/day04-microbiome-advanced.html) · [Download `.Rmd`](solutions/day04-microbiome-advanced.Rmd)
+**Slides:** [Day 4 (Thursday)](../slides/day-04-thursday.html) · **Solution:** [HTML](solutions/day04-microbiome-advanced.html) · [Download `.Rmd`](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day04-microbiome-advanced.Rmd)
 
 You compare several **`parsnip`** learners on the same microbiome recipe, then interpret one **random forest** with VIP and SHAP.
 
@@ -181,4 +181,4 @@ No afternoon lab block (symposium).
 
 ## Older block solutions
 
-Previous A–F block notebooks are in [`solutions/_archive/`](solutions/_archive/) for reference.
+Previous A–F block notebooks are in [solutions/_archive/](https://github.com/s-peischl/ML_SS_2026/tree/main/exercises/solutions/_archive) on GitHub for reference.

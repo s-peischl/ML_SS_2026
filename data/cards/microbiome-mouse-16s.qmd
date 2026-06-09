@@ -36,7 +36,7 @@ Public CSVs from the Quadram Institute workshop (see URLs below). Join metadata 
 ## Where we use this
 
 - [Lab exercises](../../exercises/index.qmd) — Day 1 (classical), Day 2 (tidymodels), Day 4 (models + VIP/SHAP)
-- Solutions: [Day 1](../../exercises/solutions/day01-microbiome-classical.Rmd), [Day 2](../../exercises/solutions/day02-microbiome-pipeline.Rmd), [Day 4](../../exercises/solutions/day04-microbiome-advanced.Rmd)
+- Solutions: [Day 1](../../exercises/solutions/day01-microbiome-classical.html), [Day 2](../../exercises/solutions/day02-microbiome-pipeline.html), [Day 4](../../exercises/solutions/day04-microbiome-advanced.html) ([Rmd on GitHub](https://github.com/s-peischl/ML_SS_2026/tree/main/exercises/solutions))
 
 ## Caveats
 

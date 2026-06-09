@@ -46,4 +46,4 @@ mlp_cmp |>
   labs(title = "Same recipe — accuracy across specs", x = NULL, y = "Mean accuracy")
 ```
 
-Full three-way comparison: [Module 08](../modules/module-08-penguins-compare-models.qmd).
+Three-way comparison: see the **cross-validated accuracy** bar chart on the Day 4 deck.

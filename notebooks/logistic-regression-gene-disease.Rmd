@@ -1,6 +1,6 @@
 ---
 title: "Gene expression and Disease"
-author: "Stephan Peischl"
+author: "Aparna Pandey and Stephan Peischl"
 date: "2024-05-17"
 format:
   html:

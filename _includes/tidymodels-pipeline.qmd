@@ -2,4 +2,4 @@
 
 {{< include day02-tidymodels-walkthrough.qmd >}}
 
-*Canonical pipeline: edit [`day02-tidymodels-walkthrough.qmd`](day02-tidymodels-walkthrough.qmd) and [`day02-penguins-setup.qmd`](day02-penguins-setup.qmd). When including from `modules/`, use the two paths under `../_includes/` directly (see Module 04).*
+*Canonical pipeline: edit [`day02-tidymodels-walkthrough.qmd`](https://github.com/s-peischl/ML_SS_2026/blob/main/_includes/day02-tidymodels-walkthrough.qmd) and [`day02-penguins-setup.qmd`](https://github.com/s-peischl/ML_SS_2026/blob/main/_includes/day02-penguins-setup.qmd). When including from `modules/`, use the two paths under `../_includes/` directly (see Module 04).*

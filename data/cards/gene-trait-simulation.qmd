@@ -27,8 +27,8 @@ data_trait <- as.data.frame(cbind(gene_data, trait))
 ## Where we use this
 
 - [linear-regression-lasso.Rmd](../../notebooks/linear-regression-lasso.Rmd) — LASSO, AIC stepwise, train/test
-- [Day 1 slides](../../slides/day-01-monday.qmd) — linear models, regularization, correlation heatmap
-- [Day 2 slides](../../slides/day-02-tuesday.qmd) — regression trees on GeneA x GeneB slice
+- [Day 1 slides](../../slides/day-01-monday.html) — linear models, regularization, correlation heatmap
+- [Day 2 slides](../../slides/day-02-tuesday.html) — regression trees on GeneA x GeneB slice
 
 ## Caveats
 

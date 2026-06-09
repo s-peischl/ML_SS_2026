@@ -16,10 +16,10 @@ format:
 
 ## Navigation
 
-- [Teaching Hub](../index.qmd)
-- [Curriculum Outline](../curriculum-outline.qmd)
-- [Reading companion](../modules/index.qmd)
-- [Next: Day 2 (Tuesday) deck](day-02-tuesday.qmd)
+- [Teaching Hub](../index.html)
+- [Curriculum Outline](../curriculum-outline.html)
+- [Reading companion](../modules/index.html)
+- [Next: Day 2 (Tuesday) deck](day-02-tuesday.html)
 
 
 # Part A  -  Setup
@@ -32,7 +32,7 @@ format:
 - **tidymodels**  -  recipes, workflows, and resampling for modeling pipelines (**Tuesday onward**); **Monday** stays mostly familiar **`lm`** / **`glm`**  
 - Install **`palmerpenguins`** before Tuesday  -  we use it in the penguin notebooks, not in today's gene simulations  
 
-Details and installs: [Student notebooks](../notebooks/index.qmd) 
+Details and installs: [Student notebooks](../notebooks/index.html) 
 
 ## Overview
 
@@ -113,7 +113,7 @@ R.version.string
 
 ## Old Faithful  -  our ggplot demo data
 
-The built-in **`faithful`** table records **eruption duration** and **waiting time** between eruptions at Yellowstone (minutes). [Data card](../data/cards/old-faithful.qmd)
+The built-in **`faithful`** table records **eruption duration** and **waiting time** between eruptions at Yellowstone (minutes). [Data card](../data/cards/old-faithful.html)
 
 ![](../assets/figures/shared/old_faithful.jpg){width=72% fig-align="center"}
 
@@ -198,7 +198,7 @@ ggplot(faithful_df, aes(x = eruptions, y = waiting)) +
 
 ## Notebook exercise 
 
-Open any notebook from the [notebook index](../notebooks/index.qmd) and try **Render** in RStudio.
+Open any notebook from the [notebook index](../notebooks/index.html) and try **Render** in RStudio.
 
 ## Bridge: from tooling to modeling
 
@@ -439,7 +439,7 @@ theme_set(theme_classic())
 
 ## The data (`MASS::cement`)
 
-[Data card](../data/cards/hald-cement.qmd)
+[Data card](../data/cards/hald-cement.html)
 
 ```{r}
 #| label: day01-hald-table
@@ -586,32 +586,11 @@ Strong negative pairs: **x2-x4** ($r \approx -0.97$), **x1-x3** ($r \approx -0.8
 - GeneC and GeneD are noise genes that are correlated with the trait but do not contribute causally. 
 - GeneJ is in strongly correlated to GeneA but not causally linked to the trait. 
 - Other genes act as irrelevant noise variables or have correlations among themselves.
-- trait = −0.5 ∗ GeneA + 0.8 ∗ GeneB + N(0,0.3)
-- more details: [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
+- `trait = -0.5 * GeneA + 0.8 * GeneB + N(0, 0.3)`
+- more details: [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.html)
 
 
-## Illustration of data and linear model
-- Points: simulated data
-- Color gradient: ground truth expectation without noise
-![](../assets/figures/01_lin_trait.png){#fig-my-image width=40% fig-align="center"}
-
-## Pairwise Plots
-
-Distribution of explanatory variables (gene expression levels) and response variable (quantitative trait)
-
-![](../assets/figures/01_trait_corr.png){#fig-my-image width=60% fig-align="center"}
-
-
-
-## Overfitting vs underfitting
-
-- **Underfitting:** model too simple  -  high error even on data used to fit (e.g. intercept-only, ignores genes)  
-- **Overfitting risk:** model very flexible  -  can fit noise; unstable coefficients when predictors overlap  
-
-- **Null model** (`trait ~ 1`): one parameter, ignores all genes → underfitting  
-- **Full model** (`trait ~ .`): all genes → lower training error, but many correlated predictors → shaky $\hat{\beta}_j$  
-- **Goal:** find a complexity level that balances fit and stability  
-
+## Gene × trait: the dataset
 
 ```{r}
 #| label: day01-trait-libs
@@ -637,9 +616,6 @@ knitr::opts_chunk$set(
   dpi = 120
 )
 ```
-
-## Gene × trait: the dataset
-
 
 ```{r}
 #| label: day01-linear-sim-data
@@ -719,18 +695,20 @@ ggplot() +
   ) +
   geom_point(
     data = trait_df,
-    aes(GeneA, GeneB),
+    aes(GeneA, GeneB, fill = trait),
+    shape = 21,
     color = "black",
-    size = 2.2,
-    alpha = 0.75
+    size = 2.8,
+    stroke = 0.35,
+    alpha = 0.92
   ) +
   scale_fill_gradient2(low = "turquoise", mid = "white", high = "magenta", midpoint = 0) +
   theme_minimal(base_size = 14) +
   labs(
-    title = "Known generating surface: trait = −0.5·GeneA + 0.8·GeneB + noise",
+    title = "Known generating surface: trait = -0.5 * GeneA + 0.8 * GeneB + noise",
     x = "GeneA",
     y = "GeneB",
-    fill = "E(trait)"
+    fill = "trait"
   )
 ```
 
@@ -745,6 +723,24 @@ X_s <- as.matrix(dplyr::select(data_scaled, -trait))
 y <- data_scaled$trait
 n_obs <- nrow(data_scaled)
 ```
+
+
+## Pairwise Plots
+
+Distribution of explanatory variables (gene expression levels) and response variable (quantitative trait)
+
+![](../assets/figures/01_trait_corr.png){#fig-my-image width=60% fig-align="center"}
+
+
+
+## Overfitting vs underfitting
+
+- **Underfitting:** model too simple  -  high error even on data used to fit (e.g. intercept-only, ignores genes)  
+- **Overfitting risk:** model very flexible  -  can fit noise; unstable coefficients when predictors overlap  
+
+- **Null model** (`trait ~ 1`): one parameter, ignores all genes → underfitting  
+- **Full model** (`trait ~ .`): all genes → lower training error, but many correlated predictors → shaky $\hat{\beta}_j$  
+- **Goal:** find a complexity level that balances fit and stability  
 
 ## Null model (intercept only)
 
@@ -802,7 +798,7 @@ ggplot(coef_tbl, aes(x = estimate, y = reorder(gene, estimate))) +
   geom_vline(xintercept = 0, linetype = 2, color = "gray50") +
   geom_pointrange(aes(xmin = lo, xmax = hi), fatten = 3) +
   labs(
-    title = "OLS coefficients ± 95% CI (all predictors)",
+    title = "OLS coefficients +/- 95% CI (all predictors)",
     x = "Effect on trait (scaled gene units)", y = NULL
   ) +
   theme_minimal()
@@ -815,7 +811,7 @@ ggplot(coef_tbl, aes(x = estimate, y = reorder(gene, estimate))) +
 - **Forward** starts at the intercept-only model and adds terms greedily up to the full model.  
 
 
-- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.html)
 
 
 ## Null vs full: in-sample fit
@@ -890,9 +886,9 @@ cat("**Backward AIC formula:** `", fmt_f(formula(backward_model)), "`\n\n", sep 
 cat("**Forward AIC formula:** `", fmt_f(formula(forward_model)), "`\n\n", sep = "")
 ```
 
-## AIC vs full OLS: coefficients (±2 SE)
+## AIC vs full OLS: coefficients (+/- 2 SE)
 
-Dashed lines: known effects for **GeneB** (0.8) and **GeneA** (−0.5).
+Dashed lines: known effects for **GeneB** (0.8) and **GeneA** (-0.5).
 
 ```{r}
 #| label: day01-aic-coef-compare
@@ -1121,7 +1117,7 @@ We can predict binary outcomes using logistic regression
 - Classify with a **threshold** probability (often 0.5)  
 - Same modeling workflow as in the qualitative-trait notebook: **null → full → AIC → lasso** on all samples  
 
-Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.Rmd)
+Notebook: [logistic-regression-gene-disease.Rmd](../notebooks/logistic-regression-gene-disease.html)
 
 ## Afternoon lab — Task 1.3
 
@@ -1377,9 +1373,9 @@ knitr::kable(
 Have a look at notebooks. Open one and try to render in RStudio.
 
 
-- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.Rmd)  
-- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.Rmd)  
-- **Index:** [notebooks/index.qmd](../notebooks/index.qmd)  
+- [Linear regression + LASSO (genes)](../notebooks/linear-regression-lasso.html)  
+- [Logistic regression + tree (genes)](../notebooks/logistic-regression-gene-disease.html)  
+- **Index:** [notebooks/index.qmd](../notebooks/index.html)  
 
 ## End-of-day checklist 
 

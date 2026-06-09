@@ -2,4 +2,4 @@
 **Shared recipe** — Day 2-style recipe on microbiome; metadata in **id** role; ready to swap the `spec`.
 :::
 
-[Lab exercises](../../exercises/index.html) · [Solution (Rmd)](../../exercises/solutions/day04-microbiome-advanced.Rmd)
+[Lab exercises](../exercises/index.html) · [Solution](../exercises/solutions/day04-microbiome-advanced.html) · [Download Rmd](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day04-microbiome-advanced.Rmd)
