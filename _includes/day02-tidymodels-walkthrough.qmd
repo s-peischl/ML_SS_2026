@@ -1,3 +1,5 @@
+**Computing reference:** [Applied Machine Learning for Tabular Data — tidymodels supplement](https://tidymodels.aml4td.org/)
+
 ## Palmer Penguins: one table, one model family (trees)
 
 - **Outcome `y`:** Adelie vs Gentoo (complete cases).

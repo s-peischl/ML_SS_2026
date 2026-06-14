@@ -924,6 +924,8 @@ knitr::kable(
 
 # Part C  -  Palmer Penguins: tidymodels pipeline (trees only) {#part-c-pipeline}
 
+**Computing reference:** [Applied Machine Learning for Tabular Data — tidymodels supplement](https://tidymodels.aml4td.org/)
+
 ## Meet the Palmer penguins
 
 Real data for the rest of Tuesday and again on **Thursday**: bill measurements, species labels, and honest evaluation.

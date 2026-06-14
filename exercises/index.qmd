@@ -47,6 +47,47 @@ With **p ≫ n**, a plain logistic regression on every OTU column is not stable 
 
 Merge the metadata and OTU table on `sample_id`, transpose counts to a sample × OTU matrix, and drop low-prevalence OTUs. Print table dimensions and `table()` of `Label`, `Sex`, and how many unique mice (`Individual`) you have.
 
+You do **not** need to clone GitHub or browse the repo in a browser — R can read the CSVs directly from their public URLs (same files linked in [The data](#the-data--schloss-mouse-16s) above). Paste the block below into a new script in RStudio and run it line by line.
+
+```{r}
+#| eval: false
+#| echo: true
+# install.packages(c("readr", "dplyr"))   # once, if needed
+library(readr)
+library(dplyr)
+
+base_url <- "https://raw.githubusercontent.com/quadram-institute-bioscience/datasciencegroup/main/4_machine_learning/mouse-16s"
+
+meta <- read_csv(paste0(base_url, "/metadata.csv"), show_col_types = FALSE) |>
+  rename(sample_id = `#NAME`)
+
+otu_raw <- read_csv(paste0(base_url, "/otutab_raw.csv"), show_col_types = FALSE)
+otu_mat <- t(as.matrix(otu_raw[, -1]))
+colnames(otu_mat) <- otu_raw$`#NAME`
+
+# Align metadata and counts (samples = rows, OTUs = columns)
+meta <- filter(meta, sample_id %in% rownames(otu_mat))
+otu_mat <- otu_mat[meta$sample_id, , drop = FALSE]
+
+# Drop OTUs present in fewer than 10% of samples
+prev <- 0.10
+otu_mat <- otu_mat[, colMeans(otu_mat > 0) >= prev, drop = FALSE]
+
+mic <- bind_cols(
+  sample_id = meta$sample_id,
+  Individual = meta$Individual,
+  Label = factor(meta$Label, levels = c("Early", "Late")),
+  Sex = meta$Sex,
+  Day = meta$Day,
+  as.data.frame(otu_mat)
+)
+
+dim(mic)
+table(mic$Label)
+table(mic$Sex, useNA = "ifany")
+length(unique(mic$Individual))
+```
+
 *Do after:* [Part A — Setup](../slides/day-01-monday.html) (*Load data: built-in table*).
 
 ### 1.2 Transform counts

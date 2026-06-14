@@ -38,6 +38,8 @@ pg |>
 
 ## Same grammar in `tidymodels`
 
+**Computing reference:** [Applied Machine Learning for Tabular Data — tidymodels supplement](https://tidymodels.aml4td.org/)
+
 - **Table pipelines:** `penguins |> filter(...) |> mutate(...)`
 - **Preprocessing:** `recipe(y ~ ., data = train) |> step_dummy() |> step_normalize()`
 - **Modeling objects:** `workflow() |> add_recipe(rec) |> add_model(spec)` — here you chain **objects**, not tables, but the **read left-to-right** habit is the same
