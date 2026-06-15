@@ -3,20 +3,32 @@ title: "Solution — Day 2 microbiome (tidymodels pipeline)"
 format:
   html:
     toc: true
+    toc_depth: 3
     code-tools: true
 ---
 
-Tasks **2.1–2.5** on the [lab exercises page](../index.qmd). Outcome: **`Label`** (Early vs Late).
+Tasks **2.1–2.5** on the [lab exercises page](../index.qmd). Outcome: **`Label`** (Early vs Late). Same **`recipe` → `workflow` → fit** pattern as the Palmer Penguins deck; here we also contrast **training-set** vs **held-out test** metrics for logistic regression.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  dpi = 120
+)
 suppressPackageStartupMessages({
   library(tidymodels)
   library(dplyr)
   library(ggplot2)
+  library(tidyr)
+  library(patchwork)
 })
-theme_set(theme_minimal())
+theme_set(theme_minimal(base_size = 13))
 source("_load_microbiome.R")
+
+class_metrics <- metric_set(accuracy, precision, recall, roc_auc)
+late_event <- "second" # Label levels: Early, Late → Late is the positive class
 ```
 
 ## 2.1 Recipe
@@ -26,6 +38,8 @@ set.seed(7)
 mic <- load_microbiome()
 otu_cols <- mic_otu_cols(mic)
 mic_model <- mic |> select(Label, all_of(otu_cols))
+
+table(mic_model$Label)
 ```
 
 ```{r recipe}
@@ -45,17 +59,42 @@ tree_spec <- decision_tree(tree_depth = 4, min_n = 10) |>
 tree_spec
 ```
 
-## 2.3 Train / test — tree
+## 2.3 Train / test split
+
+We hold out **25%** of rows for a stratified test set. The recipe is **prepped on training rows only** when we `fit()` — that is the leakage-safe pattern from the slides.
 
 ```{r split}
 split <- initial_split(mic_model, prop = 0.75, strata = Label)
+train <- training(split)
+test <- testing(split)
+
+tibble(
+  set = c("Train", "Test"),
+  n = c(nrow(train), nrow(test)),
+  pct_late = c(mean(train$Label == "Late"), mean(test$Label == "Late"))
+) |>
+  knitr::kable(digits = 3, caption = "Split sizes and Late prevalence")
+```
+
+```{r split-plot, fig.width=7, fig.height=3.5}
+bind_rows(
+  train |> mutate(set = "Train"),
+  test |> mutate(set = "Test")
+) |>
+  ggplot(aes(set, fill = Label)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(title = "Class balance in train vs test", x = NULL, y = "Proportion")
+```
+
+```{r tree-workflow}
 wf_tree <- workflow() |> add_recipe(rec) |> add_model(tree_spec)
-metrics_cls <- metric_set(accuracy, roc_auc)
 ```
 
 ```{r tree-fit}
 set.seed(7)
-fit_tree <- last_fit(wf_tree, split, metrics = metrics_cls)
+fit_tree <- last_fit(wf_tree, split, metrics = class_metrics)
 collect_metrics(fit_tree)
 ```
 
@@ -70,30 +109,120 @@ wf_log <- workflow() |> add_recipe(rec) |> add_model(log_spec)
 
 ```{r glm-fit}
 set.seed(7)
-fit_log <- last_fit(wf_log, split, metrics = metrics_cls)
+fit_log <- last_fit(wf_log, split, metrics = class_metrics)
 collect_metrics(fit_log)
 ```
 
-## 2.5 Compare on test set
+Fit once on the **training set** so we can score the same model on train and test rows explicitly.
+
+```{r glm-fit-train}
+set.seed(7)
+fitted_log <- fit(wf_log, train)
+pred_train <- augment(fitted_log, train)
+pred_test <- augment(fitted_log, test)
+```
+
+## 2.5 Compare models on the test set
 
 ```{r compare}
 cmp <- bind_rows(
   collect_metrics(fit_tree) |> mutate(model = "Decision tree (rpart)"),
   collect_metrics(fit_log) |> mutate(model = "Logistic regression")
 ) |>
+  filter(.metric %in% c("accuracy", "precision", "roc_auc")) |>
   select(model, .metric, .estimate)
-knitr::kable(cmp, digits = 3)
+
+knitr::kable(cmp, digits = 3, caption = "Held-out test metrics (last_fit)")
 ```
 
-```{r compare-plot, fig.width=7, fig.height=4}
+```{r compare-plot, fig.width=8, fig.height=4}
 cmp |>
-  filter(.metric == "accuracy") |>
+  mutate(.metric = recode(.metric, roc_auc = "ROC AUC")) |>
   ggplot(aes(reorder(model, .estimate), .estimate, fill = model)) +
   geom_col(show.legend = FALSE) +
-  labs(title = "Held-out test accuracy (75/25 split)", x = NULL, y = "Accuracy")
+  facet_wrap(~ .metric, scales = "free_x") +
+  coord_flip() +
+  labs(title = "Test-set performance (75/25 split)", x = NULL, y = NULL)
 ```
 
-**Leakage reminder:** rows from the same `Individual` can appear in both train and test with a random split — discuss in class; research workflows use `group_vfold_cv(group = Individual)`.
+## 2.6 Logistic regression — in-sample vs test precision
+
+**Precision** (positive predictive value) answers: among samples we call **Late**, what fraction truly are Late? Training precision is computed on the **same rows used to fit** the model; test precision uses **held-out** rows only. A large gap is a sign of **optimism** — the model may be memorising noise in the training OTUs.
+
+```{r precision-compare}
+score_set <- function(df, set_label) {
+  tibble(
+    set = set_label,
+    accuracy = accuracy_vec(df$Label, df$.pred_class),
+    precision = precision_vec(df$Label, df$.pred_class, event_level = late_event),
+    recall = recall_vec(df$Label, df$.pred_class, event_level = late_event)
+  )
+}
+
+log_scores <- bind_rows(
+  score_set(pred_train, "Train (in-sample)"),
+  score_set(pred_test, "Test (held out)")
+)
+
+knitr::kable(log_scores, digits = 3, caption = "Logistic regression — train vs test")
+```
+
+```{r precision-plot, fig.width=7, fig.height=4}
+log_scores |>
+  pivot_longer(c(accuracy, precision, recall), names_to = "metric", values_to = "value") |>
+  mutate(
+    metric = recode(metric,
+      accuracy = "Accuracy",
+      precision = "Precision (Late)",
+      recall = "Recall (Late)"
+    ),
+    set = factor(set, levels = c("Train (in-sample)", "Test (held out)"))
+  ) |>
+  ggplot(aes(set, value, fill = set)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ metric) +
+  scale_fill_manual(values = c("Train (in-sample)" = "steelblue", "Test (held out)" = "darkorange")) +
+  scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0.05))) +
+  labs(title = "Logistic regression: training vs test metrics", x = NULL, y = NULL)
+```
+
+```{r precision-gap, echo=FALSE, results='asis'}
+train_prec <- log_scores$precision[log_scores$set == "Train (in-sample)"]
+test_prec <- log_scores$precision[log_scores$set == "Test (held out)"]
+cat(
+  sprintf(
+    "Precision drops from **%.3f** on the training set to **%.3f** on the test set (Δ = %.3f). ",
+    train_prec, test_prec, train_prec - test_prec
+  ),
+  "That is expected when **p ≫ n**: a linear model on hundreds of OTUs can fit training noise even after preprocessing. ",
+  "Accuracy and recall show the same train-vs-test pattern — check the table above.\n",
+  sep = ""
+)
+```
+
+```{r confusion-logistic, fig.width=9, fig.height=4}
+conf_mat_train <- conf_mat(pred_train, truth = Label, estimate = .pred_class)
+conf_mat_test <- conf_mat(pred_test, truth = Label, estimate = .pred_class)
+
+bind_rows(
+  as.data.frame(conf_mat_train$table) |> mutate(set = "Train"),
+  as.data.frame(conf_mat_test$table) |> mutate(set = "Test")
+) |>
+  ggplot(aes(Prediction, Truth, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), color = "white", fontface = "bold") +
+  facet_wrap(~ set) +
+  scale_fill_gradient(low = "grey85", high = "steelblue") +
+  labs(title = "Logistic regression confusion matrices", x = "Predicted", y = "Observed")
+```
+
+### Takeaways
+
+1. **Fair model comparison** uses the **same** train/test split and the **same** recipe (tasks 2.3–2.5).
+2. **In-sample precision** is not a honest estimate of future performance — always report **test** (or CV) metrics when you tune or select models.
+3. **Repeated measures:** rows from the same `Individual` can land in both train and test with `initial_split()`, which can **inflate** test precision. Research workflows use `group_vfold_cv(group = Individual)` (Day 4 solution).
+
+**Leakage reminder:** prep the recipe inside `fit()` / `workflow` on training data only; never normalize on the full table before splitting.
 
 ```{r session, echo=FALSE}
 sessionInfo()
