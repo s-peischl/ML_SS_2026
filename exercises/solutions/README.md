@@ -13,9 +13,9 @@ quarto render exercises/solutions/day02-microbiome-pipeline.Rmd
 quarto render exercises/solutions/day04-microbiome-advanced.Rmd
 ```
 
-Microbiome solutions need **network access** to download CSVs from GitHub. Run from `exercises/solutions/` so `source("_load_microbiome.R")` resolves.
+Microbiome solutions need **network access** to download CSVs from GitHub. **Day 1** embeds its own loader in the `.Rmd`; **Days 2 and 4** use `source("_load_microbiome.R")` from `exercises/solutions/`.
 
-## Shared loader
+## Shared loader (Days 2 and 4)
 
 [`_load_microbiome.R`](_load_microbiome.R) — `load_microbiome(prev = 0.10)`, `mic_otu_cols()`, `mic_recipe_base()`, `mic_group_folds()`.
 
@@ -23,7 +23,7 @@ Microbiome solutions need **network access** to download CSVs from GitHub. Run f
 
 | Day | File | `set.seed` | ~Runtime |
 |-----|------|------------|----------|
-| 1 | `day01-microbiome-classical.Rmd` | 7 | 5 min (+ download) |
+| 1 | `day01-microbiome-classical.Rmd` | 7 | ~8 min (+ download) |
 | 2 | `day02-microbiome-pipeline.Rmd` | 7 | 4 min (+ download) |
 | 4 | `day04-microbiome-advanced.Rmd` | 7, 9, 11 | ~5 min first knit (+ download); SHAP uses top 10 OTUs only |
 
