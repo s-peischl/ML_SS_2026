@@ -16,7 +16,6 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
   library(ggplot2)
-  library(purrr)
 })
 ```
 
@@ -67,28 +66,29 @@ rf_spec <- rand_forest(mtry = 4, trees = 300, min_n = 2) |>
   set_engine("ranger") |>
   set_mode("classification")
 
-workflows <- list(
-  decision_tree = workflow() |> add_recipe(rec) |> add_model(tree_spec),
-  logistic_glm = workflow() |> add_recipe(rec) |> add_model(glm_spec),
-  random_forest = workflow() |> add_recipe(rec) |> add_model(rf_spec)
-)
+wf_tree <- workflow() |> add_recipe(rec) |> add_model(tree_spec)
+wf_glm <- workflow() |> add_recipe(rec) |> add_model(glm_spec)
+wf_rf <- workflow() |> add_recipe(rec) |> add_model(rf_spec)
 ```
 
 ## Cross-validation (`fit_resamples`)
 
+Same **`folds`** and **`metrics`** for each model — run **`fit_resamples()`** once per workflow:
+
 ```{r}
 set.seed(7)
-cv_results <- workflows |>
-  imap(\(wf, name) fit_resamples(wf, folds, metrics = metrics)) |>
-  set_names(names(workflows))
+rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics)
+rs_glm <- fit_resamples(wf_glm, folds, metrics = metrics)
+rs_rf <- fit_resamples(wf_rf, folds, metrics = metrics)
 ```
 
 ## Metrics table
 
 ```{r}
-cmp <- imap_dfr(
-  cv_results,
-  \(rs, name) collect_metrics(rs) |> mutate(model = name)
+cmp <- bind_rows(
+  collect_metrics(rs_tree) |> mutate(model = "decision_tree"),
+  collect_metrics(rs_glm) |> mutate(model = "logistic_glm"),
+  collect_metrics(rs_rf) |> mutate(model = "random_forest")
 )
 
 cmp |>

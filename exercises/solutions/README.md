@@ -24,7 +24,7 @@ Microbiome solutions need **network access** to download CSVs from GitHub. **Day
 | Day | File | `set.seed` | ~Runtime |
 |-----|------|------------|----------|
 | 1 | `day01-microbiome-classical.Rmd` | 7 | ~8 min (+ download) |
-| 2 | `day02-microbiome-pipeline.Rmd` | 7 | ~5 min (+ download) |
+| 2 | `day02-microbiome-pipeline.Rmd` | 7 | ~6 min (+ download) |
 | 4 | `day04-microbiome-advanced.Rmd` | 7, 9, 11 | ~5 min first knit (+ download); SHAP uses top 10 OTUs only |
 
 ## Archive

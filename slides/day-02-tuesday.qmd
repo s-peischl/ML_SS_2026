@@ -1156,32 +1156,6 @@ Turn raw columns into a model-ready table  -  **in order**, and **only on traini
 - **`prep()`** learns parameters on **training rows**; **`bake()`** applies those rules to new rows **without re-learning**.
 - A **`workflow()`** runs **`prep` + `bake` + `fit`** in the right order inside each CV fold.
 
-## Recipe pipeline (visual)
-
-```{r}
-#| label: day02-recipe-pipeline-fig
-#| echo: false
-#| fig-width: 9
-#| fig-height: 2.8
-pipeline_df <- tibble(
-  step = c("Raw columns", "step_zv()", "step_dummy()", "step_normalize()", "Model-ready table"),
-  x = 1:5,
-  y = 1
-)
-ggplot(pipeline_df, aes(x, y, label = step)) +
-  geom_point(size = 5, color = "#1565C0") +
-  geom_text(vjust = -1.2, size = 3.2) +
-  geom_segment(
-    data = data.frame(x = 1:4, xend = 2:5, y = 1, yend = 1),
-    aes(x = x, xend = xend, y = y, yend = yend),
-    inherit.aes = FALSE,
-    arrow = arrow(length = unit(0.2, "cm"), type = "closed"),
-    color = "gray50"
-  ) +
-  theme_void(base_size = 13) +
-  labs(title = "Recipe steps run in order (inside each CV fold)")
-```
-
 ## Start the recipe
 
 ```{r}
