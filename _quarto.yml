@@ -45,6 +45,8 @@ website:
             href: notebooks/penguins-canonical-pipeline.Rmd
           - text: Penguins — classification
             href: notebooks/penguins-classification.Rmd
+          - text: Penguins — glm convergence
+            href: notebooks/penguins-glm-convergence.Rmd
           - text: Penguins — sex (binary)
             href: notebooks/penguins-sex-classification.Rmd
           - text: Penguins — three species
