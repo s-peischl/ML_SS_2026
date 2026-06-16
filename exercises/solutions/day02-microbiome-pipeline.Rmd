@@ -9,9 +9,9 @@ format:
 
 Tasks **2.1–2.5** on the [lab exercises page](../index.qmd). Outcome: **`Label`** (Early vs Late). We use **`accuracy`** throughout and compare **`rpart`**, unpenalized logistic regression (`glm`), and **lasso** (`glmnet`) on the same train/test split.
 
-New to `tidymodels`? Use the companion explainer: [Day 2 function guide (plain language)](../tidymodels-day2-guide.qmd).
+Microbiome helpers (`load_microbiome()`, `mic_otu_cols()`, …) live in [`_load_microbiome.R` on GitHub](https://github.com/s-peischl/ML_SS_2026/blob/main/exercises/solutions/_load_microbiome.R). When you run this file locally, `source()` it from `exercises/solutions/`.
 
-New to the verbs? See the [tidymodels function guide](../tidymodels-day2-guide.html) (`last_fit`, `augment`, `workflow`, etc.).
+New to `tidymodels`? Use the companion explainer: [Day 2 function guide (plain language)](../tidymodels-day2-guide.qmd).
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -29,6 +29,9 @@ suppressPackageStartupMessages({
   library(patchwork)
 })
 theme_set(theme_minimal(base_size = 13))
+```
+
+```{r setup-visible}
 source("_load_microbiome.R")
 
 # One metric only — pass this to last_fit(), tune_grid(), etc.
