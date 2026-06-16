@@ -9,6 +9,10 @@ format:
 
 Tasks **2.1–2.5** on the [lab exercises page](../index.qmd). Outcome: **`Label`** (Early vs Late). We use **`accuracy`** throughout and compare **`rpart`**, unpenalized logistic regression (`glm`), and **lasso** (`glmnet`) on the same train/test split.
 
+New to `tidymodels`? Use the companion explainer: [Day 2 function guide (plain language)](../tidymodels-day2-guide.qmd).
+
+New to the verbs? See the [tidymodels function guide](../tidymodels-day2-guide.html) (`last_fit`, `augment`, `workflow`, etc.).
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = TRUE,

@@ -1,0 +1,228 @@
+---
+title: "Day 2 function guide: tidymodels in plain language"
+format:
+  html:
+    toc: true
+---
+
+This guide explains the main functions used in the **Day 2 microbiome solution** and what each one is doing in everyday language.
+
+Audience: students who are new to `tidymodels`.
+
+---
+
+## Big picture first
+
+On Day 2, the workflow is:
+
+1. **Prepare the data recipe** (what transformations to apply)
+2. **Define models** (tree, logistic, lasso)
+3. **Split into train/test**
+4. **Fit models on train**
+5. **Score on test**
+6. Compare with one metric (accuracy)
+
+The important idea: **never learn preprocessing on the test set**.
+
+---
+
+## Core setup functions
+
+### `set.seed(7)`
+
+Fixes random choices so you (and your classmates) get the same split/folds and the same results when re-running.
+
+### `metric_set(accuracy)`
+
+Creates a metric bundle. Here it contains only one score: accuracy.
+
+Use this when you call resampling functions so they know what to compute.
+
+---
+
+## Data split functions
+
+### `initial_split(data, prop = 0.75, strata = Label)`
+
+Creates one train/test split:
+
+- ~75% train
+- ~25% test
+- `strata = Label` tries to keep class balance similar in both parts
+
+### `training(split)` and `testing(split)`
+
+Extract the train rows and test rows from the split object.
+
+---
+
+## Recipe functions (preprocessing)
+
+### `recipe(Label ~ ., data = mic_model)`
+
+Starts a preprocessing plan:
+
+- `Label` = outcome to predict
+- `.` = use all other columns as predictors
+
+### `step_mutate(across(all_of(otu_cols), ~ log1p(.x)))`
+
+Apply `log1p` to all OTU columns (helps with skewed count data).
+
+### `step_zv(all_predictors())`
+
+Drops predictors with zero variance (columns that are constant and useless for modeling).
+
+### `step_normalize(all_numeric_predictors())`
+
+Centers/scales numeric predictors so they are on similar scales.
+
+Important: these steps are **instructions only** until model fitting happens.
+
+---
+
+## Model specification functions
+
+### `decision_tree(...) |> set_engine("rpart") |> set_mode("classification")`
+
+Defines a classification tree model using the `rpart` engine.
+
+### `logistic_reg() |> set_engine("glm") |> set_mode("classification")`
+
+Defines standard (unpenalized) logistic regression.
+
+### `logistic_reg(penalty = tune(), mixture = 1) |> set_engine("glmnet") |> set_mode("classification")`
+
+Defines **lasso logistic regression**:
+
+- `mixture = 1` means lasso
+- `penalty = tune()` means “choose lambda by CV”
+
+These are still model blueprints, not fitted yet.
+
+---
+
+## Workflow functions
+
+### `workflow() |> add_recipe(rec) |> add_model(spec)`
+
+Builds one object that combines:
+
+- preprocessing recipe
+- model spec
+
+This is the recommended way to ensure preprocessing happens in the right order and only on training data.
+
+---
+
+## Fitting and evaluation functions
+
+### `last_fit(workflow, split, metrics = accuracy_only)`
+
+Convenience function that does the full train/test evaluation:
+
+1. fit on `training(split)`
+2. evaluate on `testing(split)`
+3. return requested metrics
+
+Good for final test-set comparison.
+
+### `collect_metrics(fit_result)`
+
+Pulls the metrics table out of a fit/resample result.
+
+---
+
+## `fit()` and `augment()` (and how they relate to `last_fit()`)
+
+### `fit(workflow, train)`
+
+Fits the workflow on a dataset (usually training data).
+
+### `augment(fitted_model, test_or_train)`
+
+Adds predictions to a dataset.  
+You get columns like:
+
+- `.pred_class` (predicted label)
+- sometimes class probabilities (e.g. `.pred_Late`)
+
+### Is `last_fit()` the same as `fit() + augment(test)`?
+
+Very close conceptually:
+
+- `last_fit()` automates train-fit + test-score in one call
+- `fit()` + `augment(test)` is the manual version
+
+So:
+
+- Use `last_fit()` when you want final test metrics quickly.
+- Use `fit()` + `augment()` when you want full control and custom tables/plots.
+
+---
+
+## Accuracy functions
+
+### `accuracy(data, truth = Label, estimate = .pred_class)`
+
+Computes accuracy from a table that already has predictions.
+
+### `accuracy_vec(truth, estimate)`
+
+Vector version: same score, but with two vectors instead of a data frame.
+
+---
+
+## Lasso tuning functions
+
+### `vfold_cv(train, v = 5, strata = Label)`
+
+Creates 5-fold cross-validation splits from training data.
+
+### `grid_regular(penalty(range = c(-4, 0)), levels = 10)`
+
+Creates a grid of candidate penalty values (lambda on log10 scale).
+
+### `tune_grid(workflow, resamples = folds, grid = grid, metrics = accuracy_only)`
+
+Fits the tunable model across:
+
+- all grid values
+- all CV folds
+
+Then records accuracy for each combination.
+
+### `select_best(tuned, metric = "accuracy")`
+
+Chooses the best tuning parameter based on mean CV accuracy.
+
+### `finalize_workflow(workflow, best_params)`
+
+Inserts the chosen best parameter(s) into the workflow.
+
+Then you can use `last_fit()` to get final test performance.
+
+---
+
+## Confusion-matrix helper
+
+### `conf_mat(data, truth = Label, estimate = .pred_class)`
+
+Builds a table of prediction counts:
+
+- true early predicted early, etc.
+
+Useful for seeing what types of mistakes a model makes.
+
+---
+
+## Quick cheat sheet
+
+- **Split data:** `initial_split()`, `training()`, `testing()`
+- **Preprocess plan:** `recipe()`, `step_*()`
+- **Model plan:** `decision_tree()` / `logistic_reg()` + `set_engine()` + `set_mode()`
+- **Combine:** `workflow()` + `add_recipe()` + `add_model()`
+- **Final test score:** `last_fit()` + `collect_metrics()`
+- **Manual predictions:** `fit()` + `augment()` + `accuracy()`
+- **Tune lasso:** `vfold_cv()` + `grid_regular()` + `tune_grid()` + `select_best()` + `finalize_workflow()`
+

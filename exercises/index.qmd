@@ -136,7 +136,7 @@ Build a small summary table: outcome (`Label` / `Sex`), method (GLM on PCs, step
 
 ## Day 2 (Tuesday afternoon) — tidymodels pipeline
 
-**Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.html#part-c-pipeline) · **Solution:** [HTML](solutions/day02-microbiome-pipeline.html) · [Download `.Rmd`](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day02-microbiome-pipeline.Rmd)
+**Slides:** [Day 2 (Tuesday)](../slides/day-02-tuesday.html#part-c-pipeline) · **Solution:** [HTML](solutions/day02-microbiome-pipeline.html) · [Download `.Rmd`](https://raw.githubusercontent.com/s-peischl/ML_SS_2026/main/exercises/solutions/day02-microbiome-pipeline.Rmd) · **[tidymodels function guide](tidymodels-day2-guide.html)** (what does `last_fit` do?)
 
 Today you rebuild the analysis as a **`recipe` → `workflow` → fit** pipeline, as on Palmer Penguins in the morning. **Outcome:** **`Label`** (Early vs Late) only.
 
