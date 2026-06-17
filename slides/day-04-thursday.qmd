@@ -481,19 +481,11 @@ save_day04_composite <- function(model, data, title, chunk_id, f1 = "bill_length
 
 # Part B  -  Many models (accuracy only) {#part-b-models}
 
-## Scenario goal (Part B)
+## Part B goal — swap model `spec` only
 
-Keep preprocessing fixed and learn **model-family differences** fairly:
-- same `recipe`
-- same folds
-- same metric
-- only `spec` changes
+Keep preprocessing fixed and learn **model-family differences** fairly: same `recipe`, same `folds`, same metric — change **`add_model(spec)`** only.
 
-## Why this stress matters (Part B)
-
-If we change recipe, folds, and model at the same time, we cannot tell what caused a performance difference. Part B isolates **model family** only.
-
-**Rule:** keep **`add_recipe(rec_base)`** and **`folds`**  -  change **`add_model(spec)`** only.
+If we change everything at once, we cannot tell what caused a performance difference.
 
 ## Model catalog and engines
 
@@ -509,12 +501,9 @@ If we change recipe, folds, and model at the same time, we cannot tell what caus
 
 Also available in the same pattern: `linear_reg()`, `svm_rbf()`, `nearest_neighbor()`.
 
-## Model catalog  -  tuning and references
-
 - **`mtry`**: number of predictors considered at each split (RF only).
 - **`tune()`** marks hyperparameters for **`tune_grid()`**.
 - Lookup: [tidymodels  -  find models](https://www.tidymodels.org/find/parsnip/) · [Engines at a glance](https://www.tidymodels.org/find/parsnip/#engines-at-a-glance).
-- More depth: [parsnip model reference](https://www.tidymodels.org/find/parsnip/) · compare learners in **Part B** on this deck.
 
 ## Parsnip: type → engine → mode
 
@@ -553,16 +542,13 @@ print(
 
 {{< include ../_includes/lab/d04-41.qmd >}}
 
-## Bagging: random forests
+## Bagging and boosting (two ensemble ideas)
 
-- **Many trees** on **bootstrap** samples of rows; each split sees only a **random subset** of predictors → lower variance than one deep tree.
-- **`rand_forest(mtry = ..., trees = ..., min_n = ...) |> set_engine("ranger")`**
+**Bagging (random forests):** many trees on **bootstrap** samples; each split sees a **random subset** of predictors → lower variance than one deep tree.  
+`rand_forest(mtry = ..., trees = ..., min_n = ...) |> set_engine("ranger")`
 
-## Boosting: gradient boosted trees
-
-- Trees are added **sequentially**; each new tree targets **errors left by the ensemble** so far.
-- **`boost_tree(trees = ..., tree_depth = ..., learn_rate = ...) |> set_engine("xgboost")`**
-- **`learn_rate`**: shrink each tree's contribution (smaller → more trees needed, often smoother).
+**Boosting (gradient boosted trees):** trees added **sequentially**; each new tree corrects **errors left by the ensemble**.  
+`boost_tree(trees = ..., tree_depth = ..., learn_rate = ...) |> set_engine("xgboost")` — smaller **`learn_rate`** usually needs more trees and gives smoother surfaces.
 
 ## Forest and boosting specs (code)
 
@@ -606,7 +592,7 @@ cmp_ens <- bind_rows(
   filter(.metric == "accuracy")
 ```
 
-## Cross-validated accuracy (results table)
+## Cross-validated accuracy (results)
 
 ```{r}
 #| label: day04-ensemble-resamples-table
@@ -615,8 +601,6 @@ cmp_ens |>
   select(model, mean, std_err) |>
   arrange(desc(mean))
 ```
-
-## Cross-validated accuracy (bar chart)
 
 ```{r}
 #| label: day04-ensemble-auc-bar
@@ -726,10 +710,10 @@ print(
 )
 ```
 
-## Bagging vs boosting (same bill plane)
+## Bagging vs boosting (bill plane)
 
 - **Bagging** (**RF**): many trees on bootstrap samples; predictions **average** → often **smoother** boundaries.
-- **Boosting** (**XGBoost** / **GBM**): trees added **sequentially** to fix errors → can look **sharper** after several rounds (previous slides).
+- **Boosting** (**XGBoost**): trees added **sequentially** to fix errors → can look **sharper** after several rounds.
 
 ```{r}
 #| label: day04-rf-boundary-prep
@@ -738,36 +722,26 @@ print(
 rf_boundary_fit <- fit(wf_rf, peng_bal)
 ```
 
-## Random forest boundary (bagging)
-
 ```{r}
-#| label: day04-rf-xgb-compare-rf
+#| label: day04-rf-xgb-compare
 #| echo: false
-#| fig-width: 9
-#| fig-height: 6
+#| fig-width: 11
+#| fig-height: 4.5
 #| out-width: 100%
-print(
-  plot_prob_boundary(
-    rf_boundary_fit, peng_bal,
-    title = "Random forest (bagging)  -  averaged surface"
-  )
+p_rf <- plot_prob_boundary(
+  rf_boundary_fit, peng_bal,
+  title = "Random forest (bagging)"
 )
-```
-
-## XGBoost boundary after 6 trees (boosting)
-
-```{r}
-#| label: day04-rf-xgb-compare-xgb
-#| echo: false
-#| fig-width: 9
-#| fig-height: 6
-#| out-width: 100%
-print(
-  plot_prob_boundary(
-    get("boost_fit_6"), peng_cls,
-    title = "XGBoost after 6 trees  -  staged corrections"
-  )
+p_xgb <- plot_prob_boundary(
+  get("boost_fit_6"), peng_cls,
+  title = "XGBoost after 6 trees"
 )
+if (requireNamespace("patchwork", quietly = TRUE)) {
+  print(p_rf + p_xgb + patchwork::plot_layout(ncol = 2))
+} else {
+  print(p_rf)
+  print(p_xgb)
+}
 ```
 
 ## Neural network (small MLP)  -  schematic
@@ -781,7 +755,7 @@ print(
 print(plot_mlp_schematic())
 ```
 
-## Neural network (small MLP) 
+## Neural network (small MLP)
 
 - **MLP** = **multilayer perceptron**: one hidden layer of neurons; **`hidden_units`** sets its width.
 - **`epochs`**: how many full passes through the training data.
@@ -886,30 +860,12 @@ print(
 )
 ```
 
-Three-way comparison: see the **cross-validated accuracy** bar chart above.
-
-## What changes now
-
-From this point on, we keep the same workflow structure and stress one new issue at a time.  
-Next stress: **correlated numeric predictors** (PCA inside the recipe).
-
 # Part C  -  Dimension reduction (accuracy only) {#part-c-pca}
 
-## Scenario goal (Part C)
+## Part C goal — PCA inside the recipe
 
-Learn when PCA helps: if numeric predictors are strongly correlated, compress them inside the recipe and compare accuracy with/without PCA on the same folds.
-
-## Why this stress matters (Part C)
-
-High collinearity can make models unstable or redundant. PCA gives a compact representation, but costs interpretability.
-
-## Extension: principal component analysis (PCA) in the recipe
-
-**PCA** combines correlated numeric predictors into orthogonal **principal components**  -  fit **`step_pca()`** on training folds only, same as `step_normalize()`.
-
-## PCA motivation: correlated measurements
-
-For PCA we add back **flipper length** and **body mass**  -  bills and size track together on penguins.
+**PCA** combines correlated numeric predictors into orthogonal **principal components** — fit **`step_pca()`** on training folds only, same as `step_normalize()`.  
+Compare accuracy with/without PCA on the **same folds**; tradeoff is **interpretability** (components are not "bill mm" anymore).
 
 ```{r}
 #| label: day04-pca-corr
@@ -971,7 +927,7 @@ ggplot(var_df, aes(PC, variance_pct)) +
 ## PCA biplot  -  scores vs loadings
 
 - **Points** = **scores**: where each penguin sits in **PC1-PC2** space (compressed view of all numerics).
-- **Arrows** = **loadings** (preview): which original measurements push in which direction  -  detail on the next slides.
+- **Arrows** = **loadings** (preview): which original measurements push in which direction — detail on the next slide.
 
 ```{r}
 #| label: day04-pca-biplot
@@ -982,21 +938,16 @@ ggplot(var_df, aes(PC, variance_pct)) +
 print(plot_pca_biplot(peng_pca, num_cols, y_col = "y"))
 ```
 
-## What are PCA loadings?
+## PCA loadings — what they mean and how to read them
 
-After **`step_normalize()`**, each component is a **weighted sum** of the scaled columns:
+After **`step_normalize()`**, each component is a **weighted sum** of the scaled columns. **Loadings** = those weights (from **`prcomp()`** / **`step_pca()`**).
 
-$$\text{PC1} = w_{11}\,\text{bill\_length} + w_{12}\,\text{bill\_depth} + \cdots$$
-
-- **Loadings** = those weights $w_{jk}$ (stored in the **`rotation`** matrix from **`prcomp()`** / **`step_pca()`**).
 - **Sign:** positive loading → birds **above average** on that measurement tend to have **higher** scores on that PC.
-- **Magnitude:** larger $|\text{loading}|$ → that measurement matters **more** for that component (after scaling).
+- **Magnitude:** larger |loading| → that measurement matters **more** for that component.
+- **PC1** loads heavily on **bill length, flipper length, body mass** (bill depth negatively) → an **"overall size"** axis.
+- **PC2** is dominated by **year** → mostly study year, not morphology here.
 
-**Scores** tell you where a penguin is; **loadings** tell you **which measurements built** that axis.
-
-## Loadings on PC1 and PC2 (bar chart)
-
-Each bar = one original column's weight on that component (predictors were **scaled** before PCA).
+Each bar below = one original column's weight on PC1/PC2 (predictors were **scaled** before PCA).
 
 ```{r}
 #| label: day04-pca-loadings-bars
@@ -1006,8 +957,6 @@ Each bar = one original column's weight on that component (predictors were **sca
 #| out-width: 100%
 print(plot_pca_loadings_bars(peng_pca, num_cols))
 ```
-
-## How to read these loadings (penguins)
 
 ```{r}
 #| label: day04-pca-loadings-table
@@ -1021,11 +970,7 @@ load_tbl <- load_tbl |> dplyr::select(measurement, PC1, PC2)
 knitr::kable(load_tbl, caption = "Loadings (rounded)  -  same numerics as the plot above")
 ```
 
-## Loadings takeaway (penguins)
-
-- **PC1** loads heavily on **bill length, flipper length, body mass** (and bill depth negatively) → a **"overall size"** axis: big birds vs small birds along PC1.
-- **PC2** is dominated by **year** → mostly **study year**, not morphology (weak for separating species here).
-- **Takeaway:** PCA merged correlated size measures into **PC1**; the model later sees **PC1/PC2**, not "mm of bill" directly  -  harder to explain biologically than raw columns.
+**Takeaway:** PCA merged correlated size measures into **PC1**; the model later sees **PC1/PC2**, not "mm of bill" directly — harder to explain biologically than raw columns.
 
 ## XGBoost with PCA vs without (same folds)
 
@@ -1056,7 +1001,7 @@ set.seed(8)
 rs_no_pca <- fit_resamples(wf_no_pca, folds_pca, metrics = metrics_acc)
 ```
 
-## XGBoost with PCA vs without (accuracy table)
+## XGBoost with PCA vs without (results)
 
 ```{r}
 #| label: day04-pca-fit-compare-table
@@ -1068,8 +1013,6 @@ bind_rows(
   filter(.metric == "accuracy") |>
   select(model, mean, std_err)
 ```
-
-## XGBoost with PCA vs without (bar chart)
 
 ```{r}
 #| label: day04-pca-auc-bar
@@ -1094,28 +1037,12 @@ bind_rows(
 - **Tradeoff:** components are **not** "bill mm" anymore  -  **VIP** on PCA columns is harder to explain biologically.
 - **Leakage check:** always fit PCA **inside** `workflow()` + resampling, never on the full table before splitting.
 
-## What changes now
-
-We keep the PCA lesson fixed and move to a different stress: **missing values**.  
-Same workflow, new recipe step family: imputation.
-
 # Part D  -  Missing data (accuracy only) {#part-d-impute}
 
-## Scenario goal (Part D)
+## Part D goal — impute inside the recipe
 
-Handle missingness without leakage: impute **inside the recipe** so each fold learns imputation from analysis rows only.
-
-## Why this stress matters (Part D)
-
-Dropping rows can bias the dataset; imputing before splits leaks information. We need fold-safe imputation.
-
-## Extension: imputation inside the recipe (`peng_na`)
-
-Add **`step_impute_*()`** before `step_zv()` / dummies / normalize  -  never `drop_na()` on the full table before splitting.
-
-## Artificial missing data: bill length
-
-We set **~15%** of `bill_length_mm` (and a few `sex`) to **NA** (**missing** values  -  "not available") to practice imputation  -  not a real sensor failure pattern.
+Handle **missing values** without leakage: add **`step_impute_*()`** before `step_zv()` / dummies / normalize — never `drop_na()` on the full table before splitting.  
+Dropping rows can **bias** who remains; imputing before splits **leaks** information.
 
 ```{r}
 #| label: day04-na-scatter
@@ -1252,16 +1179,9 @@ Continue: [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipel
 
 # Part E  -  Imbalance, metrics, and confusion matrices {#part-e-metrics}
 
-## Scenario goal (Part E)
+## Part E goal — metrics beyond accuracy
 
-Show why accuracy can mislead with a rare class and practice choosing/reporting macro and per-class metrics.
-
-## Why this stress matters (Part E)
-
-When one class is rare, accuracy can hide failure on the minority class.  
-This part focuses on macro/per-class metrics and confusion matrices.
-
-## Multiclass imbalance (`peng_imb3`)
+When one class is **rare**, accuracy can hide failure on the minority class. Practice **macro recall**, **macro F1**, and **per-class** confusion matrices — and know when **`step_upsample()`** helps recall.
 
 We now use **three-species classification** (Adelie, Gentoo, Chinstrap).
 For a clean imbalance lesson, we keep only **15 Chinstrap** rows (deterministic selection), while Adelie and Gentoo stay abundant.
@@ -1348,7 +1268,7 @@ compare_metrics_tbl_multiclass(
 )
 ```
 
-## Holdout confusion matrix: no upsample
+## Holdout confusion matrices (no upsample vs upsample)
 
 ```{r}
 #| label: day04-imb3-holdout-no
@@ -1362,8 +1282,6 @@ pred_imb3 <- augment(fit_imb3, testing(split_imb3))
 pred_imb3 |>
   conf_mat(truth = y3, estimate = .pred_class)
 ```
-
-## Holdout confusion matrix: with upsample
 
 ```{r}
 #| label: day04-imb3-holdout-up
@@ -1393,13 +1311,9 @@ plot_multiclass_recall_compare(pred_imb3, pred_imb3_up, highlight_class = "Chins
 
 # Part F  -  Variable importance {#part-f-vip}
 
-## Scenario goal (Part F)
+## Part F goal — VIP and local explanations
 
-Interpret fitted models responsibly: identify influential predictors (VIP/SHAP) without making causal claims.
-
-## Why this stress matters (Part F)
-
-A model can score well but still be hard to justify. Interpretation tools help communication and diagnostics, not causal proof.
+Interpret fitted models responsibly: **VIP** ranks influential predictors globally; **SHAP** explains individual predictions. Neither is a **causal** claim.
 
 ## Data the forest sees (bill plane)
 
@@ -1422,8 +1336,9 @@ ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
 
 ## Variable importance (VIP)
 
-- **VIP** = **variable importance plot**  -  how often splits use each **baked** predictor (impurity in **`ranger`**).
-- **Correlated** bill measures can **share** importance  -  not proof that changing one bill mm **causes** species shift.
+- **VIP** = how often splits use each **baked** predictor (impurity in **`ranger`**).
+- **Correlated** bill measures can **share** importance — not proof that changing one bill mm **causes** species shift.
+- **Permutation importance** (shuffle one column, watch metric drop) is model-agnostic — see the [SHAP notebook](../notebooks/penguins-shap.html).
 
 ```{r}
 #| label: day04-vip-prep
@@ -1431,8 +1346,6 @@ ggplot(peng_bal, aes(bill_length_mm, bill_depth_mm, color = y)) +
 #| results: hide
 rf_fit <- fit(wf_rf, peng_cls)
 ```
-
-## Variable importance plot
 
 ```{r}
 #| label: day04-vip-plot
@@ -1454,10 +1367,6 @@ rf_fit |>
 
 {{< include ../_includes/lab/d04-43.qmd >}}
 
-## Permutation importance (pointer)
-
-- **Permutation importance**: shuffle one column, watch metric drop  -  model-agnostic; see the **VIP plot** above and the [SHAP notebook](../notebooks/penguins-shap.html).
-
 {{< include ../_includes/day04-shap-sex.qmd >}}
 
 # Part G  -  Wrap-up
@@ -1466,19 +1375,15 @@ rf_fit |>
 
 {{< include ../_includes/lab/d04-45.qmd >}}
 
-## Nested resampling (when tuning gets serious)
+## Nested resampling and end-of-day checklist
 
-- **Nested CV**: an **outer** cross-validation loop estimates performance; an **inner** loop tunes hyperparameters inside each outer training fold.
-- Avoid tuning and scoring on the **same** held-out rows (optimistic bias).
+- **Nested CV**: an **outer** loop estimates performance; an **inner** loop tunes hyperparameters inside each outer training fold — avoid tuning and scoring on the **same** held-out rows.
 
-## End-of-day checklist
+**Check yourself**
 
 - Name three **`parsnip` model types** and a valid **engine** for each
 - Why must **`step_pca()`** and **`step_impute_*()`** live **inside** the recipe?
 - Which metric would you report for a **rare-event screening** study?
-
-## End-of-day checklist (advanced)
-
 - When might **`step_upsample()`** not improve CV scores?
 - One reason **VIP** on correlated bills is **not** a causal claim
 - One sentence you would **not** say about a SHAP plot on penguin sex
