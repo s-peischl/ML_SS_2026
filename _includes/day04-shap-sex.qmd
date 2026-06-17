@@ -2,10 +2,14 @@
 
 - **One penguin, one prediction:** the model outputs **P(male)** (or log-odds). SHAP asks: *how much did each measurement move this bird away from a baseline?*
 - **Players and coalitions:** treat each feature as a **player**. A **coalition** is any subset of features with the others **averaged over** the data. The model's output on that coalition is the coalition's **payout**.
-- **Shapley value:** for each feature, average its **marginal contribution** over all orders in which features can join the coalition. That fair share is the **SHAP value** \(\phi_j\) for feature \(j\).
-- **Additivity:** baseline \(\phi_0\) plus all feature contributions sums to the model output on the **link scale** (for this forest, **P(male)**):
+- **Shapley value:** for each feature, average its **marginal contribution** over all orders in which features can join the coalition. That fair share is the **SHAP value** for feature *j* (written `phi_j`).
+- **Additivity:** start from a baseline score, then add one credit per feature. For penguin *i*:
 
-$$\phi_0 + \sum_j \phi_{i,j} \approx \hat{p}_i(\text{male})$$
+```
+baseline + phi_i1 + phi_i2 + ...  ≈  P(male) for this bird
+```
+
+(all credits are for the **same** fitted model on the link/probability scale)
 
 - **VIP vs SHAP:** **VIP** ranks predictors **globally** (how often splits use them). **SHAP** explains **one row** (why *this* penguin scored more male or female).
 
@@ -25,6 +29,7 @@ suppressPackageStartupMessages({
 pg_sex <- prep_penguins_sex()
 sex_shap <- fit_sex_shap_bundle(pg_sex, trees = 300, n_sample = 80, n_bg = 35, seed = 11)
 shp_sex <- sex_shap$shp
+X_model <- bake_workflow_predictors(sex_shap$fit, pg_sex)
 ```
 
 ## Compute SHAP in R (workflow + `bake`)
@@ -52,9 +57,69 @@ wf_sex <- workflow() |>
 fit_sex <- fit(wf_sex, pg_sex)
 ```
 
-## `bake()` — why not raw penguins?
+## What we actually do to get SHAP values
 
-The forest was **not** trained on the original table. Inside `fit()`, the **recipe** ran first: drop empty columns, dummy-code `island`, z-score bill measurements, and so on. SHAP must perturb **those** columns — the ones `ranger` actually split on.
+1. **Fit** `workflow(recipe + forest)` on raw penguins.
+2. **`bake()`** into **`X_model`** — a predictors-only table in the forest’s language (scaled bills, dummy `island`, …); defined on the next slides.
+3. **Pick** birds to explain (`X_shap`) and a **reference flock** (`bg_X`) = typical rows when a feature is “missing” from a coalition.
+4. **Perturb** baked columns many times: for each feature, ask *if this bird’s value on this column changed, how would **P(male)** move?*
+5. **Average** those pushes into one credit per feature → **SHAP values** → beeswarm / waterfall plots.
+
+**One-line summary:** SHAP explains the forest on the **same spreadsheet it was trained on**, not on the raw penguin table.
+
+## Why `bake()` before SHAP?
+
+The workflow has two stages:
+
+- **Recipe (preprocessing):** raw rows → model-ready numbers (`step_zv`, `step_dummy`, `step_normalize`, …).
+- **Forest (`ranger`):** trees split only on that baked output.
+
+SHAP must perturb features in **stage 2**. The forest never saw original `bill_length_mm`; it saw **scaled** `bill_length_mm` plus columns like `island_Biscoe`. If SHAP tweaks the wrong representation, the “contributions” describe a model nobody fitted.
+
+So: **`bake()` = recover the spreadsheet the trees learned from** → that is what `kernelshap()` perturbs.
+
+## Where we intervene (schematic) {.flowchart-slide}
+
+```{mermaid}
+%%{init: {"theme":"base", "themeVariables": {"fontSize": "15px", "lineColor": "#2d2d2d", "clusterBkg": "#fafafa", "clusterBorder": "#555555"}, "flowchart": {"useMaxWidth": false, "htmlLabels": true, "wrappingWidth": 300, "padding": 14, "nodeSpacing": 36, "rankSpacing": 40}}}%%
+flowchart TD
+    Raw["Raw row from pg_sex"]
+
+    subgraph TrainOnce ["Train once inside fit()"]
+        Rec["Recipe<br/>zv, dummy, normalize"]
+        BakeIn["Baked columns internal"]
+        RF["ranger learns trees"]
+        Raw --> Rec --> BakeIn --> RF
+    end
+
+    subgraph ShapLoop ["Explain after fit frozen model"]
+        BakeOut["bake to X_model"]
+        Intervene["INTERVENE HERE<br/>kernelshap edits baked columns"]
+        Pred["pred_fun asks ranger<br/>P(male)"]
+        ShapOut["SHAP credits"]
+        BakeOut --> Intervene --> Pred --> ShapOut
+    end
+
+    Raw --> BakeOut
+    RF -.->|"extract_fit_parsnip same forest"| Pred
+
+    classDef train fill:#e8f1fb,stroke:#1f4f99,color:#0f2b56,stroke-width:2px;
+    classDef shap fill:#ffffff,stroke:#3d3d3d,color:#1a1a1a,stroke-width:1.5px;
+    classDef intervene fill:#fff3cd,stroke:#b8860b,color:#3d2f00,stroke-width:3px;
+    classDef output fill:#e9f9ef,stroke:#1f7a3f,color:#124825,stroke-width:2px;
+
+    class Raw,Rec,BakeIn,RF train;
+    class BakeOut,Pred shap;
+    class Intervene intervene;
+    class ShapOut output;
+
+    style TrainOnce fill:#f3f8ff,stroke:#1f4f99,stroke-width:1px,color:#0f2b56
+    style ShapLoop fill:#fafafa,stroke:#555555,stroke-width:1px,color:#222222
+```
+
+- **Intervene on:** numeric columns in **`X_model`** (scaled bills, dummy islands, …).
+- **Do not intervene on:** raw mm/island labels, recipe parameters, or tree weights (all frozen after `fit()`).
+- **Why:** the forest only understands the baked spreadsheet — SHAP asks *what-if* questions in that language.
 
 ## `bake()` — three steps (words)
 
@@ -74,13 +139,67 @@ X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
 head(X_model, 3)
 ```
 
-## `bake()` — why SHAP cares
+## What is `X_model`?
 
-`kernelshap()` calls the model many times with **partial rows** of numbers. If you pass raw `bill_length_mm` while the forest expects scaled bills plus `island_Torgersen`, predictions — and SHAP — are **wrong**. **`X_model`** is the spreadsheet the trees were trained on.
+**`X_model`** is the data frame returned by:
 
-## KernelSHAP — the problem
+```r
+X_model <- bake(rec_prepped, new_data = pg_sex, all_predictors())
+```
 
-SHAP needs: “given these feature values, what is **P(male)**?” The forest sits inside a **workflow**; we extract the bare **`ranger`** object and define prediction ourselves.
+In words:
+
+- **Rows:** one per penguin (same birds as `pg_sex`, after any recipe row handling).
+- **Columns:** **predictors only** — the numeric columns `ranger` actually split on inside `fit()`.
+- **Not included:** the outcome `sex` (we used `all_predictors()`, not the outcome).
+
+| Raw in `pg_sex` | Becomes in `X_model` |
+|-----------------|----------------------|
+| `bill_length_mm` (mm) | z-scored `bill_length_mm` |
+| `island` (Biscoe / Dream / …) | dummy columns like `island_Biscoe` (0/1) |
+| `sex` (female / male) | **omitted** — not a predictor here |
+
+Later we sample from this same object:
+
+- **`X_shap`** — rows of `X_model` we want to explain.
+- **`bg_X`** — rows of `X_model` used as the SHAP baseline (“typical” birds).
+
+```{r}
+#| label: day04-x-model-show
+#| echo: false
+knitr::kable(
+  tibble::tibble(
+    baked_column = names(X_model),
+    row1_value = as.numeric(X_model[1, ])
+  ),
+  digits = 3,
+  caption = paste0(
+    "X_model has ", nrow(X_model), " rows and ", ncol(X_model),
+    " baked predictor columns (row 1 shown)"
+  )
+)
+```
+
+## `bake()` — what SHAP will perturb
+
+`kernelshap()` calls the forest hundreds of times with **edited rows** of numbers. Those rows must match training:
+
+- **Wrong:** pass raw `bill_length_mm = 45` while the forest expects a z-scored value.
+- **Right:** pass the baked row from `X_model` — same encoding as inside `fit()`.
+
+**Analogy:** the recipe is the translator; SHAP must argue in the language the forest speaks (`X_model`), not the original field notes (`pg_sex`).
+
+## KernelSHAP — the loop (intuition)
+
+For **one penguin** in `X_shap`:
+
+- Start from a **baseline** prediction built from typical birds in `bg_X`.
+- For each baked feature, try many **what-if** values (sometimes alone, sometimes with other features).
+- Each time, call **`pred_fun`** → forest returns **P(male)**.
+- Record how much that feature **moved** the score vs the baseline.
+- **Average** those moves → one SHAP value per feature; they sum (approximately) to this bird’s final **P(male)**.
+
+The forest sits inside a **workflow**, so we **`extract_fit_parsnip()`** and wrap prediction in **`pred_fun`** — SHAP does not know about recipes by itself.
 
 ## KernelSHAP — code
 

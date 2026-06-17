@@ -61,6 +61,70 @@ Same **`peng_bal`** table and **`rec_base`** recipe as Tuesday  -  today we swap
 - **`vfold_cv(..., strata = y)`**  -  **5-fold cross-validation (CV)** with both species in each fold
 - **`metric_set(accuracy)`** for Parts B-D today (more metrics in Part E)
 
+## Thursday start: `tidymodels` flowchart {.flowchart-slide}
+
+```{mermaid}
+%%{init: {"theme":"base", "flowchart": {"useMaxWidth": false, "htmlLabels": true, "wrappingWidth": 340, "padding": 14, "nodeSpacing": 40, "rankSpacing": 44}}}%%
+flowchart TD
+    subgraph Setup [Build task]
+        A["Define task objects<br/>recipe(), model spec, metric_set()"]
+        B["Assemble pipeline<br/>workflow() + add_recipe() + add_model()"]
+        C["Create holdout split<br/>initial_split()"]
+        A --> B --> C
+    end
+
+    C --> D{"Need tuning / resampling?"}
+
+    subgraph TunePath [If yes]
+        E["Build CV folds from train only<br/>vfold_cv(training(split))"]
+        F["Tune candidates<br/>tune_grid()"]
+        G["Pick best by metric<br/>select_best()"]
+        H["Lock in best hyperparameters<br/>finalize_workflow()"]
+        E --> F --> G --> H
+    end
+
+    subgraph OneShotPath [If no]
+        I["One-shot training fit<br/>fit(wf, training(split))"]
+        M["Generate train/test predictions<br/>augment()"]
+        I --> M
+    end
+
+    D -->|"Yes"| E
+    D -->|"No"| I
+    H --> J["Final honest test estimate<br/>last_fit(..., split)"]
+    J --> K["Summarize holdout metrics/preds<br/>collect_metrics(), collect_predictions()"]
+    M --> N["One-shot check (faster, less robust)<br/>accuracy()/conf_mat() on augment outputs"]
+
+    classDef setup fill:#f3f8ff,stroke:#1f4f99,color:#0f2b56,stroke-width:1.5px;
+    classDef decision fill:#fff4cc,stroke:#8a6d00,color:#3d2f00,stroke-width:1.5px;
+    classDef tune fill:#e9f9ef,stroke:#1f7a3f,color:#124825,stroke-width:1.5px;
+    classDef oneshot fill:#f4f4f4,stroke:#555555,color:#222222,stroke-width:1.5px;
+    classDef final fill:#ffeef0,stroke:#a12a3a,color:#5c1220,stroke-width:1.5px;
+    class A,B,C setup;
+    class D decision;
+    class E,F,G,H tune;
+    class I,M,N oneshot;
+    class J,K final;
+```
+
+## Minimal skeleton (copy/paste)
+
+```{r}
+#| echo: true
+#| eval: false
+rec <- recipe(y ~ ., data = data)
+spec <- rand_forest(mtry = tune(), trees = 500) |> set_engine("ranger") |> set_mode("classification")
+metrics <- metric_set(accuracy)
+wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+split <- initial_split(data, prop = 0.8, strata = y)
+folds <- vfold_cv(training(split), v = 5, strata = y)
+res <- tune_grid(wf, resamples = folds, grid = 10, metrics = metrics)
+wf_final <- finalize_workflow(wf, select_best(res, metric = "accuracy"))
+collect_metrics(last_fit(wf_final, split, metrics = metrics))
+```
+
+{{< include ../_includes/tidymodels-evaluation-workflow.qmd >}}
+
 ```{r}
 #| label: day04-setup
 #| include: false
@@ -415,26 +479,19 @@ save_day04_composite <- function(model, data, title, chunk_id, f1 = "bill_length
 }
 ```
 
-## Teaching scenarios (Part C extensions)
-
-We deliberately stress the penguins in three ways:
-
-```{r}
-#| label: day04-scenarios-show
-#| echo: false
-#| message: false
-dplyr::count(peng_imb3, y3, name = "n")
-sum(is.na(peng_na$bill_length_mm))
-ncol(peng_pca)
-```
-
-| Object | Stress | Recipe extension (Part C) |
-|--------|--------|---------------------------|
-| **`peng_imb3`** | **Three species**; **downsampled Chinstrap** (~15 Chinstrap vs abundant Adelie & Gentoo) | `step_upsample(y3)`  -  Part E metrics |
-| **`peng_na`** | Missing bill length and some `sex` | `step_impute_*()` |
-| **`peng_pca`** | Extra size measures (correlated) | `step_pca()` |
-
 # Part B  -  Many models (accuracy only) {#part-b-models}
+
+## Scenario goal (Part B)
+
+Keep preprocessing fixed and learn **model-family differences** fairly:
+- same `recipe`
+- same folds
+- same metric
+- only `spec` changes
+
+## Why this stress matters (Part B)
+
+If we change recipe, folds, and model at the same time, we cannot tell what caused a performance difference. Part B isolates **model family** only.
 
 **Rule:** keep **`add_recipe(rec_base)`** and **`folds`**  -  change **`add_model(spec)`** only.
 
@@ -448,10 +505,9 @@ ncol(peng_pca)
 | `rand_forest()` (**RF**) | `mtry`, `min_n`, `trees` | `ranger`, `randomForest` |
 | `boost_tree()` (**GBM**) | `trees`, `tree_depth`, `learn_rate` | `xgboost`, `lightgbm`, `C5.0` |
 | `logistic_reg()` | `penalty` | `glm`, `glmnet` |
-| `linear_reg()` | `penalty` | `lm`, `glmnet` |
 | `mlp()` (**MLP**) | `hidden_units`, `penalty`, `epochs` | `nnet`, `keras` |
-| `svm_rbf()` (**SVM**) | `cost`, `rbf_sigma` | `kernlab` |
-| `nearest_neighbor()` | `neighbors` | `kknn` |
+
+Also available in the same pattern: `linear_reg()`, `svm_rbf()`, `nearest_neighbor()`.
 
 ## Model catalog  -  tuning and references
 
@@ -531,8 +587,6 @@ list(tree = tree_spec, rf = rf_spec, xgb = xgb_spec)
 wf_rf <- workflow() |> add_recipe(rec_base) |> add_model(rf_spec)
 wf_xgb <- workflow() |> add_recipe(rec_base) |> add_model(xgb_spec)
 ```
-
-{{< include ../_includes/tidymodels-evaluation-workflow.qmd >}}
 
 ## Cross-validated accuracy (fit three specs)
 
@@ -834,16 +888,20 @@ print(
 
 Three-way comparison: see the **cross-validated accuracy** bar chart above.
 
-## Bridge: from model choice to feature engineering
+## What changes now
 
-Same workflow, new questions:
-
-- **Part B:** which **model family** fits best?
-- **Part C:** can **PCA inside the recipe** help?
-- **Part D:** how do we handle **missing values** in the recipe?
-- **Parts E–F:** which **metrics** and **interpretation** tools matter when classes are imbalanced?
+From this point on, we keep the same workflow structure and stress one new issue at a time.  
+Next stress: **correlated numeric predictors** (PCA inside the recipe).
 
 # Part C  -  Dimension reduction (accuracy only) {#part-c-pca}
+
+## Scenario goal (Part C)
+
+Learn when PCA helps: if numeric predictors are strongly correlated, compress them inside the recipe and compare accuracy with/without PCA on the same folds.
+
+## Why this stress matters (Part C)
+
+High collinearity can make models unstable or redundant. PCA gives a compact representation, but costs interpretability.
 
 ## Extension: principal component analysis (PCA) in the recipe
 
@@ -963,6 +1021,8 @@ load_tbl <- load_tbl |> dplyr::select(measurement, PC1, PC2)
 knitr::kable(load_tbl, caption = "Loadings (rounded)  -  same numerics as the plot above")
 ```
 
+## Loadings takeaway (penguins)
+
 - **PC1** loads heavily on **bill length, flipper length, body mass** (and bill depth negatively) → a **"overall size"** axis: big birds vs small birds along PC1.
 - **PC2** is dominated by **year** → mostly **study year**, not morphology (weak for separating species here).
 - **Takeaway:** PCA merged correlated size measures into **PC1**; the model later sees **PC1/PC2**, not "mm of bill" directly  -  harder to explain biologically than raw columns.
@@ -1034,11 +1094,20 @@ bind_rows(
 - **Tradeoff:** components are **not** "bill mm" anymore  -  **VIP** on PCA columns is harder to explain biologically.
 - **Leakage check:** always fit PCA **inside** `workflow()` + resampling, never on the full table before splitting.
 
-## Bridge: from PCA to missing data
+## What changes now
 
-Same workflow, new recipe stress: we now handle **missing values** with imputation steps **inside** cross-validation.
+We keep the PCA lesson fixed and move to a different stress: **missing values**.  
+Same workflow, new recipe step family: imputation.
 
 # Part D  -  Missing data (accuracy only) {#part-d-impute}
+
+## Scenario goal (Part D)
+
+Handle missingness without leakage: impute **inside the recipe** so each fold learns imputation from analysis rows only.
+
+## Why this stress matters (Part D)
+
+Dropping rows can bias the dataset; imputing before splits leaks information. We need fold-safe imputation.
 
 ## Extension: imputation inside the recipe (`peng_na`)
 
@@ -1122,7 +1191,10 @@ print(
 
 ## After imputation
 
-**Open circles** = true bill length (simulation only). **Gold** = median imputed value for the **same** penguin. **Orange arrows** connect true → imputed. Gray points are other birds (observed bill length).
+- **Open circles**: true bill length (simulation-only reference).
+- **Gold points**: median-imputed bill length for the same penguins.
+- **Orange arrows**: true value → imputed value shift.
+- **Gray points**: other penguins with observed bill length.
 
 ```{r}
 #| label: day04-impute-after
@@ -1180,10 +1252,14 @@ Continue: [Day 2 (Tuesday) pipeline](../slides/day-02-tuesday.html#/part-c-pipel
 
 # Part E  -  Imbalance, metrics, and confusion matrices {#part-e-metrics}
 
-## Bridge: from binary metrics to multiclass imbalance
+## Scenario goal (Part E)
 
-We move from Adelie vs Gentoo to **three species**, with a deliberately rare **Chinstrap** class.
-Accuracy alone is no longer enough — we add **macro recall/F1** and **per-class recall**.
+Show why accuracy can mislead with a rare class and practice choosing/reporting macro and per-class metrics.
+
+## Why this stress matters (Part E)
+
+When one class is rare, accuracy can hide failure on the minority class.  
+This part focuses on macro/per-class metrics and confusion matrices.
 
 ## Multiclass imbalance (`peng_imb3`)
 
@@ -1317,9 +1393,13 @@ plot_multiclass_recall_compare(pred_imb3, pred_imb3_up, highlight_class = "Chins
 
 # Part F  -  Variable importance {#part-f-vip}
 
-## Bridge: from metrics to interpretation
+## Scenario goal (Part F)
 
-After choosing metrics for imbalance, we ask a different question: **which predictors drove the fitted model?** (VIP and SHAP in the next section.)
+Interpret fitted models responsibly: identify influential predictors (VIP/SHAP) without making causal claims.
+
+## Why this stress matters (Part F)
+
+A model can score well but still be hard to justify. Interpretation tools help communication and diagnostics, not causal proof.
 
 ## Data the forest sees (bill plane)
 
@@ -1395,7 +1475,10 @@ rf_fit |>
 
 - Name three **`parsnip` model types** and a valid **engine** for each
 - Why must **`step_pca()`** and **`step_impute_*()`** live **inside** the recipe?
-- When might **`step_upsample()`** not improve CV scores?
 - Which metric would you report for a **rare-event screening** study?
+
+## End-of-day checklist (advanced)
+
+- When might **`step_upsample()`** not improve CV scores?
 - One reason **VIP** on correlated bills is **not** a causal claim
 - One sentence you would **not** say about a SHAP plot on penguin sex
