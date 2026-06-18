@@ -16,7 +16,7 @@ format:
 ## Learning objectives
 
 - Swap **`parsnip` specs** (bagging, boosting, neural nets) on the **same recipe + workflow** from Tuesday
-- Compare **many models** fairly with **`fit_resamples()`** using **accuracy** until imbalance
+- Compare **many models** fairly with **`fit_resamples()`** — start with **accuracy**, then choose richer metrics when imbalance matters
 - Add **dimension reduction**, **imputation**, and **resampling** as **recipe steps** inside **cross-validation (CV)**
 - Choose **metrics beyond accuracy** (sensitivity, precision-recall, confusion matrices) for imbalanced data
 - Read **variable importance** without causal over-interpretation
@@ -44,9 +44,9 @@ format:
 | **GBM** | **Gradient boosting machine**  -  sequential trees that correct prior errors |
 | **XGBoost** | **Extreme gradient boosting**  -  popular **GBM** engine in `parsnip` |
 | **SVM** | **Support vector machine**  -  margin-based classifier (`svm_rbf()` uses a radial kernel) |
-| **TP / FP / FN / TN** | **True/false positive/negative**  -  counts from a confusion matrix (Part E) |
+| **TP / FP / FN / TN** | **True/false positive/negative**  -  counts from a confusion matrix (metrics refresh, before Part B) |
 
-# Part A  -  Recap (Tuesday's pipeline)
+# Part A  -  Recap (Tuesday's pipeline) {#part-a-recap}
 
 ## Palmer penguins  -  back again
 
@@ -59,7 +59,7 @@ Same **`peng_bal`** table and **`rec_base`** recipe as Tuesday  -  today we swap
 - **`rec_base`**  -  `step_zv` (drop **zero-variance** columns) → `step_dummy` (one-hot categoricals) → `step_normalize` (scale numerics) on **`peng_bal`**
 - **`workflow()`** + **`decision_tree` / `rpart`** tuned on Tuesday
 - **`vfold_cv(..., strata = y)`**  -  **5-fold cross-validation (CV)** with both species in each fold
-- **`metric_set(accuracy)`** for Parts B-D today (more metrics in Part E)
+- **`metric_set(accuracy)`** for Parts B–D (see [metrics refresh](#/part-metrics); richer metrics in Part E)
 
 ## Thursday start: `tidymodels` flowchart {.flowchart-slide}
 
@@ -178,6 +178,18 @@ wf_tree <- workflow() |>
 set.seed(6)
 rs_tree <- fit_resamples(wf_tree, folds, metrics = metrics_acc)
 
+# Holdout predictions for metrics / ROC teaching slide (shallow tree — not perfect separation)
+tree_metrics_spec <- decision_tree(tree_depth = 1, min_n = 20) |>
+  set_engine("rpart") |>
+  set_mode("classification")
+wf_metrics_demo <- workflow() |>
+  add_recipe(rec_base) |>
+  add_model(tree_metrics_spec)
+set.seed(7)
+split_metrics <- initial_split(peng_cls, prop = 0.75, strata = y)
+fit_metrics_demo <- fit(wf_metrics_demo, training(split_metrics))
+pred_metrics_demo <- augment(fit_metrics_demo, testing(split_metrics))
+
 # Teaching scenarios
 set.seed(4)
 peng_imb3 <- prep_penguins_multiclass_imbalance(
@@ -210,6 +222,9 @@ sens_gentoo <- yardstick::metric_tweak("sens", sens, event_level = "second")
 spec_gentoo <- yardstick::metric_tweak("spec", spec, event_level = "second")
 roc_auc_gentoo <- yardstick::metric_tweak("roc_auc", roc_auc, event_level = "second")
 pr_auc_gentoo <- yardstick::metric_tweak("pr_auc", pr_auc, event_level = "second")
+metrics_demo_auc <- pred_metrics_demo |>
+  roc_auc_gentoo(truth = y, .pred_Gentoo) |>
+  pull(.estimate)
 metrics_cls_imb <- metric_set(
   accuracy,
   sens_gentoo,
@@ -478,6 +493,59 @@ save_day04_composite <- function(model, data, title, chunk_id, f1 = "bill_length
   path
 }
 ```
+
+# Metrics refresh {#part-metrics}
+
+## Confusion matrix counts
+
+Fix a **positive class** (here: **Gentoo**, `event_level = "second"` in **`yardstick`**). From a holdout confusion matrix:
+
+|  | Predicted positive | Predicted negative |
+|--|-------------------|-------------------|
+| **Actually positive** | TP | FN |
+| **Actually negative** | FP | TN |
+
+Most rates below are built from these four counts at **one classification threshold**.
+
+## Key metrics — what each is good at
+
+| Metric | In words | Good when… |
+|--------|----------|------------|
+| **Accuracy** | (TP + TN) / all | Classes are **balanced** and all mistakes cost about the same |
+| **Sensitivity** (= **recall**) | TP / (TP + FN) — catch true positives | **Missing a positive** is costly (screening, safety) |
+| **Specificity** | TN / (TN + FP) — catch true negatives | **False alarms** on negatives are costly |
+| **Precision** | TP / (TP + FP) — trust positive calls | You care about **quality of positive predictions** |
+| **F1** | Harmonic mean of precision and recall | You want **one balance** when both matter |
+| **Kappa** (`kap`) | Agreement **beyond chance** | Classes are **imbalanced** — penalizes “always guess majority” |
+| **AUC** (ROC-AUC) | Area under ROC — **ranking** quality | Comparing models **before** you pick a threshold; ranking risk |
+
+**Recall = sensitivity** (two names, same formula). **ROC** plots sensitivity vs 1 − specificity across thresholds; **AUC** summarizes that curve (0.5 ≈ random, 1 = perfect ranker).
+
+## ROC curve (Gentoo as positive class)
+
+```{r}
+#| label: day04-metrics-roc
+#| echo: false
+#| fig-width: 8
+#| fig-height: 7
+#| out-width: 92%
+print(
+  plot_roc_gentoo(
+    pred_metrics_demo,
+    subtitle = paste0(
+      "Holdout stump (depth 1); ROC AUC = ",
+      round(metrics_demo_auc, 3)
+    )
+  )
+)
+```
+
+- **x-axis:** false positive rate = 1 − **specificity** (Adelie called Gentoo).
+- **y-axis:** true positive rate = **sensitivity** / **recall** (Gentoo caught).
+- **Each point:** a different probability **threshold** on `.pred_Gentoo`.
+- **Diagonal:** no better than random ranking; **higher curve** = better separation of Gentoo scores.
+
+Parts **B–D** use **`accuracy`** for fair model shoot-outs; **Part E** returns to macro recall, F1, and confusion matrices on imbalanced species.
 
 # Part B  -  Many models (accuracy only) {#part-b-models}
 
